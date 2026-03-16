@@ -1,6 +1,8 @@
 import SearchBar from "@/components/admin/operations/SearchBar"
 import ContactCard from "@/components/admin/operations/ContactCard"
 import StatsPanel from "@/components/admin/operations/StatsPanel"
+import { contacts } from "@/data/data"
+
 
 export default function Page() {
     return (
@@ -12,32 +14,9 @@ export default function Page() {
 
                     <SearchBar />
 
-                    <ContactCard
-                        name="Suresh Raina"
-                        company="Raina Ventures"
-                        service="Web Development"
-                        status="ACTIVE"
-                        interaction={{
-                            type: "MEETING",
-                            title: "Requirement Discussion",
-                            subtitle: "ERP modules overview",
-                            time: "21 Mar • 11:00 AM",
-                            user: "Karthikeh"
-                        }}
-                    />
-
-                    <ContactCard
-                        name="Munaf Patel"
-                        company="Patel Infra"
-                        service="Digital Marketing"
-                        status="NEGOTIATION"
-                        interaction={{
-                            type: "NOTE",
-                            title: "Client requested marketing automation",
-                            time: "Yesterday",
-                            user: "Saransh"
-                        }}
-                    />
+                    {contacts.map((contact, i) => (
+                        <ContactCard key={i} {...contact} />
+                    ))}
 
                 </div>
 
