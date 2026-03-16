@@ -15,7 +15,7 @@ export default function Page() {
                     <ContactCard
                         name="Suresh Raina"
                         company="Raina Ventures"
-                        service="WEB"
+                        service="Web Development"
                         status="ACTIVE"
                         interaction={{
                             type: "MEETING",
@@ -29,7 +29,7 @@ export default function Page() {
                     <ContactCard
                         name="Munaf Patel"
                         company="Patel Infra"
-                        service="DM"
+                        service="Digital Marketing"
                         status="NEGOTIATION"
                         interaction={{
                             type: "NOTE",

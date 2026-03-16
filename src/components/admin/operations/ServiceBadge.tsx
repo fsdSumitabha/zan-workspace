@@ -1,17 +1,17 @@
-type Service = "WEB" | "DM" | "BC" | "APP" | "SEO"
+type Service = "Web Development" | "Digital Marketing" | "BlockChain" | "Mobile APP" | "SEO"
 
 function getColor(service: Service) {
     switch (service) {
-        case "WEB":
+        case "Web Development":
             return "bg-blue-500/20 text-blue-400"
 
-        case "DM":
+        case "Digital Marketing":
             return "bg-purple-500/20 text-purple-400"
 
-        case "BC":
+        case "BlockChain":
             return "bg-emerald-500/20 text-emerald-400"
 
-        case "APP":
+        case "Mobile APP":
             return "bg-orange-500/20 text-orange-400"
 
         case "SEO":

@@ -5,17 +5,8 @@ import InteractionCard from "./InteractionCard"
 interface Props {
     name: string
     company: string
-    service: "WEB" | "DM" | "BC" | "APP" | "SEO"
-    status:
-        | "NEW_LEAD"
-        | "CONTACTED"
-        | "MEETING_SCHEDULED"
-        | "DISCUSSION"
-        | "NEGOTIATION"
-        | "ACTIVE"
-        | "IN_PROGRESS"
-        | "MAINTENANCE"
-        | "COMPLETED"
+    service: "Web Development" | "Digital Marketing" | "BlockChain" | "Mobile APP" | "SEO"
+    status: | "NEW_LEAD" | "CONTACTED" | "MEETING_SCHEDULED" | "DISCUSSION" | "NEGOTIATION" | "ACTIVE" | "IN_PROGRESS" | "MAINTENANCE" | "COMPLETED"
     interaction: {
         type: "MEETING" | "NOTE" | "DOCUMENT" | "PROPOSAL"
         title: string
@@ -25,13 +16,7 @@ interface Props {
     }
 }
 
-export default function ContactCard({
-    name,
-    company,
-    service,
-    status,
-    interaction
-}: Props) {
+export default function ContactCard({ name, company, service, status, interaction }: Props) {
     return (
         <div className="p-4 rounded-xl bg-slate-100 dark:bg-neutral-950 border border-neutral-600 hover:border-blue-500/40 transition cursor-pointer">
 
