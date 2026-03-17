@@ -11,13 +11,14 @@ export const LEAD_STATUS = {
 export type LeadStatus = (typeof LEAD_STATUS)[keyof typeof LEAD_STATUS]
 
 export const LEAD_STATUS_META: Record<
-    LeadStatus, { label: string; color: string }> =
-{
-    10: { label: "New Lead", color: "gray-500" },
-    20: { label: "Contacted", color: "blue-500" },
-    30: { label: "Meeting Scheduled", color: "purple-500" },
-    40: { label: "Discussion", color: "yellow-500" },
-    50: { label: "Negotiation", color: "orange-500" },
-    60: { label: "Converted", color: "green-500" },
-    70: { label: "Lost", color: "red-500" }
+    LeadStatus,
+    { label: string; color: string }
+> = {
+    10: { label: "New Lead", color: "bg-gray-500 text-white" },
+    20: { label: "Contacted", color: "bg-blue-500 text-white" },
+    30: { label: "Meeting Scheduled", color: "bg-purple-500 text-white" },
+    40: { label: "Discussion", color: "bg-yellow-500 text-yellow-900" },
+    50: { label: "Negotiation", color: "bg-orange-500 text-white" },
+    60: { label: "Converted", color: "bg-green-500 text-white" },
+    70: { label: "Lost", color: "bg-red-500 text-white" }
 }
