@@ -9,7 +9,6 @@ export async function GET(
     try {
         const { id } = await context.params
 
-        console.log("Fetching lead with ID:", id)
         await dbConnect()
 
         const lead = await Lead.findById(id)
