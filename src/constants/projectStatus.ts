@@ -16,12 +16,12 @@ export const PROJECT_STATUS_META: Record<
     ProjectStatus,
     { label: string; color: string }
 > = {
-    110: { label: "Discussion", color: "yellow" },
-    120: { label: "Proposal Sent", color: "blue" },
-    130: { label: "Negotiation", color: "orange" },
-    140: { label: "Confirmed", color: "green" },
-    150: { label: "In Progress", color: "purple" },
-    160: { label: "Deployed", color: "teal" },
-    170: { label: "Maintenance", color: "cyan" },
-    180: { label: "Closed", color: "gray" }
+    110: { label: "Discussion", color: "bg-yellow-500 text-yellow-900" },
+    120: { label: "Proposal Sent", color: "bg-blue-500 text-white" },
+    130: { label: "Negotiation", color: "bg-orange-500 text-white" },
+    140: { label: "Confirmed", color: "bg-green-500 text-white" },
+    150: { label: "In Progress", color: "bg-purple-500 text-white" },
+    160: { label: "Deployed", color: "bg-teal-500 text-white" },
+    170: { label: "Maintenance", color: "bg-cyan-500 text-white" },
+    180: { label: "Closed", color: "bg-gray-500 text-white" }
 }
