@@ -48,13 +48,13 @@ const leads = [
         status: LEAD_STATUS.MEETING
     },
     {
-        name: "Rohit Sharma",
+        name: "Ravindra Jadeja",
         phone: "9876543217",
         source: "Google Ads",
         status: LEAD_STATUS.NEW
     },
     {
-        name: "Virat Kohli",
+        name: "Cheteshwar Pujara",
         phone: "9876543218",
         source: "Referral",
         status: LEAD_STATUS.CONTACTED
