@@ -22,15 +22,6 @@ interface Props {
     }
 }
 
-function formatDate(date: string) {
-    return new Date(date).toLocaleString("en-IN", {
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit"
-    })
-}
-
 export default function LeadCard({
     name,
     company,
