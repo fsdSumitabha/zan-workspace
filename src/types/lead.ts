@@ -1,16 +1,20 @@
-import { LeadStatus } from "@/constants/leadStatus"
+import { InteractionType } from "@/constants/interactionTypes"
+import { EntityType } from "@/constants/entityTypes"
 
-export interface Lead {
+export interface Interaction {
     _id: string
-    name: string
-    email?: string
-    phone: string
-    source: string
 
-    status: LeadStatus
+    entityType: EntityType
+    entityId: string
 
-    assignedTo?: string
-    convertedClientId?: string
+    type: InteractionType
+
+    title?: string
+    description?: string
+
+    refId?: string
+
+    createdBy?: string
 
     createdAt: string
     updatedAt: string
