@@ -2,24 +2,27 @@ import mongoose from "mongoose";
 
 const InteractionSchema = new mongoose.Schema({
 
-    projectId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Project"
+    entityType: {
+        type: Number,
+        enum: [0, 1, 2], // 0: LEAD, 1: CLIENT, 2: PROJECT
+        required: true
     },
 
-    clientId: {
+    entityId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Client"
+        required: true
     },
 
     type: {
         type: String,
         enum: [
-            "MEETING",
+            "MEETING_SCHEDULED",
+            "MEETING_COMPLETED",
+            "MEETING_CANCELLED",
             "NOTE",
-            "PROPOSAL",
+            "CALL",
             "DOCUMENT",
-            "CALL"
+            "PROPOSAL"
         ]
     },
 
@@ -27,9 +30,7 @@ const InteractionSchema = new mongoose.Schema({
 
     description: String,
 
-    meetingLink: String,
-
-    meetingDate: Date,
+    refId: mongoose.Schema.Types.ObjectId, // points to Meeting / Document
 
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -38,4 +39,4 @@ const InteractionSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
-export default mongoose.models.Interaction || mongoose.model("Interaction", InteractionSchema)
+export default mongoose.models.Interaction || mongoose.model("Interaction", InteractionSchema) 
