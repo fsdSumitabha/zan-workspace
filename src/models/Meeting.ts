@@ -33,8 +33,12 @@ const MeetingSchema = new mongoose.Schema({
 
     meetingLink: {
         type: String,
-        required: function() {
-            return this.meetingType === 0
+        validate: {
+            validator: function(value: string) {
+                if (this.meetingType === 0) return !!value
+                return true
+            },
+            message: "Meeting link required for online meetings"
         }
     },
 
@@ -42,7 +46,6 @@ const MeetingSchema = new mongoose.Schema({
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true
         }
     ],
 
@@ -58,7 +61,9 @@ const MeetingSchema = new mongoose.Schema({
 
     outcome: {
         type: String,
-        required : true
+        required : function() {
+            return this.status === 1050 // COMPLETED
+        }
     },
 
     rescheduleHistory: [
