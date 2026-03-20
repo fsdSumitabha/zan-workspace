@@ -4,9 +4,8 @@ import { useEffect, useState } from "react"
 import SearchBar from "@/components/admin/operations/SearchBar"
 import StatsPanel from "@/components/admin/operations/StatsPanel"
 import { Client } from "@/types/clients"
-import LeadCard from "@/components/admin/operations/LeadCard"
-import LeadCardSkeleton from "@/components/admin/operations/skeletons/LeadCardSkeleton"
 import ClientCard from "@/components/admin/operations/ClientCard"
+import ClientCardSkeleton from "@/components/admin/operations/skeletons/ClientCardSkeleton"
 
 interface ApiResponse {
     success: boolean
@@ -61,7 +60,7 @@ export default function Page() {
                         <div className="space-y-4">
                             {loading &&
                                 Array.from({ length: 5 }).map((_, i) => (
-                                    <LeadCardSkeleton key={i} />
+                                    <ClientCardSkeleton key={i} />
                                 ))}
                         </div>
                     )}
