@@ -7,7 +7,7 @@ import SearchBar from "@/components/admin/operations/SearchBar"
 import StatsPanel from "@/components/admin/operations/StatsPanel"
 
 import ProjectDetail from "@/components/admin/operations/ProjectDetail"
-import ProjectCardSkeleton from "@/components/admin/operations/skeletons/ProjectCardSkeleton"
+import ProjectDetailSkeleton from "@/components/admin/operations/skeletons/ProjectDetailSkeleton"
 
 import { Project } from "@/types/projects"
 
@@ -59,7 +59,7 @@ export default function Page() {
                     {/* Loading */}
                     {loading && (
                         <div className="space-y-4">
-                            <ProjectCardSkeleton />
+                            <ProjectDetailSkeleton />
                         </div>
                     )}
 
