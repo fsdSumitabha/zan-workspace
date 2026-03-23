@@ -1,130 +1,85 @@
-import { PROJECT_STATUS_META } from "@/constants/projectStatus"
+"use client"
 
-interface Props {
-    params: {
-        projectId: string
-    }
+import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
+
+import SearchBar from "@/components/admin/operations/SearchBar"
+import StatsPanel from "@/components/admin/operations/StatsPanel"
+
+import ProjectDetail from "@/components/admin/operations/ProjectDetail"
+import ProjectCardSkeleton from "@/components/admin/operations/skeletons/ProjectCardSkeleton"
+
+import { Project } from "@/types/projects"
+
+interface ApiResponse {
+    success: boolean
+    data: Project
 }
 
-async function getProject(projectId: string) {
-    const res = await fetch(
-        `/api/admin/projects/${projectId}`,
-        { cache: "no-store" }
-    )
+export default function Page() {
+    const params = useParams()
+    const projectId = params.projectId as string
 
-    if (!res.ok) return null
+    const [project, setProject] = useState<Project | null>(null)
+    const [loading, setLoading] = useState(true)
 
-    const data = await res.json()
-    return data.data
-}
+    const fetchProject = async () => {
+        try {
+            setLoading(true)
 
-export default async function ProjectDetailsPage({ params }: Props) {
-    const project = await getProject(params.projectId)
+            const res = await fetch(
+                `/api/admin/operations/projects/${projectId}`
+            )
 
-    if (!project) {
-        return (
-            <div className="p-6">
-                <p className="text-red-500">Project not found</p>
-            </div>
-        )
+            const json: ApiResponse = await res.json()
+
+            if (json.success) {
+                setProject(json.data)
+            }
+        } catch (error) {
+            console.error("Failed to fetch project", error)
+        } finally {
+            setLoading(false)
+        }
     }
 
-    const statusMeta =
-        PROJECT_STATUS_META[project.status as keyof typeof PROJECT_STATUS_META]
+    useEffect(() => {
+        if (projectId) fetchProject()
+    }, [projectId])
 
     return (
-        <div className="p-6 space-y-6">
-            {/* Header */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-neutral-800">
-                            {project.title}
-                        </h1>
-                        <p className="text-sm text-neutral-500 mt-1">
-                            {project.companyName || "No company name"}
-                        </p>
-                    </div>
+        <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
+            <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
 
-                    <span
-                        className={`px-3 py-1 text-xs rounded-full font-medium ${statusMeta?.color}`}
-                    >
-                        {statusMeta?.label}
-                    </span>
+                {/* LEFT */}
+                <div className="lg:col-span-2 space-y-4">
+
+                    <SearchBar />
+
+                    {/* Loading */}
+                    {loading && (
+                        <div className="space-y-4">
+                            <ProjectCardSkeleton />
+                        </div>
+                    )}
+
+                    {/* Empty */}
+                    {!loading && !project && (
+                        <div className="text-center py-10 text-gray-500">
+                            Project not found
+                        </div>
+                    )}
+
+                    {/* Project */}
+                    {!loading && project && (
+                        <ProjectDetail
+                            project={project}
+                        />
+                    )}
                 </div>
-            </div>
 
-            {/* Client Info */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-lg font-semibold mb-4">
-                    Client Information
-                </h2>
-
-                <div className="space-y-2 text-sm text-neutral-700">
-                    <p>
-                        <span className="text-neutral-500">Name: </span>
-                        {project.clientId?.name || "N/A"}
-                    </p>
-                    <p>
-                        <span className="text-neutral-500">Company: </span>
-                        {project.clientId?.company || "N/A"}
-                    </p>
-                </div>
-            </div>
-
-            {/* Project Details */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-lg font-semibold mb-4">
-                    Project Details
-                </h2>
-
-                <div className="space-y-3 text-sm text-neutral-700">
-                    <p>
-                        <span className="text-neutral-500">Service: </span>
-                        {project.serviceType || "N/A"}
-                    </p>
-
-                    <p>
-                        <span className="text-neutral-500">Description: </span>
-                        {project.description || "No description provided"}
-                    </p>
-                </div>
-            </div>
-
-            {/* Budget */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-lg font-semibold mb-4">Budget</h2>
-
-                <p className="text-xl font-semibold text-neutral-800">
-                    ₹ {project.budget?.toLocaleString() || "0"}
-                </p>
-            </div>
-
-            {/* Metadata */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-lg font-semibold mb-4">Metadata</h2>
-
-                <div className="text-sm text-neutral-600 space-y-2">
-                    <p>
-                        Created At:{" "}
-                        {new Date(project.createdAt).toLocaleDateString()}
-                    </p>
-                    <p>
-                        Last Updated:{" "}
-                        {new Date(project.updatedAt).toLocaleDateString()}
-                    </p>
-                </div>
-            </div>
-
-            {/* Timeline (Future Ready) */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-lg font-semibold mb-4">
-                    Activity Timeline
-                </h2>
-
-                <p className="text-sm text-neutral-500">
-                    Timeline data will appear here (meetings, updates, logs)
-                </p>
+                {/* RIGHT */}
+                <StatsPanel />
             </div>
         </div>
     )

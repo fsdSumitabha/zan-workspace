@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Project from "@/models/Project"
+import "@/models/Client"
 import { SortOrder } from "mongoose"
 
 export async function GET(req: NextRequest) {
