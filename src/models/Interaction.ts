@@ -14,16 +14,8 @@ const InteractionSchema = new mongoose.Schema({
     },
 
     type: {
-        type: String,
-        enum: [
-            "MEETING_SCHEDULED",
-            "MEETING_COMPLETED",
-            "MEETING_CANCELLED",
-            "NOTE",
-            "CALL",
-            "DOCUMENT",
-            "PROPOSAL"
-        ]
+        type: Number,
+        required: true
     },
 
     title: String,
