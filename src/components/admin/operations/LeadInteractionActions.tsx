@@ -27,7 +27,7 @@ export default function LeadInteractionActions({
     activeType
 }: Props) {
     return (
-        <div className="flex flex-wrap gap-4 p-4 rounded-xl border bg-white dark:bg-neutral-900">
+        <div className="flex flex-wrap gap-4 p-4 rounded-xl border bg-white dark:bg-neutral-900 dark:border-neutral-700">
 
             {ACTION_TYPES.map((type) => {
                 const meta = INTERACTION_TYPE_META[type]
