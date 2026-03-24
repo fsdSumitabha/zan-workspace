@@ -9,6 +9,7 @@ import LeadDetails from "@/components/admin/operations/LeadDetails"
 
 import type { Lead } from "@/types/lead"
 import LeadDetailsSkeleton from "@/components/admin/operations/skeletons/LeadDetailsSkeleton"
+import LeadInteractionActions from "@/components/admin/operations/LeadInteractionActions"
 
 export default function Page() {
     const params = useParams()
@@ -60,7 +61,7 @@ export default function Page() {
                     {!loading && lead && (
                         <LeadDetails lead={lead} />
                     )}
-
+                    <LeadInteractionActions leadId={leadId} />
                 </div>
 
                 <StatsPanel />
