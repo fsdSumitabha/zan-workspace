@@ -33,14 +33,15 @@ export default function CallForm({ leadId, onClose }: any) {
                 placeholder="Call notes..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full p-2 border rounded"
+                className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
+                rows={3}
             />
 
             {/* Optional Status */}
             <select
                 value={status}
                 onChange={(e) => setStatus(Number(e.target.value))}
-                className="w-full p-2 border rounded"
+                className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
             >
                 <option value="">No status change</option>
                 <option value={20}>Contacted</option>
@@ -48,11 +49,18 @@ export default function CallForm({ leadId, onClose }: any) {
             </select>
 
             <div className="flex justify-end gap-2">
-                <button type="button" onClick={onClose}>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-3 py-1 text-sm"
+                >
                     Cancel
                 </button>
 
-                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+                <button
+                    type="submit"
+                    className="px-4 py-2 rounded bg-blue-600 text-white"
+                >
                     Save
                 </button>
             </div>

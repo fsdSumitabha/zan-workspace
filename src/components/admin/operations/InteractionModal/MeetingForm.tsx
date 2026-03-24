@@ -66,7 +66,7 @@ export default function MeetingForm({ leadId, onClose }: Props) {
                 <input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800"
+                    className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
                     placeholder="e.g. Discovery Call"
                 />
             </div>
@@ -77,7 +77,7 @@ export default function MeetingForm({ leadId, onClose }: Props) {
                 <input
                     value={agenda}
                     onChange={(e) => setAgenda(e.target.value)}
-                    className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800"
+                    className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
                     placeholder="Purpose of the meeting"
                 />
             </div>
@@ -89,7 +89,7 @@ export default function MeetingForm({ leadId, onClose }: Props) {
                     type="datetime-local"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800"
+                    className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
                 />
             </div>
 
@@ -99,7 +99,7 @@ export default function MeetingForm({ leadId, onClose }: Props) {
                 <select
                     value={meetingType}
                     onChange={(e) => setMeetingType(Number(e.target.value))}
-                    className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800"
+                    className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
                 >
                     <option value={0}>Online</option>
                     <option value={1}>Offline</option>
@@ -113,7 +113,7 @@ export default function MeetingForm({ leadId, onClose }: Props) {
                     <input
                         value={meetingLink}
                         onChange={(e) => setMeetingLink(e.target.value)}
-                        className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800"
+                        className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
                         placeholder="https://..."
                     />
                 </div>
@@ -124,7 +124,7 @@ export default function MeetingForm({ leadId, onClose }: Props) {
                 placeholder="Additional notes..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800"
+                className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
                 rows={3}
             />
 
@@ -140,7 +140,7 @@ export default function MeetingForm({ leadId, onClose }: Props) {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="px-4 py-2 rounded-lg bg-purple-600 text-white"
+                    className="px-4 py-2 rounded bg-purple-600 text-white"
                 >
                     {loading ? "Saving..." : "Schedule"}
                 </button>

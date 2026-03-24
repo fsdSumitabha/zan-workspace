@@ -13,7 +13,7 @@ export default function InteractionInlineForm({
     if (!type) return null
 
     return (
-        <div className="p-4 rounded-xl border bg-white dark:bg-neutral-900 space-y-4">
+        <div className="p-4 rounded-xl border bg-white dark:bg-neutral-900 dark:border-neutral-700 space-y-4">
 
             <div className="flex justify-between items-center">
                 <h2 className="font-semibold text-lg">Add Interaction</h2>
