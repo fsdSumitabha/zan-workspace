@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 
 interface Props {
     leadId: string
@@ -9,19 +8,24 @@ interface Props {
 }
 
 export default function MeetingForm({ leadId, onClose }: Props) {
+    const [title, setTitle] = useState("")
+    const [agenda, setAgenda] = useState("")
+    const [description, setDescription] = useState("")
     const [date, setDate] = useState("")
-    const [notes, setNotes] = useState("")
+    const [meetingType, setMeetingType] = useState(0) // 0: ONLINE, 1: OFFLINE
+    const [meetingLink, setMeetingLink] = useState("")
     const [loading, setLoading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!date) return
+        if (!title || !agenda || !date) return
+        if (meetingType === 0 && !meetingLink) return
 
         try {
             setLoading(true)
 
-            await fetch("/api/interactions", {
+            await fetch("/api/meetings", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -29,11 +33,17 @@ export default function MeetingForm({ leadId, onClose }: Props) {
                 body: JSON.stringify({
                     entityType: 0,
                     entityId: leadId,
-                    type: INTERACTION_TYPE.MEETING_SCHEDULED,
-                    description: notes,
-                    metadata: {
-                        scheduledAt: date
-                    }
+
+                    title,
+                    agenda,
+                    description,
+
+                    meetingType,
+                    meetingLink: meetingType === 0 ? meetingLink : undefined,
+
+                    scheduledAt: new Date(date),
+
+                    status: 1000 // e.g. SCHEDULED (define in constants)
                 })
             })
 
@@ -50,6 +60,29 @@ export default function MeetingForm({ leadId, onClose }: Props) {
 
             <h2 className="text-lg font-semibold">Schedule Meeting</h2>
 
+            {/* Title */}
+            <div className="space-y-2">
+                <label className="text-sm">Title</label>
+                <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800"
+                    placeholder="e.g. Discovery Call"
+                />
+            </div>
+
+            {/* Agenda */}
+            <div className="space-y-2">
+                <label className="text-sm">Agenda</label>
+                <input
+                    value={agenda}
+                    onChange={(e) => setAgenda(e.target.value)}
+                    className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800"
+                    placeholder="Purpose of the meeting"
+                />
+            </div>
+
+            {/* Date */}
             <div className="space-y-2">
                 <label className="text-sm">Meeting Date & Time</label>
                 <input
@@ -60,10 +93,37 @@ export default function MeetingForm({ leadId, onClose }: Props) {
                 />
             </div>
 
+            {/* Meeting Type */}
+            <div className="space-y-2">
+                <label className="text-sm">Meeting Type</label>
+                <select
+                    value={meetingType}
+                    onChange={(e) => setMeetingType(Number(e.target.value))}
+                    className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800"
+                >
+                    <option value={0}>Online</option>
+                    <option value={1}>Offline</option>
+                </select>
+            </div>
+
+            {/* Meeting Link (only for online) */}
+            {meetingType === 0 && (
+                <div className="space-y-2">
+                    <label className="text-sm">Meeting Link</label>
+                    <input
+                        value={meetingLink}
+                        onChange={(e) => setMeetingLink(e.target.value)}
+                        className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800"
+                        placeholder="https://..."
+                    />
+                </div>
+            )}
+
+            {/* Description */}
             <textarea
-                placeholder="Add notes (optional)..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Additional notes..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800"
                 rows={3}
             />
