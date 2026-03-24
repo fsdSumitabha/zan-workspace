@@ -9,6 +9,7 @@ import {
 interface Props {
     leadId: string
     onAction?: (type: InteractionType) => void
+    activeType?: InteractionType | null
 }
 
 const ACTION_TYPES: InteractionType[] = [
@@ -22,19 +23,30 @@ const ACTION_TYPES: InteractionType[] = [
 
 export default function LeadInteractionActions({
     leadId,
-    onAction
+    onAction,
+    activeType
 }: Props) {
     return (
-        <div className="flex flex-wrap gap-2 p-4 rounded-xl border bg-white dark:bg-neutral-900">
+        <div className="flex flex-wrap gap-4 p-4 rounded-xl border bg-white dark:bg-neutral-900">
 
             {ACTION_TYPES.map((type) => {
                 const meta = INTERACTION_TYPE_META[type]
+                const isActive = activeType === type
 
                 return (
                     <button
                         key={type}
                         onClick={() => onAction?.(type)}
-                        className={`px-3 py-1 rounded-md text-sm font-medium ${meta.color}`}
+                        className={`
+                            px-3 py-1 rounded-md text-sm font-medium transition
+
+                            ${isActive
+                                ? "ring-2 ring-blue-500 scale-105"
+                                : "opacity-80 hover:opacity-100"
+                            }
+
+                            ${meta.color}
+                        `}
                     >
                         + {meta.label}
                     </button>

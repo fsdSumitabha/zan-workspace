@@ -10,6 +10,7 @@ import LeadDetails from "@/components/admin/operations/LeadDetails"
 import type { Lead } from "@/types/lead"
 import LeadDetailsSkeleton from "@/components/admin/operations/skeletons/LeadDetailsSkeleton"
 import LeadInteractionActions from "@/components/admin/operations/LeadInteractionActions"
+import InteractionModal from "@/components/admin/operations/InteractionModal/InteractionInlineForm"
 
 export default function Page() {
     const params = useParams()
@@ -35,6 +36,19 @@ export default function Page() {
         if (leadId) fetchLead()
     }, [leadId])
 
+    const [activeType, setActiveType] = useState<number | null>(null)
+    const [isOpen, setIsOpen] = useState(false)
+
+    const handleOpen = (type: number) => {
+        setActiveType(type)
+        setIsOpen(true)
+    }
+
+    const handleClose = () => {
+        setIsOpen(false)
+        setActiveType(null)
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
             <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
@@ -59,14 +73,19 @@ export default function Page() {
 
                     {/* List */}
                     {!loading && lead && (
-                        <LeadDetails lead={lead} />
+                        <>
+                            <LeadDetails lead={lead} />
+                            <LeadInteractionActions leadId={leadId} onAction={handleOpen} activeType={activeType}/>
+                        </>
                     )}
-                    <LeadInteractionActions leadId={leadId} />
+
+                    <InteractionModal type={activeType} open={isOpen} onClose={handleClose} leadId={leadId} />
                 </div>
 
                 <StatsPanel />
 
             </div>
+
         </div>
     )
 }

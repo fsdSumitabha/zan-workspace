@@ -1,0 +1,35 @@
+"use client"
+
+import { INTERACTION_TYPE } from "@/constants/interactionTypes"
+import CallForm from "./CallForm"
+
+export default function InteractionInlineForm({
+    type,
+    leadId,
+    onClose
+}: any) {
+    if (!type) return null
+
+    return (
+        <div className="p-4 rounded-xl border bg-white dark:bg-neutral-900 space-y-4">
+
+            <div className="flex justify-between items-center">
+                <h2 className="font-semibold text-lg">Add Interaction</h2>
+
+                <button
+                    onClick={onClose}
+                    className="text-sm text-gray-500"
+                >
+                    Close
+                </button>
+            </div>
+
+            {type === INTERACTION_TYPE.CALL_MADE && (
+                <CallForm leadId={leadId} onClose={onClose} />
+            )}
+
+
+
+        </div>
+    )
+}
