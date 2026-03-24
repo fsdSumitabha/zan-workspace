@@ -37,17 +37,6 @@ export default function CallForm({ leadId, onClose }: any) {
                 rows={3}
             />
 
-            {/* Optional Status */}
-            <select
-                value={status}
-                onChange={(e) => setStatus(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
-            >
-                <option value="">No status change</option>
-                <option value={20}>Contacted</option>
-                <option value={40}>Discussion</option>
-            </select>
-
             <div className="flex justify-end gap-2">
                 <button
                     type="button"
