@@ -19,28 +19,6 @@ const ACTION_TYPES: InteractionType[] = [
     INTERACTION_TYPE.PROPOSAL_SENT
 ]
 
-function getColorClasses(color: string) {
-    switch (color) {
-        case "blue":
-            return "bg-blue-600 text-white"
-        case "green":
-            return "bg-green-600 text-white"
-        case "red":
-            return "bg-red-600 text-white"
-        case "yellow":
-            return "bg-yellow-500 text-black"
-        case "purple":
-            return "bg-purple-600 text-white"
-        case "gray":
-            return "bg-gray-600 text-white"
-        case "teal":
-            return "bg-teal-600 text-white"
-        case "orange":
-            return "bg-orange-600 text-white"
-        default:
-            return "bg-gray-500 text-white"
-    }
-}
 
 export default function LeadInteractionActions({
     leadId,
@@ -56,8 +34,7 @@ export default function LeadInteractionActions({
                     <button
                         key={type}
                         onClick={() => onAction?.(type)}
-                        className={`px-3 py-1 rounded-md text-sm font-medium
-                        ${getColorClasses(meta.color)}`}
+                        className={`px-3 py-1 rounded-md text-sm font-medium ${meta.color}`}
                     >
                         + {meta.label}
                     </button>

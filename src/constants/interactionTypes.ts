@@ -22,41 +22,41 @@ export const INTERACTION_TYPE_META: Record<
     2010: {
         label: "Meeting Scheduled",
         icon: "calendar",
-        color: "blue"
+        color: "bg-blue-600 text-white"
     },
     2020: {
         label: "Meeting Completed",
         icon: "check",
-        color: "green"
+        color: "bg-green-600 text-white"
     },
     2030: {
         label: "Meeting Cancelled",
         icon: "times",
-        color: "red"
+        color: "bg-red-600 text-white"
     },
     2040: {
         label: "Meeting Rescheduled",
         icon: "refresh",
-        color: "yellow"
+        color: "bg-yellow-500 text-black"
     },
     2110: {
         label: "Note Added",
         icon: "file",
-        color: "gray"
+        color: "bg-gray-600 text-white"
     },
     2210: {
         label: "Call Made",
         icon: "phone",
-        color: "purple"
+        color: "bg-purple-600 text-white"
     },
     2310: {
         label: "Document Uploaded",
         icon: "doc",
-        color: "teal"
+        color: "bg-teal-600 text-white"
     },
     2410: {
         label: "Proposal Sent",
         icon: "briefcase",
-        color: "orange"
+        color: "bg-orange-600 text-white"
     }
 }
