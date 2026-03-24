@@ -2,6 +2,8 @@
 
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import CallForm from "./CallForm"
+import MeetingForm from "./MeetingForm"
+import NoteForm from "./NoteForm"
 
 export default function InteractionInlineForm({
     type,
@@ -28,7 +30,13 @@ export default function InteractionInlineForm({
                 <CallForm leadId={leadId} onClose={onClose} />
             )}
 
+            {type === INTERACTION_TYPE.MEETING_SCHEDULED && (
+                <MeetingForm leadId={leadId} onClose={onClose} />
+            )}
 
+            {type === INTERACTION_TYPE.NOTE_ADDED && (
+                <NoteForm leadId={leadId} onClose={onClose} />
+            )}
 
         </div>
     )
