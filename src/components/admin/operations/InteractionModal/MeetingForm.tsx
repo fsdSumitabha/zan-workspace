@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
 
 interface Props {
     leadId: string
@@ -12,44 +13,51 @@ export default function MeetingForm({ leadId, onClose }: Props) {
     const [agenda, setAgenda] = useState("")
     const [description, setDescription] = useState("")
     const [date, setDate] = useState("")
+    const [status, setStatus] = useState(2010) // 0: Scheduled, 1: Completed, 2: Cancelled
     const [meetingType, setMeetingType] = useState(0) // 0: ONLINE, 1: OFFLINE
     const [meetingLink, setMeetingLink] = useState("")
     const [loading, setLoading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        setLoading(true)
 
-        if (!title || !agenda || !date) return
-        if (meetingType === 0 && !meetingLink) return
+        const promise = fetch("/api/admin/operations/meetings", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                entityType: 0, // LEAD
+                entityId: leadId,
+                title,
+                agenda,
+                description,
+                meetingType,
+                meetingLink,
+                status,
+                scheduledAt: date,
+                createdBy: "USER_ID"
+            })
+        }).then(async (res) => {
+            const data = await res.json()
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || "Failed to schedule meeting")
+            }
+            return data
+        })
+
+        toast.promise(promise, {
+            loading: "Scheduling meeting...",
+            success: () => {
+                onClose()
+                return "Meeting scheduled successfully"
+            },
+            error: (err) => err.message || "Something went wrong"
+        })
 
         try {
-            setLoading(true)
-
-            await fetch("/api/meetings", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    entityType: 0,
-                    entityId: leadId,
-
-                    title,
-                    agenda,
-                    description,
-
-                    meetingType,
-                    meetingLink: meetingType === 0 ? meetingLink : undefined,
-
-                    scheduledAt: new Date(date),
-
-                    status: 1000 // e.g. SCHEDULED (define in constants)
-                })
-            })
-
-            onClose()
-        } catch (err) {
-            console.error(err)
+            await promise
         } finally {
             setLoading(false)
         }
