@@ -100,11 +100,15 @@ export default function Page() {
                         <>
                             <LeadDetails lead={lead} />
                             <LeadInteractionActions leadId={leadId} onAction={handleOpen} activeType={activeType}/>
-                            <InteractionTimeline interactions={interactions} loading={interactionLoading} />
                         </>
                     )}
 
                     <InteractionModal type={activeType} open={isOpen} onClose={handleClose} leadId={leadId} onSuccess={fetchInteractions}/>
+
+                    {!loading && lead && (
+                        <InteractionTimeline interactions={interactions} loading={interactionLoading} />
+                    )}
+
                 </div>
 
                 <StatsPanel />
