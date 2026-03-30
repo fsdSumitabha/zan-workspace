@@ -23,6 +23,8 @@ const QuotationSchema = new mongoose.Schema({
 
     url: String,
 
+    status: Number,
+    
     uploadedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
