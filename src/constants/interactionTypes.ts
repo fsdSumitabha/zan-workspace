@@ -42,7 +42,7 @@ export const INTERACTION_TYPE_META: Record<
     2110: {
         label: "Note Added",
         icon: "file",
-        color: "bg-gray-600 text-white"
+        color: "border border-gray-500 bg-gray-100 text-gray-800 dark:bg-gray-900/40 dark:text-gray-300"
     },
     2210: {
         label: "Call Made",
