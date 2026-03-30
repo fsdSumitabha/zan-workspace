@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         await Interaction.create({
             entityType,
             entityId,
-            type: 1010, // MEETING_SCHEDULED (use constant later)
+            type: 2010, // MEETING_SCHEDULED (use constant later)
             title: title,
             description: agenda,
             refId: meeting._id
