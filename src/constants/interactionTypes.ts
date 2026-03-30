@@ -10,7 +10,7 @@ export const INTERACTION_TYPE = {
 
     DOCUMENT_UPLOADED: 2310,
 
-    PROPOSAL_SENT: 2410
+    QUOTATION_SENT: 2410
 } as const
 
 export type InteractionType = (typeof INTERACTION_TYPE)[keyof typeof INTERACTION_TYPE]
@@ -55,7 +55,7 @@ export const INTERACTION_TYPE_META: Record<
         color: "bg-teal-600 text-white"
     },
     2410: {
-        label: "Proposal Sent",
+        label: "Quotation Sent",
         icon: "briefcase",
         color: "bg-orange-600 text-white"
     }
