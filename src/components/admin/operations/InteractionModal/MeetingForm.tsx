@@ -6,9 +6,10 @@ import { toast } from "sonner"
 interface Props {
     leadId: string
     onClose: () => void
+    onSuccess?: () => void
 }
 
-export default function MeetingForm({ leadId, onClose }: Props) {
+export default function MeetingForm({ leadId, onClose, onSuccess }: Props) {
     const [title, setTitle] = useState("")
     const [agenda, setAgenda] = useState("")
     const [description, setDescription] = useState("")
@@ -50,6 +51,7 @@ export default function MeetingForm({ leadId, onClose }: Props) {
         toast.promise(promise, {
             loading: "Scheduling meeting...",
             success: () => {
+                onSuccess?.()
                 onClose()
                 return "Meeting scheduled successfully"
             },

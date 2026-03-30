@@ -7,9 +7,10 @@ import { toast } from "sonner";
 interface Props {
     leadId: string
     onClose: () => void
+    onSuccess?: () => void
 }
 
-export default function NoteForm({ leadId, onClose }: Props) {
+export default function NoteForm({ leadId, onClose, onSuccess }: Props) {
     const [description, setDescription] = useState("")
     const [title, setTitle] = useState('')
     const [loading, setLoading] = useState(false)
@@ -45,6 +46,7 @@ export default function NoteForm({ leadId, onClose }: Props) {
         toast.promise(promise, {
             loading: "Saving note...",
             success: () => {
+                onSuccess?.();
                 onClose();
                 return "Note added successfully";
             },

@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
         const note = await Interaction.create({
             entityType,
             entityId,
-            type: 2210,
+            type: 2110,
             title: title,
             description: description,
         })

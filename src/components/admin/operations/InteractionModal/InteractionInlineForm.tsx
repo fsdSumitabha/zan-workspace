@@ -8,7 +8,8 @@ import NoteForm from "./NoteForm"
 export default function InteractionInlineForm({
     type,
     leadId,
-    onClose
+    onClose,
+    onSuccess
 }: any) {
     if (!type) return null
 
@@ -27,15 +28,15 @@ export default function InteractionInlineForm({
             </div>
 
             {type === INTERACTION_TYPE.CALL_MADE && (
-                <CallForm leadId={leadId} onClose={onClose} />
+                <CallForm leadId={leadId} onClose={onClose} onSuccess={onSuccess} />
             )}
 
             {type === INTERACTION_TYPE.MEETING_SCHEDULED && (
-                <MeetingForm leadId={leadId} onClose={onClose} />
+                <MeetingForm leadId={leadId} onClose={onClose} onSuccess={onSuccess} />
             )}
 
             {type === INTERACTION_TYPE.NOTE_ADDED && (
-                <NoteForm leadId={leadId} onClose={onClose} />
+                <NoteForm leadId={leadId} onClose={onClose} onSuccess={onSuccess} />
             )}
 
         </div>

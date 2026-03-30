@@ -54,7 +54,6 @@ export default function Page() {
         setActiveType(null)
     }
 
-    useEffect(() => {
         const fetchInteractions = async () => {
             try {
                 const res = await fetch(
@@ -69,7 +68,8 @@ export default function Page() {
                 setInteractionLoading(false)
             }
         }
-
+        
+    useEffect(() => {
         if (leadId) fetchInteractions()
     }, [leadId])
 
@@ -104,7 +104,7 @@ export default function Page() {
                         </>
                     )}
 
-                    <InteractionModal type={activeType} open={isOpen} onClose={handleClose} leadId={leadId} />
+                    <InteractionModal type={activeType} open={isOpen} onClose={handleClose} leadId={leadId} onSuccess={fetchInteractions}/>
                 </div>
 
                 <StatsPanel />
