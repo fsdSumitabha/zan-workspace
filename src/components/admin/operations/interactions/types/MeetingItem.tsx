@@ -3,6 +3,8 @@
 import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { MEETING_STATUS_META } from "@/constants/meetingStatus"
+import { MEETING_TYPE_META, MEETING_TYPE } from "@/constants/meetingTypes"
+import MeetingLinkButton from "@/components/admin/operations/MeetingLinkButton"
 import * as Icons from "lucide-react"
 
 export default function MeetingItem({ item }: { item: any }) {
@@ -63,13 +65,18 @@ export default function MeetingItem({ item }: { item: any }) {
 
                 {/* Meta */}
                 {meeting && (
-                    <div className="flex items-center gap-4 text-xs text-gray-500 pt-1">
+                    <div className="flex items-center justify-between flex-wrap gap-3 text-xs text-gray-500 pt-1">
 
-                        {/* Scheduled */}
+                        {/* Left: Schedule */}
                         <div className="flex items-center gap-1">
                             Scheduled at: <TimeAgo date={meeting.scheduledAt} />
                         </div>
 
+                        {/* Right: Actions */}
+                        {meeting.meetingType === MEETING_TYPE.ONLINE &&
+                            meeting.meetingLink && (
+                                <MeetingLinkButton link={meeting.meetingLink} />
+                            )}
                     </div>
                 )}
             </div>
