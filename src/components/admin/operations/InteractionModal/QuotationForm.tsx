@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
+import FileUpload from "../dropzone/FileUpload"
 
 interface Props {
     entityId: string
@@ -17,7 +18,6 @@ export default function QuotationForm({
     onSuccess
 }: Props) {
 
-    const inputRef = useRef<HTMLInputElement>(null)
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
     const [amount, setAmount] = useState("")
@@ -111,11 +111,7 @@ export default function QuotationForm({
                 className="w-full px-3 py-2 rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800"
             />
 
-            <input
-                type="file"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="w-full text-sm border"
-            />
+            <FileUpload file={file} setFile={setFile} label="Upload Quotation File" />
 
             <div className="flex justify-end gap-2">
                 <button type="button" onClick={onClose}>
