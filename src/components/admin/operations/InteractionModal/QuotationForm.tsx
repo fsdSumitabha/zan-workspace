@@ -53,7 +53,7 @@ export default function QuotationForm({
 
         setLoading(true)
 
-        const promise = fetch("/api/admin/operations/quotations", {
+        const promise = fetch("/api/admin/operations/quotation", {
             method: "POST",
             body: formData
         }).then(async (res) => {
@@ -111,7 +111,17 @@ export default function QuotationForm({
                 className="w-full px-3 py-2 rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800"
             />
 
-            <FileUpload file={file} setFile={setFile} label="Upload Quotation File" />
+            <FileUpload
+                file={file}
+                setFile={setFile}
+                label="Upload Quotation File"
+                maxSize={10 * 1024 * 1024}
+                acceptedTypes={[
+                    "application/pdf",
+                    "application/msword",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                ]}
+            />
 
             <div className="flex justify-end gap-2">
                 <button type="button" onClick={onClose}>
