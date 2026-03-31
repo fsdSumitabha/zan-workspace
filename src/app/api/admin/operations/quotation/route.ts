@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Quotation from "@/models/Quotation"
 import Interaction from "@/models/Interaction"
+import { writeFile } from "fs/promises"
+import path from "path"
 
 export async function POST(req: NextRequest) {
     try {
@@ -26,25 +28,14 @@ export async function POST(req: NextRequest) {
             const buffer = Buffer.from(bytes)
 
             const fileName = `${Date.now()}-${file.name}`
+            const filePath = path.join(process.cwd(), "public/uploads", fileName)
 
-            // Example: save locally (for now)
-            const path = require("path")
-            const fs = require("fs")
-
-            const uploadDir = path.join(process.cwd(), "public/uploads/quotations/")
-
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true })
-            }
-
-            const filePath = path.join(uploadDir, fileName)
-
-            fs.writeFileSync(filePath, buffer)
+            await writeFile(filePath, buffer)
 
             fileUrl = `/uploads/${fileName}`
         }
 
-        // 2. Create Quotation
+        // 2. Create quotation
         const quotation = await Quotation.create({
             entityType,
             entityId,
@@ -54,11 +45,11 @@ export async function POST(req: NextRequest) {
             status
         })
 
-        // 3. Create Interaction (timeline)
+        // 3. Create interaction
         await Interaction.create({
             entityType,
             entityId,
-            type: 2410, // QUOTATION_SENT
+            type: 2410,
             title,
             description,
             status,
