@@ -18,9 +18,15 @@ const QuotationSchema = new mongoose.Schema({
     amount: {
         type: Number,
         required: true
-        //amount will be including gst
+        //amount will be excluding gst
     },
 
+    gst_percentage: {
+        type: Number,
+        default: 18,
+        required: true
+    },
+    
     url: String,
 
     status: Number,
