@@ -53,7 +53,7 @@ export default function QuotationItem({ item }: { item: any }) {
 
                 {/*  Quotation Details */}
                 {quotation && (
-                    <div className="mt-2 p-3 rounded-lg border bg-neutral-50 dark:bg-neutral-800 flex items-center justify-between">
+                    <div className="mt-2 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-neutral-50 dark:bg-neutral-800 flex items-center justify-between">
 
                         {/* Left Info */}
                         <div className="space-y-1">
