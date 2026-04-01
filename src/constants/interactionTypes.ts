@@ -22,7 +22,7 @@ export const INTERACTION_TYPE_META: Record<
     2010: {
         label: "Meeting Scheduled",
         icon: "calendar",
-        color: "bg-blue-600 text-white"
+        color: "border border-blue-600 bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
     },
     2020: {
         label: "Meeting Completed",
@@ -47,16 +47,16 @@ export const INTERACTION_TYPE_META: Record<
     2210: {
         label: "Call Made",
         icon: "phone",
-        color: "bg-purple-600 text-white"
+        color: "border border-purple-500 bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300"
     },
     2310: {
         label: "Document Uploaded",
         icon: "doc",
-        color: "bg-teal-600 text-white"
+        color: "border border-teal-500 bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300"
     },
     2410: {
         label: "Quotation Sent",
         icon: "briefcase",
-        color: "bg-orange-600 text-white"
+        color: "border border-orange-500 bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-200"
     }
 }
