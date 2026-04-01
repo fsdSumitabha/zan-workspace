@@ -13,6 +13,8 @@ import LeadDetailsSkeleton from "@/components/admin/operations/skeletons/LeadDet
 import LeadInteractionActions from "@/components/admin/operations/LeadInteractionActions"
 import InteractionModal from "@/components/admin/operations/InteractionModal/InteractionInlineForm"
 import InteractionTimeline from "@/components/admin/operations/interactions/InteractionTimeline"
+import { InteractionItemSkeleton } from "@/components/admin/operations/skeletons/InteractionItemSkeleton"
+import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/ActionTypeSkeleton"
 
 export default function Page() {
     const params = useParams()
@@ -54,21 +56,21 @@ export default function Page() {
         setActiveType(null)
     }
 
-        const fetchInteractions = async () => {
-            try {
-                const res = await fetch(
-                    `/api/admin/operations/leads/${leadId}/interactions`
-                )
-                const data = await res.json()
+    const fetchInteractions = async () => {
+        try {
+            const res = await fetch(
+                `/api/admin/operations/leads/${leadId}/interactions`
+            )
+            const data = await res.json()
 
-                setInteractions(data.interactions || [])
-            } catch (err) {
-                console.error("Failed to fetch interactions", err)
-            } finally {
-                setInteractionLoading(false)
-            }
+            setInteractions(data.interactions || [])
+        } catch (err) {
+            console.error("Failed to fetch interactions", err)
+        } finally {
+            setInteractionLoading(false)
         }
-        
+    }
+
     useEffect(() => {
         if (leadId) fetchInteractions()
     }, [leadId])
@@ -85,6 +87,14 @@ export default function Page() {
                     {loading && (
                         <div className="space-y-4">
                             <LeadDetailsSkeleton />
+                            <ActionTypeSkeleton />
+                            <div className="relative pl-6">
+                                <div className="space-y-4">
+                                    {Array.from({ length: 3 }).map((_, i) => (
+                                        <InteractionItemSkeleton key={i} />
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -99,11 +109,11 @@ export default function Page() {
                     {!loading && lead && (
                         <>
                             <LeadDetails lead={lead} />
-                            <LeadInteractionActions leadId={leadId} onAction={handleOpen} activeType={activeType}/>
+                            <LeadInteractionActions leadId={leadId} onAction={handleOpen} activeType={activeType} />
                         </>
                     )}
 
-                    <InteractionModal type={activeType} open={isOpen} onClose={handleClose} leadId={leadId} onSuccess={fetchInteractions}/>
+                    <InteractionModal type={activeType} open={isOpen} onClose={handleClose} leadId={leadId} onSuccess={fetchInteractions} />
 
                     {!loading && lead && (
                         <InteractionTimeline interactions={interactions} loading={interactionLoading} />

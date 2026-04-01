@@ -1,6 +1,7 @@
 import InteractionItem from "./InteractionItem"
 import { Interaction } from "@/types/interaction"
 import { AnimatedItem } from "./AnimatedItem"
+import { InteractionItemSkeleton } from "../skeletons/InteractionItemSkeleton"
 
 interface Props {
     interactions: Interaction[]

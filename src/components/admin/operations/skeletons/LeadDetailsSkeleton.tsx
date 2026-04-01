@@ -1,6 +1,6 @@
 export default function LeadDetailsSkeleton() {
     return (
-        <div className="p-5 rounded-xl border bg-white dark:bg-neutral-900 space-y-4 animate-pulse">
+        <div className="p-5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-neutral-900 space-y-4 animate-pulse">
 
             {/* Header */}
             <div className="flex items-center justify-between">
