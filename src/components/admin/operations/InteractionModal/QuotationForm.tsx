@@ -53,7 +53,7 @@ export default function QuotationForm({
 
         setLoading(true)
 
-        const promise = fetch("/api/admin/operations/quotation", {
+        const promise = fetch("/api/admin/operations/quotations", {
             method: "POST",
             body: formData
         }).then(async (res) => {
