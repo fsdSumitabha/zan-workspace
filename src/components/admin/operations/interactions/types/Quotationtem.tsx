@@ -58,12 +58,12 @@ export default function QuotationItem({ item }: { item: any }) {
                         {/* Left Info */}
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                                ₹{quotation.amount.toLocaleString()}
+                                ₹{quotation.amount.toLocaleString()} <small className="text-xs text-gray-500" > + {quotation.gst_percentage}% GST </small>
                             </p>
 
                             {quotation.gst_percentage && (
                                 <p className="text-xs text-gray-500">
-                                    GST: {quotation.gst_percentage}%
+                                    Amount Inclusive GST : ₹{(quotation.amount * (1 + quotation.gst_percentage / 100)).toLocaleString()}
                                 </p>
                             )}
                         </div>

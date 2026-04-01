@@ -21,7 +21,8 @@ export default function QuotationForm({
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
     const [amount, setAmount] = useState("")
-    const [status, setStatus] = useState(120) // PROPOSAL_SENT
+    const [gst_percentage, setGstPercentage] = useState("")
+    const [status, setStatus] = useState(2410) // PROPOSAL_SENT
     const [file, setFile] = useState<File | null>(null)
     const [loading, setLoading] = useState(false)
 
@@ -45,6 +46,7 @@ export default function QuotationForm({
         formData.append("title", title)
         formData.append("description", description)
         formData.append("amount", amount)
+        formData.append("gst_percentage", gst_percentage)
         formData.append("status", String(status))
 
         if (file) {
@@ -108,6 +110,14 @@ export default function QuotationForm({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="Amount (₹)"
+                className="w-full px-3 py-2 rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800"
+            />
+
+            <input
+                type="number"
+                value={gst_percentage}
+                onChange={(e) => setGstPercentage(e.target.value)}
+                placeholder="GST % (Default: 18%)"
                 className="w-full px-3 py-2 rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800"
             />
 

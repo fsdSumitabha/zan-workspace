@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
         const title = formData.get("title") as string
         const description = formData.get("description") as string
         const amount = Number(formData.get("amount"))
+        const gst_percentage = Number(formData.get("gst_percentage"))
         const status = Number(formData.get("status"))
 
         const file = formData.get("file") as File | null
@@ -46,6 +47,7 @@ export async function POST(req: NextRequest) {
             entityId,
             title,
             amount,
+            gst_percentage,
             url: fileUrl,
             status
         })
