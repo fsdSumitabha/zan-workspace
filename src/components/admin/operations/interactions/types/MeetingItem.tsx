@@ -57,9 +57,9 @@ export default function MeetingItem({ item }: { item: any }) {
                 )}
 
                 {/* Description */}
-                {item.description && (
+                {meeting.description && (
                     <p className="text-sm text-gray-500">
-                        {item.description}
+                        {meeting.description}
                     </p>
                 )}
 
