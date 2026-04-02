@@ -1,7 +1,8 @@
 import StatusBadge from "@/components/admin/operations/StatusBadge"
-import { LEAD_STATUS_META } from "@/constants/leadStatus"
+import { LEAD_STATUS, LEAD_STATUS_META } from "@/constants/leadStatus"
 import type { Lead } from "@/types/lead"
 import LeadStatusDropdown from "./statusDropdowns/LeadStatusDropdown"
+import ConvertButton from "./ConvertClientButton"
 
 interface Props {
     lead: Lead
@@ -50,7 +51,7 @@ export default function LeadDetails({ lead }: Props) {
     }
 
     return (
-        <div className="p-5 rounded-xl border bg-white dark:bg-neutral-900 space-y-4 dark:border-neutral-700">
+        <div className="relative p-5 rounded-xl border bg-white dark:bg-neutral-900 space-y-4 dark:border-neutral-700">
 
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -60,6 +61,10 @@ export default function LeadDetails({ lead }: Props) {
                 </div>
 
                 <LeadStatusDropdown currentStatus={lead.status} onChange={handleStatusChange} />
+            </div>
+
+            <div className="absolute top-1/2 right-4 -translate-y-1/2">
+                {lead.status === LEAD_STATUS.NEGOTIATION && <ConvertButton id={leadId} />}
             </div>
 
             {/* Contact Info */}
