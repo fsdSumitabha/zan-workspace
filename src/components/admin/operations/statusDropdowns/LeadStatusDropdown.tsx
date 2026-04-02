@@ -15,6 +15,8 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
     const [loading, setLoading] = useState(false)
     const [pendingStatus, setPendingStatus] = useState<LeadStatus | null>(null)
 
+    const isTerminal = currentStatus >= LEAD_STATUS.CONVERTED
+
     //  Async lifecycle lives here — not inside the toast
     useEffect(() => {
         if (pendingStatus === null) return
@@ -74,7 +76,7 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
     return (
         <div className="relative inline-block">
             <button
-                onClick={() => !loading && setOpen((prev) => !prev)}
+                onClick={() => !loading && !isTerminal && setOpen((prev) => !prev)}
                 disabled={loading}
                 className={clsx(
                     "px-3 py-1.5 rounded-md text-sm font-medium transition",
