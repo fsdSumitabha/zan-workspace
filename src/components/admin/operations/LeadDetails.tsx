@@ -23,16 +23,29 @@ export default function LeadDetails({ lead }: Props) {
                 }
             )
 
-            const data = await res.json()
+            let data: any = null
 
-            if (!res.ok || !data.success) {
-                throw new Error(data.message || "Failed to update status")
+            try {
+                data = await res.json()
+            } catch {
+                // response not JSON
             }
 
+            if (!res.ok || !data?.success) {
+                throw new Error(
+                    data?.message || "Failed to update status"
+                )
+            }
 
+            return data
 
-        } catch (err) {
-            console.error("Status update failed:", err)
+        } catch (err: any) {
+            console.log("Status update failed:", err)
+
+            // IMPORTANT: rethrow so UI can handle it
+            throw new Error(
+                err?.message || "Something went wrong"
+            )
         }
     }
 

@@ -33,8 +33,10 @@ export async function PATCH(
             )
         }
 
+        // Prepare valid statuses (sorted for progression logic)
+        const validStatuses = Object.values(LEAD_STATUS).sort((a, b) => a - b)
+
         // Validate status value
-        const validStatuses = Object.values(LEAD_STATUS)
         if (!validStatuses.includes(status)) {
             return NextResponse.json(
                 { success: false, message: "Invalid status value" },
@@ -52,7 +54,7 @@ export async function PATCH(
             )
         }
 
-        // Optional: Prevent updating if already converted/lost
+        // Prevent updating if already closed
         if (
             lead.status === LEAD_STATUS.CONVERTED ||
             lead.status === LEAD_STATUS.LOST
@@ -65,6 +67,40 @@ export async function PATCH(
                 { status: 409 }
             )
         }
+
+        const currentStatus = lead.status
+
+        // === STATUS PROGRESSION LOGIC START ===
+
+        // Allow LOST anytime
+        if (status !== LEAD_STATUS.LOST) {
+            const currentIndex = validStatuses.indexOf(currentStatus)
+            const nextAllowedStatus = validStatuses[currentIndex + 1]
+
+            // Prevent downgrade
+            if (status < currentStatus) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        message: "Cannot downgrade lead status"
+                    },
+                    { status: 400 }
+                )
+            }
+
+            // Prevent skipping stages
+            if (status !== nextAllowedStatus) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        message: "You can only move to the next stage"
+                    },
+                    { status: 400 }
+                )
+            }
+        }
+
+        // === STATUS PROGRESSION LOGIC END ===
 
         const oldStatus = lead.status
 
