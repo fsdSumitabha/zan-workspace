@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { LEAD_STATUS_META, type LeadStatus } from "@/constants/leadStatus"
+import { LEAD_STATUS, LEAD_STATUS_META, type LeadStatus } from "@/constants/leadStatus"
 import clsx from "clsx"
 import { toast } from "sonner"
 
@@ -87,7 +87,9 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
 
             {open && !loading && (
                 <div className="absolute mt-2 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg z-50 overflow-hidden">
-                    {Object.entries(LEAD_STATUS_META).map(([key, meta]) => {
+                    {Object.entries(LEAD_STATUS_META)
+                    .filter(([key]) => Number(key) !== LEAD_STATUS.CONVERTED)
+                    .map(([key, meta]) => {
                         const status = Number(key) as LeadStatus
                         const isActive = status === currentStatus
 
@@ -96,15 +98,19 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
                                 key={status}
                                 onClick={() => handleSelect(status)}
                                 className={clsx(
-                                    "w-full text-left px-3 py-2 text-sm flex items-center justify-between transition",
+                                    "w-full text-left px-3 py-2 transition",
                                     "hover:bg-neutral-100 dark:hover:bg-neutral-800",
-                                    isActive && "opacity-50 cursor-default"
+                                    isActive && "bg-neutral-100 dark:bg-neutral-800"
                                 )}
                             >
-                                <span>{meta.label}</span>
-                                {isActive && (
-                                    <span className="text-xs text-neutral-500">Current</span>
-                                )}
+                                <div className="flex flex-col">
+                                    <span className="text-sm">{meta.label}</span>
+                                    {isActive && (
+                                        <span className="text-[11px] text-neutral-500 mt-0.5">
+                                            Current
+                                        </span>
+                                    )}
+                                </div>
                             </button>
                         )
                     })}
