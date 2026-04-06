@@ -15,6 +15,7 @@ import InteractionModal from "@/components/admin/operations/InteractionModal/Int
 import InteractionTimeline from "@/components/admin/operations/interactions/InteractionTimeline"
 import { InteractionItemSkeleton } from "@/components/admin/operations/skeletons/InteractionItemSkeleton"
 import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/ActionTypeSkeleton"
+import { StatusProvider } from "@/contexts/StatusContext"
 
 export default function Page() {
     const params = useParams()
@@ -76,6 +77,7 @@ export default function Page() {
     }, [leadId])
 
     return (
+        <StatusProvider>
         <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
             <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
 
@@ -126,5 +128,6 @@ export default function Page() {
             </div>
 
         </div>
+        </StatusProvider>
     )
 }
