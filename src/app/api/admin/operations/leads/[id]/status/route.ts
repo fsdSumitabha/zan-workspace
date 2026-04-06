@@ -3,7 +3,10 @@ import mongoose from "mongoose"
 
 import dbConnect from "@/lib/db/dbConnect"
 import Lead from "@/models/Lead"
-import { LEAD_STATUS, LeadStatus } from "@/constants/leadStatus"
+import Interaction from "@/models/Interaction"
+import { LEAD_STATUS, LEAD_STATUS_META, LeadStatus } from "@/constants/leadStatus"
+
+const INTERACTION_TYPE_STATUS_CHANGE = 900
 
 export async function PATCH(
     req: NextRequest,
@@ -14,7 +17,6 @@ export async function PATCH(
 
         const { id } = await context.params
 
-        // Validate MongoDB ObjectId
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json(
                 { success: false, message: "Invalid lead ID" },
@@ -23,7 +25,10 @@ export async function PATCH(
         }
 
         const body = await req.json()
-        const { status } = body as { status?: LeadStatus }
+        const { status, remarks } = body as {
+            status?: LeadStatus
+            remarks?: string
+        }
 
         // Validate status presence
         if (!status) {
@@ -33,7 +38,13 @@ export async function PATCH(
             )
         }
 
-        // Prepare valid statuses (sorted for progression logic)
+        if (!remarks || !remarks.trim()) {
+            return NextResponse.json(
+                { success: false, message: "Remarks are required" },
+                { status: 400 }
+            )
+        }
+
         const validStatuses = Object.values(LEAD_STATUS).sort((a, b) => a - b)
 
         // Validate status value
@@ -70,43 +81,49 @@ export async function PATCH(
 
         const currentStatus = lead.status
 
-        // === STATUS PROGRESSION LOGIC START ===
-
-        // Allow LOST anytime
+        // === STATUS PROGRESSION LOGIC ===
         if (status !== LEAD_STATUS.LOST) {
             const currentIndex = validStatuses.indexOf(currentStatus)
             const nextAllowedStatus = validStatuses[currentIndex + 1]
 
-            // Prevent downgrade
             if (status < currentStatus) {
                 return NextResponse.json(
-                    {
-                        success: false,
-                        message: "Cannot downgrade lead status"
-                    },
+                    { success: false, message: "Cannot downgrade lead status" },
                     { status: 400 }
                 )
             }
 
-            // Prevent skipping stages
             if (status !== nextAllowedStatus) {
                 return NextResponse.json(
-                    {
-                        success: false,
-                        message: "You can only move to the next stage"
-                    },
+                    { success: false, message: "You can only move to the next stage" },
                     { status: 400 }
                 )
             }
         }
-
-        // === STATUS PROGRESSION LOGIC END ===
+        // === END ===
 
         const oldStatus = lead.status
 
-        // Update status
+        // 1. Update lead
         lead.status = status
         await lead.save()
+
+        // 2. Create interaction (THIS IS THE NEW PART)
+        await Interaction.create({
+            entityType: 0,
+            entityId: lead._id,
+            type: INTERACTION_TYPE_STATUS_CHANGE,
+
+            title: JSON.stringify({
+                action: "STATUS_CHANGE",
+                from: oldStatus,
+                to: status
+            }),
+
+            description: remarks,
+
+            createdBy: null
+        })
 
         return NextResponse.json(
             {
