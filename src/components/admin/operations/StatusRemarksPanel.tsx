@@ -30,13 +30,11 @@ export default function StatusRemarksPanel({ onConfirm }: Props) {
         }
 
         toast.custom((t) => (
-            <div className="flex flex-col gap-3 p-3 rounded-lg border bg-white dark:bg-neutral-900 w-full">
+            <div className="flex flex-col gap-3 p-3 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 transition min-w-sm w-full">
                 <div>
-                    <div className="text-sm font-medium">
-                        Confirm status change
-                    </div>
+                    <div className="text-sm font-medium">Confirm status change</div>
 
-                    <div className="text-xs text-neutral-500">
+                    <div className="text-xs text-neutral-500 dark:text-neutral-400">
                         Move to "{LEAD_STATUS_META[nextStatus].label}"
                     </div>
 
@@ -48,7 +46,7 @@ export default function StatusRemarksPanel({ onConfirm }: Props) {
                 <div className="flex justify-end gap-2">
                     <button
                         onClick={() => toast.dismiss(t)}
-                        className="text-xs px-2 py-1 border rounded"
+                        className="text-xs px-2 py-1 border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition rounded"
                     >
                         Edit
                     </button>
@@ -67,7 +65,7 @@ export default function StatusRemarksPanel({ onConfirm }: Props) {
                                 setLoading(false)
                             }
                         }}
-                        className="text-xs px-2 py-1 bg-blue-600 text-white rounded"
+                        className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                     >
                         Confirm
                     </button>
@@ -77,7 +75,7 @@ export default function StatusRemarksPanel({ onConfirm }: Props) {
     }
 
     return (
-        <div className="p-4 rounded-xl border bg-white dark:bg-neutral-900 space-y-3">
+        <div className="p-4 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 transition w-full">
             <div className="text-sm font-medium">
                 Change to "{LEAD_STATUS_META[nextStatus].label}"
             </div>
@@ -86,16 +84,16 @@ export default function StatusRemarksPanel({ onConfirm }: Props) {
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 placeholder="Add remarks (required)"
-                className="w-full p-2 text-sm border rounded-md bg-transparent"
+                className="w-full p-2 text-sm border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition rounded"
             />
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 mt-2">
                 <button
                     onClick={() => {
                         reset()
                         setShowRemarks(false)
                     }}
-                    className="text-xs px-3 py-1 border rounded"
+                    className="text-xs px-3 py-1 border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition rounded"
                 >
                     Cancel
                 </button>
@@ -103,7 +101,7 @@ export default function StatusRemarksPanel({ onConfirm }: Props) {
                 <button
                     onClick={handleContinue}
                     disabled={loading}
-                    className="text-xs px-3 py-1 bg-blue-600 text-white rounded"
+                    className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                 >
                     Continue
                 </button>
