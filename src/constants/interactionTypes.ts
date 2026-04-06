@@ -10,7 +10,8 @@ export const INTERACTION_TYPE = {
 
     DOCUMENT_UPLOADED: 2310,
 
-    QUOTATION_SENT: 2410
+    QUOTATION_SENT: 2410,
+    STATUS_CHANGED: 2510
 } as const
 
 export type InteractionType = (typeof INTERACTION_TYPE)[keyof typeof INTERACTION_TYPE]
@@ -58,5 +59,10 @@ export const INTERACTION_TYPE_META: Record<
         label: "Quotation Sent",
         icon: "briefcase",
         color: "border border-orange-500 bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-200"
+    },
+    2510: {
+        label: "Status Changed",
+        icon: "exchange-alt",
+        color: "border border-gray-500 bg-gray-100 text-gray-800 dark:bg-gray-900/40 dark:text-gray-300"
     }
 }
