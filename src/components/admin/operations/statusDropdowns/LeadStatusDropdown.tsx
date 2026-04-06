@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { LEAD_STATUS, LEAD_STATUS_META, type LeadStatus } from "@/constants/leadStatus"
 import clsx from "clsx"
 import { toast } from "sonner"
+import { useStatus } from "@/contexts/StatusContext"
 
 type Props = {
     currentStatus: LeadStatus
@@ -37,40 +38,15 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
         run()
     }, [pendingStatus])
 
+    const { setNextStatus, setShowRemarks } = useStatus()
+
     const handleSelect = (status: LeadStatus) => {
         if (status === currentStatus || loading) return
+
         setOpen(false)
 
-        // Toast is purely presentational — no async inside
-        toast.custom((t) => (
-            <div className="flex items-center p-2 rounded-lg border border-neutral-200 dark:border-neutral-600 justify-between gap-4 w-full backdrop-blur-lg bg-white/30 dark:bg-neutral-800/50">
-                <div className="flex flex-col">
-                    <span className="text-sm font-medium">Change status</span>
-                    <span className="text-xs text-neutral-400">
-                        Move to "{LEAD_STATUS_META[status].label}"
-                    </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => toast.dismiss(t)}
-                        className="text-xs px-2 py-1 rounded-md border border-neutral-700 hover:bg-neutral-800"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        onClick={() => {
-                            toast.dismiss(t)         // 1. close toast
-                            setPendingStatus(status) // 2. trigger useEffect
-                        }}
-                        className="text-xs px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                        Confirm
-                    </button>
-                </div>
-            </div>
-        ))
+        setNextStatus(status)
+        setShowRemarks(true)
     }
 
     return (

@@ -16,6 +16,7 @@ import InteractionTimeline from "@/components/admin/operations/interactions/Inte
 import { InteractionItemSkeleton } from "@/components/admin/operations/skeletons/InteractionItemSkeleton"
 import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/ActionTypeSkeleton"
 import { StatusProvider } from "@/contexts/StatusContext"
+import StatusRemarksPanel from "@/components/admin/operations/StatusRemarksPanel"
 
 export default function Page() {
     const params = useParams()
@@ -76,58 +77,86 @@ export default function Page() {
         if (leadId) fetchInteractions()
     }, [leadId])
 
+    const handleStatusChange = async (status: number, remarks: string) => {
+        const res = await fetch(
+            `/api/admin/operations/leads/${leadId}/status`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ status, remarks })
+            }
+        )
+
+        const data = await res.json()
+
+        if (!res.ok || !data?.success) {
+            throw new Error(data?.message || "Failed to update status")
+        }
+
+        // refresh lead + timeline
+        setLoading(true)
+        await Promise.all([fetchInteractions()])
+        setLoading(false)
+
+        return data
+    }
+
     return (
         <StatusProvider>
-        <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
-            <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
+            <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
+                <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
 
-                <div className="lg:col-span-2 space-y-4">
+                    <div className="lg:col-span-2 space-y-4">
 
-                    <SearchBar />
+                        <SearchBar />
 
-                    {/* Loading */}
-                    {loading && (
-                        <div className="space-y-4">
-                            <LeadDetailsSkeleton />
-                            <ActionTypeSkeleton />
-                            <div className="relative pl-6">
-                                <div className="space-y-4">
-                                    {Array.from({ length: 3 }).map((_, i) => (
-                                        <InteractionItemSkeleton key={i} />
-                                    ))}
+                        {/* Loading */}
+                        {loading && (
+                            <div className="space-y-4">
+                                <LeadDetailsSkeleton />
+                                <ActionTypeSkeleton />
+                                <div className="relative pl-6">
+                                    <div className="space-y-4">
+                                        {Array.from({ length: 3 }).map((_, i) => (
+                                            <InteractionItemSkeleton key={i} />
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {/* Empty */}
-                    {!loading && lead === null && (
-                        <div className="text-center py-10 text-gray-500">
-                            Lead not found
-                        </div>
-                    )}
+                        {/* Empty */}
+                        {!loading && lead === null && (
+                            <div className="text-center py-10 text-gray-500">
+                                Lead not found
+                            </div>
+                        )}
 
-                    {/* List */}
-                    {!loading && lead && (
-                        <>
-                            <LeadDetails lead={lead} />
-                            <LeadInteractionActions leadId={leadId} onAction={handleOpen} activeType={activeType} />
-                        </>
-                    )}
+                        {/* List */}
+                        {!loading && lead && (
+                            <>
+                                <LeadDetails lead={lead} />
+                                <LeadInteractionActions leadId={leadId} onAction={handleOpen} activeType={activeType} />
+                            </>
+                        )}
 
-                    <InteractionModal type={activeType} open={isOpen} onClose={handleClose} leadId={leadId} onSuccess={fetchInteractions} />
+                        <StatusRemarksPanel onConfirm={handleStatusChange} />
 
-                    {!loading && lead && (
-                        <InteractionTimeline interactions={interactions} loading={interactionLoading} />
-                    )}
+                        <InteractionModal type={activeType} open={isOpen} onClose={handleClose} leadId={leadId} onSuccess={fetchInteractions} />
+
+                        {!loading && lead && (
+                            <InteractionTimeline interactions={interactions} loading={interactionLoading} />
+                        )}
+
+                    </div>
+
+                    <StatsPanel />
 
                 </div>
 
-                <StatsPanel />
-
             </div>
-
-        </div>
         </StatusProvider>
     )
 }
