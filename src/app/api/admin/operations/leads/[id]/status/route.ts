@@ -5,8 +5,7 @@ import dbConnect from "@/lib/db/dbConnect"
 import Lead from "@/models/Lead"
 import Interaction from "@/models/Interaction"
 import { LEAD_STATUS, LEAD_STATUS_META, LeadStatus } from "@/constants/leadStatus"
-
-const INTERACTION_TYPE_STATUS_CHANGE = 900
+import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 
 export async function PATCH(
     req: NextRequest,
@@ -112,7 +111,7 @@ export async function PATCH(
         await Interaction.create({
             entityType: 0,
             entityId: lead._id,
-            type: INTERACTION_TYPE_STATUS_CHANGE,
+            type: INTERACTION_TYPE.STATUS_CHANGED,
 
             title: JSON.stringify({
                 action: "STATUS_CHANGE",
