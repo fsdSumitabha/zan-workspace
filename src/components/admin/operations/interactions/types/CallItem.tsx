@@ -92,9 +92,6 @@ export default function CallItem({ item }: { item: any }) {
                                     <DirectionIcon className="w-3 h-3" />
                                     {direction.label}
                                 </span>
-                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${callStatus.color}`}>
-                                    {callStatus.label}
-                                </span>
                             </div>
                         </div>
 
