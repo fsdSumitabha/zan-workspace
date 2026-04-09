@@ -30,12 +30,12 @@ export default function StatusChangeItem({ item }: { item: any }) {
             : null
 
     return (
-        <div className="flex gap-3 p-4 rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition">
+        <div className="flex group gap-3 p-4 rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition">
 
             {/* Icon */}
             <div className="mt-1">
-                <div className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800">
-                    <Icons.ArrowRightLeft className="w-4 h-4 text-neutral-600 dark:text-neutral-300" />
+                <div className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30">
+                    <Icons.ArrowRightLeft className="w-4 h-4 text-neutral-600 dark:text-neutral-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
                 </div>
             </div>
 

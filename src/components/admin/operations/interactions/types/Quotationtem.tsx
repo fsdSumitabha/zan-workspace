@@ -10,12 +10,12 @@ export default function QuotationItem({ item }: { item: any }) {
     const quotation = item.quotation
 
     return (
-        <div className="flex gap-3 p-4 rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition">
+        <div className="flex group gap-3 p-4 rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition">
 
             {/* Left Icon */}
             <div className="mt-1">
-                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                    <Icons.FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-200 dark:group-hover:bg-blue-800/30">
+                    <Icons.FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300" />
                 </div>
             </div>
 
