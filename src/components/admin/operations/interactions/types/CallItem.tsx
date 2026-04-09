@@ -7,13 +7,6 @@ import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { INTERACTION_TYPE_META } from "@/constants/interactionTypes"
 import { CALL_DIRECTION_META, CALL_STATUS_META } from "@/constants/callStatus"
 
-function formatDuration(seconds: number): string {
-    if (!seconds) return "0s"
-    const m = Math.floor(seconds / 60)
-    const s = seconds % 60
-    if (m === 0) return `${s}s`
-    return s === 0 ? `${m}m` : `${m}m ${s}s`
-}
 
 export default function CallItem({ item }: { item: any }) {
 
@@ -109,7 +102,7 @@ export default function CallItem({ item }: { item: any }) {
                             {!!call.duration && (
                                 <span className="flex items-center gap-1">
                                     <Icons.Timer className="w-3 h-3 shrink-0" />
-                                    {formatDuration(call.duration)}
+                                    {call.duration} minutes
                                 </span>
                             )}
                         </div>

@@ -67,13 +67,13 @@ export default function StatusChangeItem({ item }: { item: any }) {
                 {fromMeta && toMeta && (
                     <div className="flex items-center gap-2 text-sm">
 
-                        <span className={`px-2 py-0.5 rounded ${fromMeta.color}`}>
+                        <span className={`px-2 py-0.5 ${fromMeta.decoration}`}>
                             {fromMeta.label}
                         </span>
 
                         <Icons.ArrowRight className="w-4 h-4 text-gray-400" />
 
-                        <span className={`px-2 py-0.5 rounded ${toMeta.color}`}>
+                        <span className={`px-2 py-0.5 ${toMeta.decoration}`}>
                             {toMeta.label}
                         </span>
                     </div>
