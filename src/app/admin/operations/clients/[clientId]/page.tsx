@@ -13,6 +13,11 @@ import ClientDetailsSkeleton from "@/components/admin/operations/skeletons/Clien
 import type { Client } from "@/types/clients"
 import ClientProjectPreviewCard from "@/components/admin/operations/ClientProjectPreviewCard"
 
+import type { Interaction } from "@/types/interaction"
+import LeadInteractionActions from "@/components/admin/operations/LeadInteractionActions"
+import InteractionModal from "@/components/admin/operations/InteractionModal/InteractionInlineForm"
+import InteractionTimeline from "@/components/admin/operations/interactions/InteractionTimeline"
+
 export default function Page() {
     const params = useParams()
     const clientId = params.clientId as string
@@ -20,6 +25,12 @@ export default function Page() {
     const [client, setClient] = useState<Client | null>(null)
     const [projects, setProjects] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+
+    const [interactions, setInteractions] = useState<Interaction[]>([])
+    const [interactionLoading, setInteractionLoading] = useState(true)
+
+    const [activeType, setActiveType] = useState<number | null>(null)
+    const [isOpen, setIsOpen] = useState(false)
 
     useEffect(() => {
         const fetchClient = async () => {
@@ -37,6 +48,35 @@ export default function Page() {
         }
 
         if (clientId) fetchClient()
+    }, [clientId])
+
+    const handleOpen = (type: number) => {
+        setActiveType(type)
+        setIsOpen(true)
+    }
+
+    const handleClose = () => {
+        setIsOpen(false)
+        setActiveType(null)
+    }
+
+    const fetchInteractions = async () => {
+        try {
+            const res = await fetch(
+                `/api/admin/operations/clients/${clientId}/interactions`
+            )
+            const data = await res.json()
+
+            setInteractions(data.interactions || [])
+        } catch (err) {
+            console.error("Failed to fetch interactions", err)
+        } finally {
+            setInteractionLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        if (clientId) fetchInteractions()
     }, [clientId])
 
     return (
@@ -66,34 +106,23 @@ export default function Page() {
                         <>
                             <ClientDetails client={client} />
 
+                            <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={1} entityId={clientId} onSuccess={fetchInteractions} />
                             {/* ================= PROJECTS ================= */}
                             <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-4">
 
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-lg font-semibold">
-                                        Projects
-                                    </h3>
+                                    <h3 className="text-lg font-semibold"> Projects </h3>
 
-                                    <Link
-                                        href={`/admin/operations/clients/${client._id}/projects`}
-                                        className="text-sm text-blue-500 hover:underline"
-                                    >
-                                        View All
-                                    </Link>
+                                    <Link href={`/admin/operations/clients/${client._id}/projects`} className="text-sm text-blue-500 hover:underline" > View All </Link>
                                 </div>
 
                                 {projects?.length === 0 && (
-                                    <p className="text-sm text-gray-500">
-                                        No projects yet
-                                    </p>
+                                    <p className="text-sm text-gray-500"> No projects yet </p>
                                 )}
 
                                 <div className="space-y-3">
                                     {projects?.slice(0, 3).map((project) => (
-                                        <ClientProjectPreviewCard
-                                            key={project._id}
-                                            project={project}
-                                        />
+                                        <ClientProjectPreviewCard key={project._id} project={project} />
                                     ))}
                                 </div>
                             </div>
