@@ -5,11 +5,12 @@ import { toast } from "sonner"
 
 interface Props {
     entityId: string
+    entityType?: number
     onClose: () => void
     onSuccess?: () => void
 }
 
-export default function MeetingForm({ entityId, onClose, onSuccess }: Props) {
+export default function MeetingForm({ entityType, entityId, onClose, onSuccess }: Props) {
     const [title, setTitle] = useState("")
     const [agenda, setAgenda] = useState("")
     const [description, setDescription] = useState("")
@@ -29,7 +30,7 @@ export default function MeetingForm({ entityId, onClose, onSuccess }: Props) {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                entityType: 0, // LEAD
+                entityType,
                 entityId: entityId,
                 title,
                 agenda,

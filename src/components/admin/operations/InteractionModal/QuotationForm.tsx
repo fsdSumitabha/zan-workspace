@@ -5,15 +5,15 @@ import { toast } from "sonner"
 import FileUpload from "../dropzone/FileUpload"
 
 interface Props {
+    entityType: number
     entityId: string
-    entityType?: number
     onClose: () => void
     onSuccess?: () => void
 }
 
 export default function QuotationForm({
-    entityId,
     entityType = 0,
+    entityId,
     onClose,
     onSuccess
 }: Props) {

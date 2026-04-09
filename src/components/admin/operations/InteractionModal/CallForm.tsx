@@ -2,7 +2,14 @@
 
 import { useState } from "react"
 
-export default function CallForm({ entityId, onClose }: any) {
+interface Props {
+    entityType: number
+    entityId: string
+    onClose: () => void
+    onSuccess?: () => void
+}
+
+export default function CallForm({ entityType, entityId, onClose, onSuccess }: Props) {
     const [form, setForm] = useState({
         contactPersonName: "",
         contactPersonPhone: "",
@@ -25,7 +32,7 @@ export default function CallForm({ entityId, onClose }: any) {
         setLoading(true)
 
         const formData = new FormData()
-        formData.append("entityType", "0")
+        formData.append("entityType", String(entityType))
         formData.append("entityId", entityId)
         formData.append("contactPersonName", form.contactPersonName)
         formData.append("contactPersonPhone", form.contactPersonPhone)

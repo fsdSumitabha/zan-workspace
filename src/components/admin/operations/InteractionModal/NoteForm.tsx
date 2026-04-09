@@ -5,12 +5,13 @@ import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { toast } from "sonner";
 
 interface Props {
+    entityType: number
     entityId: string
     onClose: () => void
     onSuccess?: () => void
 }
 
-export default function NoteForm({ entityId, onClose, onSuccess }: Props) {
+export default function NoteForm({ entityType, entityId, onClose, onSuccess }: Props) {
     const [description, setDescription] = useState("")
     const [title, setTitle] = useState('')
     const [loading, setLoading] = useState(false)
@@ -29,7 +30,7 @@ export default function NoteForm({ entityId, onClose, onSuccess }: Props) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                entityType: 0,
+                entityType,
                 entityId: entityId,
                 type: INTERACTION_TYPE.NOTE_ADDED,
                 title,
