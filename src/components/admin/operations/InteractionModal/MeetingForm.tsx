@@ -4,12 +4,12 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 interface Props {
-    leadId: string
+    entityId: string
     onClose: () => void
     onSuccess?: () => void
 }
 
-export default function MeetingForm({ leadId, onClose, onSuccess }: Props) {
+export default function MeetingForm({ entityId, onClose, onSuccess }: Props) {
     const [title, setTitle] = useState("")
     const [agenda, setAgenda] = useState("")
     const [description, setDescription] = useState("")
@@ -30,7 +30,7 @@ export default function MeetingForm({ leadId, onClose, onSuccess }: Props) {
             },
             body: JSON.stringify({
                 entityType: 0, // LEAD
-                entityId: leadId,
+                entityId: entityId,
                 title,
                 agenda,
                 description,

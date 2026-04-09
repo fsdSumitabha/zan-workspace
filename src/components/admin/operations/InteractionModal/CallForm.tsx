@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 
-export default function CallForm({ leadId, onClose }: any) {
+export default function CallForm({ entityId, onClose }: any) {
     const [form, setForm] = useState({
         contactPersonName: "",
         contactPersonPhone: "",
@@ -26,7 +26,7 @@ export default function CallForm({ leadId, onClose }: any) {
 
         const formData = new FormData()
         formData.append("entityType", "0")
-        formData.append("entityId", leadId)
+        formData.append("entityId", entityId)
         formData.append("contactPersonName", form.contactPersonName)
         formData.append("contactPersonPhone", form.contactPersonPhone)
         formData.append("callTime", form.callTime)
