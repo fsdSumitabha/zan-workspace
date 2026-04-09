@@ -118,28 +118,34 @@ export default function Page() {
                             <ClientDetails client={client} />
                             <LeadInteractionActions leadId={clientId} onAction={handleOpen} activeType={activeType} />
                             <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={1} entityId={clientId} onSuccess={fetchInteractions} />
-                            {/* ================= PROJECTS ================= */}
-                            <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-4">
-
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-lg font-semibold"> Projects </h3>
-
-                                    <Link href={`/admin/operations/clients/${client._id}/projects`} className="text-sm text-blue-500 hover:underline" > View All </Link>
-                                </div>
-
-                                {projects?.length === 0 && (
-                                    <p className="text-sm text-gray-500"> No projects yet </p>
-                                )}
-
-                                <div className="space-y-3">
-                                    {projects?.slice(0, 3).map((project) => (
-                                        <ClientProjectPreviewCard key={project._id} project={project} />
-                                    ))}
-                                </div>
-                            </div>
                         </>
                     )}
 
+                    {!loading && client && (
+                        <InteractionTimeline interactions={interactions} loading={interactionLoading} />
+                    )}
+
+                    {!loading && client && (
+                        /* ================= PROJECTS ================= */
+                        <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-4">
+
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold"> Projects </h3>
+
+                                <Link href={`/admin/operations/clients/${client._id}/projects`} className="text-sm text-blue-500 hover:underline" > View All </Link>
+                            </div>
+
+                            {projects?.length === 0 && (
+                                <p className="text-sm text-gray-500"> No projects yet </p>
+                            )}
+
+                            <div className="space-y-3">
+                                {projects?.slice(0, 3).map((project) => (
+                                    <ClientProjectPreviewCard key={project._id} project={project} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <StatsPanel />
