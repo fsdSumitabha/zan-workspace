@@ -105,7 +105,7 @@ export default function Page() {
                     {!loading && client && (
                         <>
                             <ClientDetails client={client} />
-
+                            <LeadInteractionActions leadId={clientId} onAction={handleOpen} activeType={activeType} />
                             <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={1} entityId={clientId} onSuccess={fetchInteractions} />
                             {/* ================= PROJECTS ================= */}
                             <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-4">
