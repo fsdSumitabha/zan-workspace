@@ -10,7 +10,7 @@ export default function OperationsLayout({
     return (
         <div className="flex h-screen bg-neutral-950 text-white">
             {/* Sidebar */}
-            <Sidebar />
+
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
