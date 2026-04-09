@@ -9,7 +9,7 @@ import QuotationForm from "./QuotationForm"
 export default function InteractionInlineForm({
     type,
     entityType,
-    leadId,
+    entityId,
     onClose,
     onSuccess
 }: any) {
@@ -30,19 +30,19 @@ export default function InteractionInlineForm({
             </div>
 
             {type === INTERACTION_TYPE.CALL_MADE && (
-                <CallForm entityType={entityType} entityId={leadId} onClose={onClose} onSuccess={onSuccess} />
+                <CallForm entityType={entityType} entityId={entityId} onClose={onClose} onSuccess={onSuccess} />
             )}
 
             {type === INTERACTION_TYPE.MEETING_SCHEDULED && (
-                <MeetingForm entityType={entityType} entityId={leadId} onClose={onClose} onSuccess={onSuccess} />
+                <MeetingForm entityType={entityType} entityId={entityId} onClose={onClose} onSuccess={onSuccess} />
             )}
 
             {type === INTERACTION_TYPE.NOTE_ADDED && (
-                <NoteForm entityType={entityType} entityId={leadId} onClose={onClose} onSuccess={onSuccess} />
+                <NoteForm entityType={entityType} entityId={entityId} onClose={onClose} onSuccess={onSuccess} />
             )}
 
             {type === INTERACTION_TYPE.QUOTATION_SENT && (
-                <QuotationForm entityType={entityType} entityId={leadId} onClose={onClose} onSuccess={onSuccess} />
+                <QuotationForm entityType={entityType} entityId={entityId} onClose={onClose} onSuccess={onSuccess} />
             )}
 
         </div>

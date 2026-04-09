@@ -144,7 +144,7 @@ export default function Page() {
 
                         <StatusRemarksPanel onConfirm={handleStatusChange} />
 
-                        <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={0} leadId={leadId} onSuccess={fetchInteractions} />
+                        <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={0} entityId={leadId} onSuccess={fetchInteractions} />
 
                         {!loading && lead && (
                             <InteractionTimeline interactions={interactions} loading={interactionLoading} />
