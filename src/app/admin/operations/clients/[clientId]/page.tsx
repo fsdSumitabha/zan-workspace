@@ -17,6 +17,9 @@ import type { Interaction } from "@/types/interaction"
 import LeadInteractionActions from "@/components/admin/operations/LeadInteractionActions"
 import InteractionModal from "@/components/admin/operations/InteractionModal/InteractionInlineForm"
 import InteractionTimeline from "@/components/admin/operations/interactions/InteractionTimeline"
+import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/ActionTypeSkeleton"
+import { InteractionItemSkeleton } from "@/components/admin/operations/skeletons/InteractionItemSkeleton"
+
 
 export default function Page() {
     const params = useParams()
@@ -91,6 +94,14 @@ export default function Page() {
                     {loading && (
                         <div className="space-y-4">
                             <ClientDetailsSkeleton />
+                            <ActionTypeSkeleton />
+                            <div className="relative pl-6">
+                                <div className="space-y-4">
+                                    {Array.from({ length: 3 }).map((_, i) => (
+                                        <InteractionItemSkeleton key={i} />
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
 
