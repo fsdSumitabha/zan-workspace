@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
 
 interface Props {
     entityType: number
@@ -45,13 +46,32 @@ export default function CallForm({ entityType, entityId, onClose, onSuccess }: P
         formData.append("notes", form.notes)
         if (recording) formData.append("recording", recording)
 
-        await fetch("/api/admin/operations/calls", {
+        const promise = fetch("/api/admin/operations/calls", {
             method: "POST",
             body: formData,
+        }).then(async (res) => {
+            const data = await res.json()
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || "Failed to log call")
+            }
+            return data
         })
 
-        setLoading(false)
-        onClose()
+        toast.promise(promise, {
+            loading: "Saving call details...",
+            success: () => {
+                onSuccess?.()
+                onClose()
+                return "Call logged successfully"
+            },
+            error: (err) => err.message || "Something went wrong",
+        })
+
+        try {
+            await promise
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -123,7 +143,7 @@ export default function CallForm({ entityType, entityId, onClose, onSuccess }: P
                         <option value="1">Inbound</option>
                     </select>
                 </div>
-                
+
             </div>
 
             {/* Title */}
