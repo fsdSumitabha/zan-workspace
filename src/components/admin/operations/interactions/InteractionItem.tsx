@@ -3,6 +3,7 @@ import MeetingItem from "./types/MeetingItem"
 import NoteItem from "./types/NoteItem"
 import QuotationItem from "./types/Quotationtem"
 import StatusChangeItem from "./types/StatusChangeItem"
+import CallItem from "./types/CallItem"
 
 export default function InteractionItem({ item }: { item: any }) {
     switch (item.type) {
@@ -17,6 +18,8 @@ export default function InteractionItem({ item }: { item: any }) {
             return <QuotationItem item={item} />
         case INTERACTION_TYPE.STATUS_CHANGED:
             return <StatusChangeItem item={item} />
+        case INTERACTION_TYPE.CALL_MADE:
+            return <CallItem item={item} />
 
         default:
             return null

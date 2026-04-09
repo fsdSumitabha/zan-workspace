@@ -4,6 +4,7 @@ import Interaction from "@/models/Interaction"
 import Meeting from "@/models/Meeting"
 import Document from "@/models/Document"
 import Quotation from "@/models/Quotation"
+import Call from "@/models/Call"
 
 export async function GET(
     req: NextRequest,
@@ -18,6 +19,7 @@ export async function GET(
         const MEETING_TYPES = [2010, 2020, 2030, 2040]
         const DOCUMENT_TYPES = [2310]
         const QUOTATION_TYPES = [2410]
+        const CALL_TYPES = [2210]
 
         // 1. Fetch interactions
         const interactions = await Interaction.find({
@@ -31,6 +33,7 @@ export async function GET(
         const meetingIds: string[] = []
         const documentIds: string[] = []
         const quotationIds: string[] = []
+        const callIds: string[] = []
 
         for (const i of interactions) {
             if (MEETING_TYPES.includes(i.type) && i.refId) {
@@ -44,32 +47,30 @@ export async function GET(
             if (QUOTATION_TYPES.includes(i.type) && i.refId) {
                 quotationIds.push(i.refId.toString())
             }
+            if (CALL_TYPES.includes(i.type) && i.refId) {
+                callIds.push(i.refId.toString())
+            }
         }
 
         // 3. Fetch related data
-        const [meetings, documents, quotations] = await Promise.all([
+        const [meetings, documents, quotations, calls] = await Promise.all([
             Meeting.find({ _id: { $in: meetingIds } }).lean(),
             Document.find({ _id: { $in: documentIds } }).lean(),
-            Quotation.find({ _id: { $in: quotationIds } }).lean()
+            Quotation.find({ _id: { $in: quotationIds } }).lean(),
+            Call.find({ _id: { $in: callIds } }).lean()
         ])
 
-        const meetingMap = new Map(
-            meetings.map(m => [m._id.toString(), m])
-        )
+        const meetingMap = new Map(meetings.map(m => [m._id.toString(), m]))
+        const documentMap = new Map(documents.map(d => [d._id.toString(), d]))
+        const quotationMap = new Map(quotations.map(q => [q._id.toString(), q]))
+        const callMap = new Map(calls.map(c => [c._id.toString(), c]))
 
-        const documentMap = new Map(
-            documents.map(d => [d._id.toString(), d])
-        )
-
-        const quotationMap = new Map(
-            quotations.map(q => [q._id.toString(), q])
-        )
-
-        // 4. Structure response (THIS IS THE KEY CHANGE)
+        // 4. Structure response
         const enriched = interactions.map(i => {
             let meeting = null
             let document = null
             let quotation = null
+            let call = null
 
             if (MEETING_TYPES.includes(i.type) && i.refId) {
                 meeting = meetingMap.get(i.refId.toString()) || null
@@ -82,6 +83,9 @@ export async function GET(
             if (QUOTATION_TYPES.includes(i.type) && i.refId) {
                 quotation = quotationMap.get(i.refId.toString()) || null
             }
+            if (CALL_TYPES.includes(i.type) && i.refId) {
+                call = callMap.get(i.refId.toString()) || null
+            }
 
             return {
                 _id: i._id,
@@ -90,17 +94,14 @@ export async function GET(
                 description: i.description,
                 createdAt: i.createdAt,
 
-                // 🔥 structured nesting
                 meeting,
                 document,
-                quotation
+                quotation,
+                call
             }
         })
 
-        return NextResponse.json({
-            success: true,
-            interactions: enriched
-        })
+        return NextResponse.json({ success: true, interactions: enriched })
 
     } catch (error) {
         console.error(error)
