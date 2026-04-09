@@ -31,11 +31,6 @@ export default function ClientDetails({ client }: Props) {
                 </div>
             </div>
 
-            {/* Future Sections Placeholder */}
-            <div className="p-5 rounded-xl border bg-white dark:bg-neutral-900 text-sm text-gray-500">
-                Projects & interactions will appear here
-            </div>
-
         </div>
     )
 }

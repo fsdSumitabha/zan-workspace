@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 
@@ -10,12 +11,14 @@ import ClientDetails from "@/components/admin/operations/ClientDetails"
 import ClientDetailsSkeleton from "@/components/admin/operations/skeletons/ClientDetailsSkeleton"
 
 import type { Client } from "@/types/clients"
+import ClientProjectPreviewCard from "@/components/admin/operations/ClientProjectPreviewCard"
 
 export default function Page() {
     const params = useParams()
     const clientId = params.clientId as string
 
     const [client, setClient] = useState<Client | null>(null)
+    const [projects, setProjects] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -24,7 +27,8 @@ export default function Page() {
                 const res = await fetch(`/api/admin/operations/clients/${clientId}`)
                 const data = await res.json()
 
-                setClient(data.data)
+                setClient(data.data.client)
+                setProjects(data.data.projects || [])
             } catch (err) {
                 console.error("Failed to fetch client", err)
             } finally {
@@ -59,7 +63,41 @@ export default function Page() {
 
                     {/* Data */}
                     {!loading && client && (
-                        <ClientDetails client={client} />
+                        <>
+                            <ClientDetails client={client} />
+
+                            {/* ================= PROJECTS ================= */}
+                            <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-4">
+
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-semibold">
+                                        Projects
+                                    </h3>
+
+                                    <Link
+                                        href={`/admin/operations/clients/${client._id}/projects`}
+                                        className="text-sm text-blue-500 hover:underline"
+                                    >
+                                        View All
+                                    </Link>
+                                </div>
+
+                                {projects?.length === 0 && (
+                                    <p className="text-sm text-gray-500">
+                                        No projects yet
+                                    </p>
+                                )}
+
+                                <div className="space-y-3">
+                                    {projects?.slice(0, 3).map((project) => (
+                                        <ClientProjectPreviewCard
+                                            key={project._id}
+                                            project={project}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </>
                     )}
 
                 </div>
