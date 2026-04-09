@@ -22,11 +22,10 @@ export async function POST(req: NextRequest) {
         const duration = Number(formData.get("duration"))
 
         const direction = Number(formData.get("direction"))
-        const status = Number(formData.get("status"))
+        const status = 2210
 
         const notes = formData.get("notes") as string
         const title = formData.get("title") as string
-        const description = formData.get("description") as string
 
         const file = formData.get("recording") as File | null
 
@@ -69,7 +68,7 @@ export async function POST(req: NextRequest) {
             entityId,
             type: 2210, // CALL
             title: title || `Call with ${contactPersonName}`,
-            description,
+            notes,
             refId: call._id
         })
 
