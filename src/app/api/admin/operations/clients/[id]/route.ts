@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Client from "@/models/Client"
+import Project from "@/models/Project"
 
 export async function GET(
     req: NextRequest,
@@ -11,6 +12,7 @@ export async function GET(
 
         const { id } = await context.params
 
+        // Fetch client
         const client = await Client.findById(id)
 
         if (!client) {
@@ -20,13 +22,24 @@ export async function GET(
             )
         }
 
+        // Fetch projects linked to this client
+        const projects = await Project.find({ clientId: id })
+            .sort({ createdAt: -1 }) // optional: latest first
+
         return NextResponse.json({
             success: true,
-            data: client
+            data: {
+                client,
+                projects
+            }
         })
-    } catch {
+    } catch (error) {
         return NextResponse.json(
-            { success: false, message: "Invalid ID" },
+            {
+                success: false,
+                message: "Invalid ID",
+                error: (error as Error).message
+            },
             { status: 400 }
         )
     }
