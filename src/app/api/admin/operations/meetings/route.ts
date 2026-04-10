@@ -3,6 +3,7 @@ import dbConnect from "@/lib/db/dbConnect"
 import Meeting from "@/models/Meeting"
 import Interaction from "@/models/Interaction"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import Lead from "@/models/Lead"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
         const interaction = await Interaction.create({
             entityType,
             entityId,
-            type: 2010, // MEETING_SCHEDULED (use constant later)
+            type: INTERACTION_TYPE.MEETING_SCHEDULED,
             title: title,
             description: agenda,
             refId: meeting._id

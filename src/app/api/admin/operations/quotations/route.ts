@@ -4,6 +4,11 @@ import Quotation from "@/models/Quotation"
 import Interaction from "@/models/Interaction"
 import { mkdir, writeFile } from "fs/promises"
 import path from "path"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { INTERACTION_TYPE } from "@/constants/interactionTypes"
+import Lead from "@/models/Lead"
+import Client from "@/models/Client"
+import Project from "@/models/Project"
 
 export async function POST(req: NextRequest) {
     try {
@@ -13,6 +18,14 @@ export async function POST(req: NextRequest) {
 
         const entityType = Number(formData.get("entityType"))
         const entityId = formData.get("entityId") as string
+
+        if (!entityType || !entityId) {
+            return NextResponse.json(
+                { success: false, error: "entityType and entityId are required" },
+                { status: 400 }
+            )
+        }
+
         const title = formData.get("title") as string
         const description = formData.get("description") as string
         const amount = Number(formData.get("amount"))
@@ -53,16 +66,42 @@ export async function POST(req: NextRequest) {
         })
 
         // 3. Create interaction
-        await Interaction.create({
+        const interaction = await Interaction.create({
             entityType,
             entityId,
-            type: 2410,
+            type: INTERACTION_TYPE.QUOTATION_SENT,
             title,
             description,
             status,
             refId: quotation._id
         })
 
+        // 4. Prepare update payload
+        const updatePayload = {
+            lastInteractionAt: new Date(),
+            lastInteractionId: interaction._id
+        }
+
+        // 5. Update corresponding entity
+        switch (entityType) {
+            case ENTITY_TYPE.LEAD:
+                await Lead.findByIdAndUpdate(entityId, updatePayload)
+                break
+
+            case ENTITY_TYPE.CLIENT:
+                await Client.findByIdAndUpdate(entityId, updatePayload)
+                break
+
+            case ENTITY_TYPE.PROJECT:
+                await Project.findByIdAndUpdate(entityId, updatePayload)
+                break
+
+            default:
+                return NextResponse.json(
+                    { success: false, error: "Invalid entityType" },
+                    { status: 400 }
+                )
+        }
         return NextResponse.json(
             { success: true, data: quotation },
             { status: 201 }
