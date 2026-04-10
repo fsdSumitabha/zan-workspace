@@ -2,13 +2,17 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Meeting from "@/models/Meeting"
 import Interaction from "@/models/Interaction"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
+import Lead from "@/models/Lead"
+import Client from "@/models/Client"
+import Project from "@/models/Project"
 
 export async function POST(req: NextRequest) {
     try {
         await dbConnect()
 
         const body = await req.json()
- 
+
         const {
             entityType,
             entityId,
@@ -20,6 +24,13 @@ export async function POST(req: NextRequest) {
             scheduledAt,
             status
         } = body
+
+        if (!entityType || !entityId) {
+            return NextResponse.json(
+                { success: false, error: "entityType and entityId are required" },
+                { status: 400 }
+            )
+        }
 
         // 1. Create Meeting
         const meeting = await Meeting.create({
@@ -35,7 +46,7 @@ export async function POST(req: NextRequest) {
         })
 
         // 2. Create Interaction (timeline entry)
-        await Interaction.create({
+        const interaction = await Interaction.create({
             entityType,
             entityId,
             type: 2010, // MEETING_SCHEDULED (use constant later)
@@ -43,6 +54,33 @@ export async function POST(req: NextRequest) {
             description: agenda,
             refId: meeting._id
         })
+
+        // 2. Prepare update payload
+        const updatePayload = {
+            lastInteractionAt: new Date(),
+            lastInteractionId: interaction._id
+        }
+
+        // 3. Update corresponding entity
+        switch (entityType) {
+            case ENTITY_TYPE.LEAD:
+                await Lead.findByIdAndUpdate(entityId, updatePayload)
+                break
+
+            case ENTITY_TYPE.CLIENT:
+                await Client.findByIdAndUpdate(entityId, updatePayload)
+                break
+
+            case ENTITY_TYPE.PROJECT:
+                await Project.findByIdAndUpdate(entityId, updatePayload)
+                break
+
+            default:
+                return NextResponse.json(
+                    { success: false, error: "Invalid entityType" },
+                    { status: 400 }
+                )
+        }
 
         return NextResponse.json(
             { success: true, data: meeting },
