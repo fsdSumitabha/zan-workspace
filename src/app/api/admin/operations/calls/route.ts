@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Interaction from "@/models/Interaction"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import Call from "@/models/Call"
+import Lead from "@/models/Lead"
+import Client from "@/models/Client"
+import Project from "@/models/Project"
 
 import path from "path"
 import { writeFile, mkdir } from "fs/promises"
@@ -14,6 +19,13 @@ export async function POST(req: NextRequest) {
 
         const entityType = Number(formData.get("entityType"))
         const entityId = formData.get("entityId") as string
+
+        if (!entityType || !entityId) {
+            return NextResponse.json(
+                { success: false, error: "entityType and entityId are required" },
+                { status: 400 }
+            )
+        }
 
         const contactPersonName = formData.get("contactPersonName") as string
         const contactPersonPhone = formData.get("contactPersonPhone") as string
@@ -66,11 +78,38 @@ export async function POST(req: NextRequest) {
         const interaction = await Interaction.create({
             entityType,
             entityId,
-            type: 2210, // CALL
+            type: INTERACTION_TYPE.CALL_MADE,
             title: title || `Call with ${contactPersonName}`,
             notes,
             refId: call._id
         })
+
+        // 2. Prepare update payload
+        const updatePayload = {
+            lastInteractionAt: new Date(),
+            lastInteractionId: interaction._id
+        }
+
+        // 3. Update corresponding entity
+        switch (entityType) {
+            case ENTITY_TYPE.LEAD:
+                await Lead.findByIdAndUpdate(entityId, updatePayload)
+                break
+
+            case ENTITY_TYPE.CLIENT:
+                await Client.findByIdAndUpdate(entityId, updatePayload)
+                break
+
+            case ENTITY_TYPE.PROJECT:
+                await Project.findByIdAndUpdate(entityId, updatePayload)
+                break
+
+            default:
+                return NextResponse.json(
+                    { success: false, error: "Invalid entityType" },
+                    { status: 400 }
+                )
+        }
 
         return NextResponse.json(
             { success: true, data: { call, interaction } },
