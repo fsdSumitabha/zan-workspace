@@ -8,6 +8,9 @@ export interface IClient extends Document {
     phone: string
 
     status: number
+
+    lastInteractionAt?: Date
+    lastInteractionId?: mongoose.Types.ObjectId
 }
 
 const ClientSchema = new Schema<IClient>(
@@ -21,7 +24,13 @@ const ClientSchema = new Schema<IClient>(
             type: Number,
             default: CLIENT_STATUS.ACTIVE,
             required: true
+        },
+        lastInteractionAt: Date,
+        lastInteractionId: {
+            type: Schema.Types.ObjectId,
+            ref: "Interaction"
         }
+
     },
     { timestamps: true }
 )

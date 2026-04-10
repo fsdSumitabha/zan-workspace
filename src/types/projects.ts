@@ -19,4 +19,7 @@ export interface Project {
 
     createdAt: string
     updatedAt: string
+
+    lastInteractionAt?: string
+    lastInteractionId?: string
 }

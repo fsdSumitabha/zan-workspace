@@ -11,6 +11,9 @@ export interface IProject extends Document {
     status: number
 
     budget?: number
+
+    lastInteractionAt?: Date
+    lastInteractionId?: mongoose.Types.ObjectId
 }
 
 const ProjectSchema = new Schema<IProject>(
@@ -31,7 +34,13 @@ const ProjectSchema = new Schema<IProject>(
             required: true
         },
 
-        budget: Number
+        budget: Number,
+
+        lastInteractionAt: Date,
+        lastInteractionId: {
+            type: Schema.Types.ObjectId,
+            ref: "Interaction"
+        }
     },
     { timestamps: true }
 )

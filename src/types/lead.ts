@@ -14,4 +14,7 @@ export interface Lead {
 
     createdAt: string
     updatedAt: string
+
+    lastInteractionAt?: string
+    lastInteractionId?: string
 }

@@ -11,6 +11,9 @@ export interface ILead extends Document {
 
     assignedTo?: mongoose.Types.ObjectId
     convertedClientId?: mongoose.Types.ObjectId
+    
+    lastInteractionAt?: Date
+    lastInteractionId?: mongoose.Types.ObjectId
 }
 
 const LeadSchema = new Schema<ILead>(
@@ -34,6 +37,11 @@ const LeadSchema = new Schema<ILead>(
         convertedClientId: {
             type: Schema.Types.ObjectId,
             ref: "Client"
+        },
+        lastInteractionAt: Date,
+        lastInteractionId: {
+            type: Schema.Types.ObjectId,
+            ref: "Interaction"
         }
     },
     { timestamps: true }
