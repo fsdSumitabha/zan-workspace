@@ -1,112 +1,72 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
+
 import Lead from "@/models/Lead"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
 
-function normalizeLeads(leads: any[]) {
-    return leads.map(l => ({
-        id: l._id,
-        name: l.name,
-        company: l.source,
-        status: { type: "LEAD", value: l.status },
-        service: undefined,
-        updatedAt: l.updatedAt
-    }))
-}
-
-function normalizeClients(clients: any[]) {
-    return clients.map(c => ({
-        id: c._id,
-        name: c.name,
-        company: c.company,
-        status: { type: "CLIENT", value: c.status },
-        service: undefined,
-        updatedAt: c.updatedAt
-    }))
-}
-
-function normalizeProjects(projects: any[]) {
-    return projects.map(p => ({
-        id: p._id,
-        name: p.title,
-        company: p.companyName,
-        status: { type: "PROJECT", value: p.status },
-        service: p.serviceType,
-        updatedAt: p.updatedAt
-    }))
-}
-
-function mergeAndSort(data: any[], limit: number) {
-    return data
-        .sort(
-            (a, b) =>
-                new Date(b.updatedAt).getTime() -
-                new Date(a.updatedAt).getTime()
-        )
-        .slice(0, limit)
-}
-
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export async function GET(req: NextRequest) {
     try {
         await dbConnect()
 
-        const { searchParams } = new URL(req.url)
-        const limit = Number(searchParams.get("limit")) || 15
-
+        // fetch all in parallel
         const [leads, clients, projects] = await Promise.all([
-            Lead.find()
-                .select("name source status updatedAt")
-                .sort({ updatedAt: -1 })
-                .limit(limit)
+            Lead.find({ lastInteractionAt: { $ne: null } })
+                .select("name status lastInteractionAt lastInteractionId")
+                .populate("lastInteractionId")
                 .lean(),
 
-            Client.find()
-                .select("name company status updatedAt")
-                .sort({ updatedAt: -1 })
-                .limit(limit)
+            Client.find({ lastInteractionAt: { $ne: null } })
+                .select("name company status lastInteractionAt lastInteractionId")
+                .populate("lastInteractionId")
                 .lean(),
 
-            Project.find()
-                .select("title companyName serviceType status updatedAt")
-                .sort({ updatedAt: -1 })
-                .limit(limit)
+            Project.find({ lastInteractionAt: { $ne: null } })
+                .select("title status lastInteractionAt lastInteractionId clientId")
+                .populate("lastInteractionId")
                 .lean()
         ])
 
+        // normalize structure
+        const normalized = [
+            ...leads.map((item) => ({
+                ...item,
+                entityType: ENTITY_TYPE.LEAD,
+                lastInteraction: item.lastInteractionId || null
+            })),
 
-        const leadViews = normalizeLeads(leads)
-        const clientViews = normalizeClients(clients)
-        const projectViews = normalizeProjects(projects)
+            ...clients.map((item) => ({ 
+                ...item,
+                entityType: ENTITY_TYPE.CLIENT,
+                lastInteraction: item.lastInteractionId || null
+            })),
 
+            ...projects.map((item) => ({
+                ...item,
+                entityType: ENTITY_TYPE.PROJECT,
+                lastInteraction: item.lastInteractionId || null
+            }))
+        ]
 
-        const recent = mergeAndSort(
-            [...leadViews, ...clientViews, ...projectViews],
-            limit
-        )
+        // sort by latest interaction
+        normalized.sort((a, b) => {
+            const aTime = a.lastInteractionAt
+                ? new Date(a.lastInteractionAt).getTime()
+                : 0
 
+            const bTime = b.lastInteractionAt
+                ? new Date(b.lastInteractionAt).getTime()
+                : 0
 
-        const [totalLeads, activeClients, runningProjects] =
-            await Promise.all([
-                Lead.countDocuments(),
-                Client.countDocuments({ status: 1 }),
-                Project.countDocuments({
-                    status: { $in: [140, 150] }
-                })
-            ])
+            return bTime - aTime
+        })
 
         return NextResponse.json(
             {
                 success: true,
-                data: {
-                    stats: {
-                        totalLeads,
-                        activeClients,
-                        runningProjects
-                    },
-                    recent
-                }
+                data: normalized
             },
             { status: 200 }
         )
@@ -116,7 +76,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(
             {
                 success: false,
-                message: "Failed to load operations dashboard"
+                message: "Failed to fetch operations data"
             },
             { status: 500 }
         )
