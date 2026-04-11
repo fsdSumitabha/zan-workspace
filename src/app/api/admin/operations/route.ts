@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
                 return {
                     _id: rest._id,
                     entityType: ENTITY_TYPE.LEAD,
-                    displayName: rest.name,
+                    name: rest.name,
                     phone: rest.phone,
                     email: rest.email,
                     source: rest.source,
@@ -63,7 +63,8 @@ export async function GET(req: NextRequest) {
                 return {
                     _id: rest._id,
                     entityType: ENTITY_TYPE.CLIENT,
-                    displayName: `${rest.name}${rest.company ? ` (${rest.company})` : ""}`,
+                    name: rest.name,
+                    company: rest.company,
                     phone: rest.phone,
                     email: rest.email,
                     status: rest.status,
@@ -78,7 +79,8 @@ export async function GET(req: NextRequest) {
                 return {
                     _id: rest._id,
                     entityType: ENTITY_TYPE.PROJECT,
-                    displayName: rest.title,
+                    name: rest.title,
+                    title: rest.title,
                     companyName: rest.companyName,
                     serviceType: rest.serviceType,
                     description: rest.description,
