@@ -23,3 +23,8 @@ I successfully upgraded my API to return both client details and their linked pr
 
 **Friction**
 I struggled initially with how to structure the API response and whether to embed or separate data. Mapping the response correctly in the frontend state caused confusion, especially around loading and null handling. I was also unsure about UI decisions—whether to reuse existing components or create new ones—and how much information to show at each level without cluttering the interface.
+
+
+Timestamp : 10/04/2026 08:00 PM
+
+/api/admin/operations -- API developed
