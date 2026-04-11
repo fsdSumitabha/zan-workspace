@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/dbConnect";
-import Lead from "@/models/Lead";
+import Project from "@/models/Project";
 import Interaction from "@/models/Interaction";
 import { ENTITY_TYPE } from "@/constants/entityTypes";
 
@@ -8,25 +8,25 @@ export async function GET() {
     try {
         await dbConnect();
 
-        const leads = await Lead.find({});
-        if (!leads.length) {
+        const projects = await Project.find({});
+        if (!projects.length) {
             return NextResponse.json(
-                { success: false, message: "No leads found" },
+                { success: false, message: "No projects found" },
                 { status: 404 }
             );
         }
 
         let updatedCount = 0;
-        for (const lead of leads) {
+        for (const project of projects) {
             const latestInteraction = await Interaction.findOne({
-                entityType: ENTITY_TYPE.LEAD,
-                entityId: lead._id,
+                entityType: ENTITY_TYPE.PROJECT,
+                entityId: project._id,
             }).sort({ createdAt: -1 });
 
             if (latestInteraction) {
-                lead.lastInteractionAt = latestInteraction.createdAt;
-                lead.lastInteractionId = latestInteraction._id;
-                await lead.save();
+                project.lastInteractionAt = latestInteraction.createdAt;
+                project.lastInteractionId = latestInteraction._id;
+                await project.save();
                 updatedCount++;
             }
         }
@@ -35,8 +35,8 @@ export async function GET() {
             {
                 success: true,
                 message: "Backfill complete",
-                totalLeads: leads.length,
-                updatedLeads: updatedCount,
+                totalProjects: projects.length,
+                updatedProjects: updatedCount,
             },
             { status: 200 }
         );
