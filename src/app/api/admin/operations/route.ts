@@ -14,40 +14,78 @@ export async function GET(req: NextRequest) {
         // fetch all in parallel
         const [leads, clients, projects] = await Promise.all([
             Lead.find({ lastInteractionAt: { $ne: null } })
-                .select("name status lastInteractionAt lastInteractionId")
-                .populate("lastInteractionId")
+                .select("name email phone status source lastInteractionAt lastInteractionId")
+                .populate({
+                    path: "lastInteractionId",
+                    select: "type title createdAt"
+                })
                 .lean(),
-
+        
             Client.find({ lastInteractionAt: { $ne: null } })
-                .select("name company status lastInteractionAt lastInteractionId")
-                .populate("lastInteractionId")
+                .select("name company phone email status lastInteractionAt lastInteractionId")
+                .populate({
+                    path: "lastInteractionId",
+                    select: "type title createdAt"
+                })
                 .lean(),
-
+        
             Project.find({ lastInteractionAt: { $ne: null } })
-                .select("title status lastInteractionAt lastInteractionId clientId")
-                .populate("lastInteractionId")
+                .select("title companyName serviceType description status lastInteractionAt lastInteractionId clientId")
+                .populate({
+                    path: "lastInteractionId",
+                    select: "type title createdAt"
+                })
                 .lean()
         ])
 
         // normalize structure
         const normalized = [
-            ...leads.map((item) => ({
-                ...item,
-                entityType: ENTITY_TYPE.LEAD,
-                lastInteraction: item.lastInteractionId || null
-            })),
-
-            ...clients.map((item) => ({ 
-                ...item,
-                entityType: ENTITY_TYPE.CLIENT,
-                lastInteraction: item.lastInteractionId || null
-            })),
-
-            ...projects.map((item) => ({
-                ...item,
-                entityType: ENTITY_TYPE.PROJECT,
-                lastInteraction: item.lastInteractionId || null
-            }))
+            ...leads.map(item => {
+                const { lastInteractionId, ...rest } = item
+        
+                return {
+                    _id: rest._id,
+                    entityType: ENTITY_TYPE.LEAD,
+                    displayName: rest.name,
+                    phone: rest.phone,
+                    email: rest.email,
+                    source: rest.source,
+                    status: rest.status,
+                    lastInteractionAt: rest.lastInteractionAt,
+                    lastInteraction: lastInteractionId || null
+                }
+            }),
+        
+            ...clients.map(item => {
+                const { lastInteractionId, ...rest } = item
+        
+                return {
+                    _id: rest._id,
+                    entityType: ENTITY_TYPE.CLIENT,
+                    displayName: `${rest.name}${rest.company ? ` (${rest.company})` : ""}`,
+                    phone: rest.phone,
+                    email: rest.email,
+                    status: rest.status,
+                    lastInteractionAt: rest.lastInteractionAt,
+                    lastInteraction: lastInteractionId || null
+                }
+            }),
+        
+            ...projects.map(item => {
+                const { lastInteractionId, ...rest } = item
+        
+                return {
+                    _id: rest._id,
+                    entityType: ENTITY_TYPE.PROJECT,
+                    displayName: rest.title,
+                    companyName: rest.companyName,
+                    serviceType: rest.serviceType,
+                    description: rest.description,
+                    status: rest.status,
+                    lastInteractionAt: rest.lastInteractionAt,
+                    lastInteraction: lastInteractionId || null
+                }
+            })
         ]
 
         // sort by latest interaction
