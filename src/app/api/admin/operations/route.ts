@@ -4,6 +4,7 @@ import dbConnect from "@/lib/db/dbConnect"
 import Lead from "@/models/Lead"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
+import "@/models/Interaction"
 
 import { ENTITY_TYPE } from "@/constants/entityTypes"
 
