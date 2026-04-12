@@ -11,6 +11,9 @@ import ProjectDetailSkeleton from "@/components/admin/operations/skeletons/Proje
 
 import { Project } from "@/types/projects"
 
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+
 interface ApiResponse {
     success: boolean
     data: Project
@@ -22,6 +25,9 @@ export default function Page() {
 
     const [project, setProject] = useState<Project | null>(null)
     const [loading, setLoading] = useState(true)
+
+    const router = useRouter()
+    const [deleting, setDeleting] = useState(false)
 
     const fetchProject = async () => {
         try {
@@ -46,6 +52,45 @@ export default function Page() {
     useEffect(() => {
         if (projectId) fetchProject()
     }, [projectId])
+
+    const deleteProject = async () => {
+        if (deleting) return
+
+        setDeleting(true)
+
+        try {
+            const res = await fetch(`/api/admin/operations/projects/${projectId}`, {
+                method: "DELETE"
+            })
+
+            const data = await res.json()
+
+            if (!res.ok || !data?.success) {
+                throw new Error(data?.message || "Failed to delete projects")
+            }
+
+            toast.success("Projects deleted successfully")
+
+            router.push("/admin/operations/projects")
+
+        } catch (error: any) {
+            toast.error(error.message || "Something went wrong")
+        } finally {
+            setDeleting(false)
+        }
+    }
+    
+    const handleDelete = () => {
+        toast("Are you sure you want to delete this project?", {
+            action: {
+                label: deleting ? "Deleting..." : "Delete",
+                onClick: deleteProject
+            },
+            cancel: {
+                label: "Cancel"
+            }
+        })
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
@@ -75,6 +120,17 @@ export default function Page() {
                         <ProjectDetail
                             project={project}
                         />
+                    )}
+
+                    {!loading && project && (
+                        <div className="flex justify-end">
+                            <button
+                                onClick={handleDelete}
+                                className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+                            >
+                                Delete Project
+                            </button>
+                        </div>
                     )}
                 </div>
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Project from "@/models/Project"
+import { Types } from "mongoose"
 
 export async function GET(
     req: NextRequest,
@@ -73,27 +74,44 @@ export async function DELETE(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await dbConnect()
-
         const { id } = await context.params
 
-        const project = await Project.findByIdAndDelete(id)
+        // 1. Validate ID
+        if (!id || !Types.ObjectId.isValid(id)) {
+            return NextResponse.json(
+                { success: false, message: "Invalid project ID" },
+                { status: 400 }
+            )
+        }
 
-        if (!project) {
+        await dbConnect()
+
+        // 2. Delete lead
+        const lead = await Project.findByIdAndDelete(id)
+
+        // 3. Not found
+        if (!lead) {
             return NextResponse.json(
                 { success: false, message: "Project not found" },
                 { status: 404 }
             )
         }
 
-        return NextResponse.json({
-            success: true,
-            message: "Project deleted"
-        })
-    } catch {
+        // 4. Success
         return NextResponse.json(
-            { success: false, message: "Delete failed" },
-            { status: 400 }
+            {
+                success: true,
+                message: "Project deleted successfully"
+            },
+            { status: 200 }
+        )
+
+    } catch (error) {
+        console.error("DELETE PROJECT ERROR:", error)
+
+        return NextResponse.json(
+            { success: false, message: "Internal server error" },
+            { status: 500 }
         )
     }
 }

@@ -87,7 +87,7 @@ export default function Page() {
         if (clientId) fetchInteractions()
     }, [clientId])
 
-    const deleteLead = async () => {
+    const deleteClient = async () => {
         if (deleting) return
 
         setDeleting(true)
@@ -118,7 +118,7 @@ export default function Page() {
         toast("Are you sure you want to delete this lead?", {
             action: {
                 label: deleting ? "Deleting..." : "Delete",
-                onClick: deleteLead
+                onClick: deleteClient
             },
             cancel: {
                 label: "Cancel"
