@@ -1,11 +1,14 @@
 "use client"
 
+import Link from "next/link"
+import { Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import SearchBar from "@/components/admin/operations/SearchBar"
 import StatsPanel from "@/components/admin/operations/StatsPanel"
 import { Lead } from "@/types/lead"
 import LeadCard from "@/components/admin/operations/LeadCard"
 import LeadCardSkeleton from "@/components/admin/operations/skeletons/LeadCardSkeleton"
+import CreateActionButton from "@/components/admin/operations/CreateActionButton"
 
 interface ApiResponse {
     success: boolean
@@ -54,6 +57,7 @@ export default function Page() {
                 <div className="lg:col-span-2 space-y-4">
 
                     <SearchBar />
+                    <CreateActionButton href="/leads/create" label="Create New Lead"/>
 
                     {/* Loading Skeleton */}
                     {loading && (
@@ -85,6 +89,21 @@ export default function Page() {
                                 status={lead.status}
                             />
                         ))}
+
+                        <Link 
+                            href={"leads/create"}
+                            className="
+                                fixed bottom-6 right-6
+                                h-14 w-14 rounded-full
+                                bg-blue-600 hover:bg-blue-500
+                                text-white
+                                flex items-center justify-center
+                                shadow-lg hover:shadow-xl
+                                transition
+                            "
+                        >
+                            <Plus size={22} />
+                        </Link>
                 </div>
 
                 {/* RIGHT SIDE */}
