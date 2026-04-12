@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 
@@ -19,6 +20,7 @@ import InteractionModal from "@/components/admin/operations/InteractionModal/Int
 import InteractionTimeline from "@/components/admin/operations/interactions/InteractionTimeline"
 import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/ActionTypeSkeleton"
 import { InteractionItemSkeleton } from "@/components/admin/operations/skeletons/InteractionItemSkeleton"
+import CreateActionButton from "@/components/admin/operations/CreateActionButton"
 
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -160,6 +162,7 @@ export default function Page() {
                     {!loading && client && (
                         <>
                             <ClientDetails client={client} />
+                            <CreateActionButton href={`${clientId}/projects/create`} label="Create New Lead"/>
                             <LeadInteractionActions leadId={clientId} onAction={handleOpen} activeType={activeType} />
                             <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={1} entityId={clientId} onSuccess={fetchInteractions} />
                         </>
@@ -201,6 +204,21 @@ export default function Page() {
                             </div>
                         </div>
                     )}
+
+                    <Link 
+                        href={`${clientId}/projects/create`}
+                        className="
+                            fixed bottom-6 right-6
+                            h-14 w-14 rounded-full
+                            bg-blue-600 hover:bg-blue-500
+                            text-white
+                            flex items-center justify-center
+                            shadow-lg hover:shadow-xl
+                            transition
+                        "
+                    >
+                        <Plus size={22} />
+                    </Link>
                 </div>
 
                 <StatsPanel />
