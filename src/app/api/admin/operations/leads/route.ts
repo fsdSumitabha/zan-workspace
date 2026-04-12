@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Lead from "@/models/Lead"
 import { SortOrder } from "mongoose"
+import { Types } from "mongoose"
 
 export async function GET(req: NextRequest) {
     try {
@@ -104,3 +105,59 @@ export async function POST(req: NextRequest) {
 }
 
 
+export async function DELETE(req: NextRequest) {
+    try {
+        await dbConnect()
+
+        const { searchParams } = new URL(req.url)
+        const leadId = searchParams.get("leadId")
+
+        // 1. Validate presence
+        if (!leadId) {
+            return NextResponse.json(
+                { success: false, message: "leadId is required" },
+                { status: 400 }
+            )
+        }
+
+        // 2. Validate MongoDB ObjectId
+        if (!Types.ObjectId.isValid(leadId)) {
+            return NextResponse.json(
+                { success: false, message: "Invalid leadId" },
+                { status: 400 }
+            )
+        }
+
+        // 3. Check existence
+        const existingLead = await Lead.findById(leadId)
+
+        if (!existingLead) {
+            return NextResponse.json(
+                { success: false, message: "Lead not found" },
+                { status: 404 }
+            )
+        }
+
+        // 4. Delete
+        await Lead.findByIdAndDelete(leadId)
+
+        return NextResponse.json(
+            {
+                success: true,
+                message: "Lead deleted successfully"
+            },
+            { status: 200 }
+        )
+
+    } catch (error) {
+        console.error("DELETE LEAD ERROR:", error)
+
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Internal server error"
+            },
+            { status: 500 }
+        )
+    }
+}
