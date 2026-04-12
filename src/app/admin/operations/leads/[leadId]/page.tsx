@@ -7,6 +7,9 @@ import SearchBar from "@/components/admin/operations/SearchBar"
 import StatsPanel from "@/components/admin/operations/StatsPanel"
 import LeadDetails from "@/components/admin/operations/LeadDetails"
 import type { Interaction } from "@/types/interaction"
+import { toast } from "sonner"
+//import router
+import { useRouter } from "next/navigation"
 
 import type { Lead } from "@/types/lead"
 import LeadDetailsSkeleton from "@/components/admin/operations/skeletons/LeadDetailsSkeleton"
@@ -103,6 +106,48 @@ export default function Page() {
         return data
     }
 
+    const router = useRouter()
+    const [deleting, setDeleting] = useState(false)
+
+    const deleteLead = async () => {
+        if (deleting) return
+
+        setDeleting(true)
+
+        try {
+            const res = await fetch(`/api/admin/operations/leads/${leadId}`, {
+                method: "DELETE"
+            })
+
+            const data = await res.json()
+
+            if (!res.ok || !data?.success) {
+                throw new Error(data?.message || "Failed to delete lead")
+            }
+
+            toast.success("Lead deleted successfully")
+
+            router.push("/admin/operations/leads")
+
+        } catch (error: any) {
+            toast.error(error.message || "Something went wrong")
+        } finally {
+            setDeleting(false)
+        }
+    }
+
+    const handleDelete = () => {
+        toast("Are you sure you want to delete this lead?", {
+            action: {
+                label: deleting ? "Deleting..." : "Delete",
+                onClick: deleteLead
+            },
+            cancel: {
+                label: "Cancel"
+            }
+        })
+    }
+
     return (
         <StatusProvider>
             <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
@@ -141,7 +186,17 @@ export default function Page() {
                                 <LeadInteractionActions leadId={leadId} onAction={handleOpen} activeType={activeType} />
                             </>
                         )}
-
+{!loading && lead && (
+    <div className="flex justify-end">
+        <button
+            onClick={handleDelete}
+            className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+        >
+            Delete Lead
+        </button>
+    </div>
+)}
+                        
                         <StatusRemarksPanel onConfirm={handleStatusChange} />
 
                         <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={0} entityId={leadId} onSuccess={fetchInteractions} />

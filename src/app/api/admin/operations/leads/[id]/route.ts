@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Lead from "@/models/Lead"
+import { Types } from "mongoose"
 
 export async function GET(
     req: NextRequest,
@@ -75,10 +76,20 @@ export async function DELETE(
     try {
         const { id } = await context.params
 
+        // 1. Validate ID
+        if (!id || !Types.ObjectId.isValid(id)) {
+            return NextResponse.json(
+                { success: false, message: "Invalid lead ID" },
+                { status: 400 }
+            )
+        }
+
         await dbConnect()
 
+        // 2. Delete lead
         const lead = await Lead.findByIdAndDelete(id)
 
+        // 3. Not found
         if (!lead) {
             return NextResponse.json(
                 { success: false, message: "Lead not found" },
@@ -86,14 +97,21 @@ export async function DELETE(
             )
         }
 
-        return NextResponse.json({
-            success: true,
-            message: "Lead deleted"
-        })
-    } catch {
+        // 4. Success
         return NextResponse.json(
-            { success: false, message: "Delete failed" },
-            { status: 400 }
+            {
+                success: true,
+                message: "Lead deleted successfully"
+            },
+            { status: 200 }
+        )
+
+    } catch (error) {
+        console.error("DELETE LEAD ERROR:", error)
+
+        return NextResponse.json(
+            { success: false, message: "Internal server error" },
+            { status: 500 }
         )
     }
 }
