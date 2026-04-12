@@ -22,7 +22,7 @@ export default function ClientInfoCard() {
                 if (!res.ok) throw new Error()
 
                 const data = await res.json()
-                setClient(data?.data ?? null)
+                setClient(data?.data?.client ?? null)
             } catch {
                 setClient(null)
             } finally {
