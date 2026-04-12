@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
+import { Types } from "mongoose"
 
 export async function GET(
     req: NextRequest,
@@ -85,27 +86,44 @@ export async function DELETE(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await dbConnect()
-
         const { id } = await context.params
 
-        const client = await Client.findByIdAndDelete(id)
+        // 1. Validate ID
+        if (!id || !Types.ObjectId.isValid(id)) {
+            return NextResponse.json(
+                { success: false, message: "Invalid client ID" },
+                { status: 400 }
+            )
+        }
 
-        if (!client) {
+        await dbConnect()
+
+        // 2. Delete lead
+        const lead = await Client.findByIdAndDelete(id)
+
+        // 3. Not found
+        if (!lead) {
             return NextResponse.json(
                 { success: false, message: "Client not found" },
                 { status: 404 }
             )
         }
 
-        return NextResponse.json({
-            success: true,
-            message: "Client deleted"
-        })
-    } catch {
+        // 4. Success
         return NextResponse.json(
-            { success: false, message: "Delete failed" },
-            { status: 400 }
+            {
+                success: true,
+                message: "Client deleted successfully"
+            },
+            { status: 200 }
+        )
+
+    } catch (error) {
+        console.error("DELETE CLIENT ERROR:", error)
+
+        return NextResponse.json(
+            { success: false, message: "Internal server error" },
+            { status: 500 }
         )
     }
 }

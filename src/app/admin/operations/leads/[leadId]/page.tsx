@@ -186,16 +186,17 @@ export default function Page() {
                                 <LeadInteractionActions leadId={leadId} onAction={handleOpen} activeType={activeType} />
                             </>
                         )}
-{!loading && lead && (
-    <div className="flex justify-end">
-        <button
-            onClick={handleDelete}
-            className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
-        >
-            Delete Lead
-        </button>
-    </div>
-)}
+                        
+                        {!loading && lead && (
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={handleDelete}
+                                    className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+                                >
+                                    Delete Lead
+                                </button>
+                            </div>
+                        )}
                         
                         <StatusRemarksPanel onConfirm={handleStatusChange} />
 

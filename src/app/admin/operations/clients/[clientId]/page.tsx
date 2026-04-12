@@ -20,6 +20,8 @@ import InteractionTimeline from "@/components/admin/operations/interactions/Inte
 import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/ActionTypeSkeleton"
 import { InteractionItemSkeleton } from "@/components/admin/operations/skeletons/InteractionItemSkeleton"
 
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 export default function Page() {
     const params = useParams()
@@ -34,6 +36,9 @@ export default function Page() {
 
     const [activeType, setActiveType] = useState<number | null>(null)
     const [isOpen, setIsOpen] = useState(false)
+
+    const router = useRouter()
+    const [deleting, setDeleting] = useState(false)
 
     useEffect(() => {
         const fetchClient = async () => {
@@ -82,6 +87,45 @@ export default function Page() {
         if (clientId) fetchInteractions()
     }, [clientId])
 
+    const deleteLead = async () => {
+        if (deleting) return
+
+        setDeleting(true)
+
+        try {
+            const res = await fetch(`/api/admin/operations/clients/${clientId}`, {
+                method: "DELETE"
+            })
+
+            const data = await res.json()
+
+            if (!res.ok || !data?.success) {
+                throw new Error(data?.message || "Failed to delete client")
+            }
+
+            toast.success("Client deleted successfully")
+
+            router.push("/admin/operations/clients")
+
+        } catch (error: any) {
+            toast.error(error.message || "Something went wrong")
+        } finally {
+            setDeleting(false)
+        }
+    }
+    
+    const handleDelete = () => {
+        toast("Are you sure you want to delete this lead?", {
+            action: {
+                label: deleting ? "Deleting..." : "Delete",
+                onClick: deleteLead
+            },
+            cancel: {
+                label: "Cancel"
+            }
+        })
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
             <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
@@ -119,6 +163,17 @@ export default function Page() {
                             <LeadInteractionActions leadId={clientId} onAction={handleOpen} activeType={activeType} />
                             <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={1} entityId={clientId} onSuccess={fetchInteractions} />
                         </>
+                    )}
+
+                    {!loading && client && (
+                        <div className="flex justify-end">
+                            <button
+                                onClick={handleDelete}
+                                className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+                            >
+                                Delete Client
+                            </button>
+                        </div>
                     )}
 
                     {!loading && client && (
