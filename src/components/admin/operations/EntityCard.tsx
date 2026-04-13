@@ -6,12 +6,14 @@ import { PROJECT_STATUS_META } from "@/constants/projectStatus"
 import { SERVICE_META } from "@/constants/services"
 import { ServiceType } from "@/constants/services"
 
+import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import StatusBadge from "./StatusBadge"
 import ServiceBadge from "./ServiceBadge"
 import InteractionCard from "./InteractionCard"
 import TimeAgo from "./dayjs/TimeAgo"
 
 import { Phone, Mail, Building2, Briefcase } from "lucide-react"
+import StatusChangeItem from "./StatusChangeItem"
 
 interface EntityCardProps {
     item: any
@@ -116,7 +118,11 @@ export default function EntityCard({ item }: EntityCardProps) {
                 {/* Interaction */}
                 {lastInteraction && (
                     <div className="pt-2">
-                        <InteractionCard {...lastInteraction} />
+                        {lastInteraction.type === INTERACTION_TYPE.STATUS_CHANGED ? (
+                            <StatusChangeItem entityType={entityType} item={lastInteraction} />
+                        ) : (
+                            <InteractionCard type={lastInteraction.type} title={lastInteraction.title} createdAt={lastInteraction.createdAt} />
+                        )}
                     </div>
                 )}
             </div>
