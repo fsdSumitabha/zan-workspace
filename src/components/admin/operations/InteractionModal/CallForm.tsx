@@ -96,6 +96,7 @@ export default function CallForm({ entityType, entityId, onClose, onSuccess }: P
                         required
                         type="tel"
                         placeholder="+91 99999 00000"
+                        pattern="[0-9]{10}"
                         value={form.contactPersonPhone}
                         onChange={set("contactPersonPhone")}
                         className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none text-sm"
