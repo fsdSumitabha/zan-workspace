@@ -143,7 +143,8 @@ export default function Page() {
                 onClick: deleteLead
             },
             cancel: {
-                label: "Cancel"
+                label: "Cancel",
+                onClick: () => {}
             }
         })
     }

@@ -87,7 +87,8 @@ export default function Page() {
                 onClick: deleteProject
             },
             cancel: {
-                label: "Cancel"
+                label: "Cancel",
+                onClick: () => {}
             }
         })
     }

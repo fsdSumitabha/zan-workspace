@@ -124,7 +124,8 @@ export default function Page() {
                 onClick: deleteClient
             },
             cancel: {
-                label: "Cancel"
+                label: "Cancel",
+                onClick: () => {}
             }
         })
     }
