@@ -8,6 +8,7 @@ import StatsPanel from "@/components/admin/operations/StatsPanel"
 import ProjectCardSkeleton from "@/components/admin/operations/skeletons/ProjectCardSkeleton"
 import { Project } from "@/types/projects"
 import ClientProjectPreviewCard from "@/components/admin/operations/ClientProjectPreviewCard"
+import CreateActionButton from "@/components/admin/operations/CreateActionButton"
 
 
 export default function Page() {
@@ -68,6 +69,8 @@ export default function Page() {
 
                     <SearchBar />
 
+                    <CreateActionButton href={`projects/create`} label="Create New Project" />
+                    
                     {/* Loading */}
                     {loading && (
                         <div className="space-y-4">

@@ -19,7 +19,7 @@ function CreateActionButton({
 }: CreateActionButtonProps) {
     const baseStyles = `
         group w-full flex items-center justify-center gap-2
-        px-4 py-3 rounded-2xl
+        px-4 py-3 rounded
         font-medium
         transition-all duration-200
         active:scale-[0.98]
