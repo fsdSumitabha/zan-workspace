@@ -10,10 +10,10 @@ export type ClientStatus =
 
 export const CLIENT_STATUS_META: Record<
     ClientStatus,
-    { label: string; color: string }
+    { label: string; color: string; decoration?: string }
 > = {
-    1: { label: "Active", color: "bg-green-500 text-white" },
-    2: { label: "Inactive", color: "bg-gray-500 text-white" },
-    3: { label: "On Hold", color: "bg-yellow-500 text-yellow-900" },
-    4: { label: "Completed", color: "bg-blue-500 text-white" }
+    1: { label: "Active", color: "bg-green-500 text-white", decoration: "border-b-2 border-green-500" },
+    2: { label: "Inactive", color: "bg-gray-500 text-white", decoration: "border-b-2 border-gray-500" },
+    3: { label: "On Hold", color: "bg-yellow-500 text-yellow-900", decoration: "border-b-2 border-yellow-500" },
+    4: { label: "Completed", color: "bg-blue-500 text-white", decoration: "border-b-2 border-blue-500" }
 }

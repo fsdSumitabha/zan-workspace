@@ -14,14 +14,14 @@ export type ProjectStatus =
 
 export const PROJECT_STATUS_META: Record<
     ProjectStatus,
-    { label: string; color: string }
+    { label: string; color: string; decoration?: string }
 > = {
-    110: { label: "Discussion", color: "bg-yellow-500 text-yellow-900" },
-    120: { label: "Proposal Sent", color: "bg-blue-500 text-white" },
-    130: { label: "Negotiation", color: "bg-orange-500 text-white" },
-    140: { label: "Confirmed", color: "bg-green-500 text-white" },
-    150: { label: "In Progress", color: "bg-purple-500 text-white" },
-    160: { label: "Deployed", color: "bg-teal-500 text-white" },
-    170: { label: "Maintenance", color: "bg-cyan-500 text-white" },
-    180: { label: "Closed", color: "bg-gray-500 text-white" }
+    110: { label: "Discussion", color: "bg-yellow-500 text-yellow-900", decoration: "border-b-2 border-yellow-500" },
+    120: { label: "Proposal Sent", color: "bg-blue-500 text-white", decoration: "border-b-2 border-blue-500" },
+    130: { label: "Negotiation", color: "bg-orange-500 text-white", decoration: "border-b-2 border-orange-500" },
+    140: { label: "Confirmed", color: "bg-green-500 text-white", decoration: "border-b-2 border-green-500" },
+    150: { label: "In Progress", color: "bg-purple-500 text-white", decoration: "border-b-2 border-purple-500" },
+    160: { label: "Deployed", color: "bg-teal-500 text-white", decoration: "border-b-2 border-teal-500" },
+    170: { label: "Maintenance", color: "bg-cyan-500 text-white", decoration: "border-b-2 border-cyan-500" },
+    180: { label: "Closed", color: "bg-gray-500 text-white", decoration: "border-b-2 border-gray-500" }
 }
