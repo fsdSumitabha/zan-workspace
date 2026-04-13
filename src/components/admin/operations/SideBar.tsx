@@ -17,7 +17,7 @@ export default function Sidebar() {
     const pathname = usePathname()
 
     return (
-        <aside className="w-64 bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white border-r-4 border-neutral-800 flex flex-col">
+        <aside className="w-64 bg-gray-50 h-full dark:bg-neutral-950 text-gray-900 dark:text-white border-r-4 border-neutral-800 flex flex-col">
             {/* Logo */}
             <div className="h-14 flex items-center px-4 border-b border-neutral-800 font-semibold">
                 <Image
@@ -29,7 +29,6 @@ export default function Sidebar() {
                 />
             </div>
 
-
             {/* Nav */}
             <nav className="flex-1 p-2 space-y-1">
                 {navItems.map((item) => {
@@ -39,9 +38,10 @@ export default function Sidebar() {
                         <Link
                             key={item.name}
                             href={item.href}
-                            className={`block px-3 py-2 rounded-lg text-sm transition-all duration-200 ${isActive
-                                ? "bg-neutral-800 text-white shadow-inner"
-                                : "text-neutral-400 hover:bg-neutral-800/70 hover:text-white"
+                            className={`block px-3 py-2 rounded-lg text-sm transition-all duration-200 border-l-2
+                                ${isActive
+                                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium"
+                                    : "border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-800 hover:text-gray-900 dark:hover:text-white"
                                 }`}
                         >
                             {item.name}
@@ -51,9 +51,9 @@ export default function Sidebar() {
             </nav>
 
             {/* Bottom User / Footer */}
-            <div className="p-3 border-t border-neutral-800 text-sm text-neutral-400">
+            <div className="p-3 border-t border-neutral-800 text-sm text-gray-500 dark:text-neutral-400">
                 Logged in as
-                <div className="text-white font-medium">
+                <div className="text-gray-900 dark:text-white font-medium">
                     Admin
                 </div>
             </div>
