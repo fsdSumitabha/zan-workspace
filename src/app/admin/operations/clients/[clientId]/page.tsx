@@ -24,6 +24,7 @@ import CreateActionButton from "@/components/admin/operations/CreateActionButton
 
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { ClientStatus } from "@/constants/clientStatus"
 
 export default function Page() {
     const params = useParams()
@@ -128,6 +129,21 @@ export default function Page() {
         })
     }
 
+    const handleStatusChange = async (status: ClientStatus, remarks: string) => {
+        const res = await fetch(`/api/admin/operations/clients/${clientId}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status, remarks }),
+        })
+        if (!res.ok) throw new Error("Failed to update status")
+
+        toast.success("Status updated")
+        // refresh client
+        const updated = await fetch(`/api/admin/operations/clients/${clientId}`)
+        const data = await updated.json()
+        setClient(data.data.client)
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
             <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
@@ -161,7 +177,7 @@ export default function Page() {
                     {/* Data */}
                     {!loading && client && (
                         <>
-                            <ClientDetails client={client} />
+                           <ClientDetails client={client} onStatusChange={handleStatusChange} />
                             <CreateActionButton href={`${clientId}/projects/create`} label="Create New Project"/>
                             <LeadInteractionActions leadId={clientId} onAction={handleOpen} activeType={activeType} />
                             <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={1} entityId={clientId} onSuccess={fetchInteractions} />
