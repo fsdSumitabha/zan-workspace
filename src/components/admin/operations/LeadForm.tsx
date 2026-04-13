@@ -64,7 +64,7 @@ export default function LeadForm() {
     return (
         <form
             onSubmit={handleSubmit}
-            className="p-5 rounded-xl border bg-white dark:bg-neutral-900 space-y-4"
+            className="p-5 rounded-xl border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 space-y-4"
         >
             <h2 className="text-lg font-semibold">Create Lead</h2>
 

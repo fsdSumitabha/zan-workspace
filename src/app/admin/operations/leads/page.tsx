@@ -57,7 +57,7 @@ export default function Page() {
                 <div className="lg:col-span-2 space-y-4">
 
                     <SearchBar />
-                    <CreateActionButton href="/leads/create" label="Create New Lead"/>
+                    <CreateActionButton href="leads/create" label="Create New Lead"/>
 
                     {/* Loading Skeleton */}
                     {loading && (
