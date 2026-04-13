@@ -162,7 +162,7 @@ export default function Page() {
                     {!loading && client && (
                         <>
                             <ClientDetails client={client} />
-                            <CreateActionButton href={`${clientId}/projects/create`} label="Create New Lead"/>
+                            <CreateActionButton href={`${clientId}/projects/create`} label="Create New Project"/>
                             <LeadInteractionActions leadId={clientId} onAction={handleOpen} activeType={activeType} />
                             <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={1} entityId={clientId} onSuccess={fetchInteractions} />
                         </>
