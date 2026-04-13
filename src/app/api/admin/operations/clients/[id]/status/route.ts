@@ -93,7 +93,7 @@ export async function PATCH(
 
         // 2. Create interaction log
         const interaction = await Interaction.create({
-            entityType: 1, // 1 = CLIENT (based on your system)
+            entityType: 1,
             entityId: client._id,
             type: INTERACTION_TYPE.STATUS_CHANGED,
 

@@ -89,6 +89,7 @@ export async function GET(
 
             return {
                 _id: i._id,
+                entitytype: i.entityType,
                 type: i.type,
                 title: i.title,
                 description: i.description,

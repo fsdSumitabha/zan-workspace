@@ -116,7 +116,7 @@ export default function Page() {
             setDeleting(false)
         }
     }
-    
+
     const handleDelete = () => {
         toast("Are you sure you want to delete this lead?", {
             action: {
@@ -125,7 +125,7 @@ export default function Page() {
             },
             cancel: {
                 label: "Cancel",
-                onClick: () => {}
+                onClick: () => { }
             }
         })
     }
@@ -178,8 +178,8 @@ export default function Page() {
                     {/* Data */}
                     {!loading && client && (
                         <>
-                           <ClientDetails client={client} onStatusChange={handleStatusChange} />
-                            <CreateActionButton href={`${clientId}/projects/create`} label="Create New Project"/>
+                            <ClientDetails client={client} onStatusChange={handleStatusChange} />
+                            <CreateActionButton href={`${clientId}/projects/create`} label="Create New Project" />
                             <LeadInteractionActions leadId={clientId} onAction={handleOpen} activeType={activeType} />
                             <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={1} entityId={clientId} onSuccess={fetchInteractions} />
                         </>
@@ -197,7 +197,7 @@ export default function Page() {
                     )}
 
                     {!loading && client && (
-                        <InteractionTimeline interactions={interactions} loading={interactionLoading} />
+                        <InteractionTimeline entityType={1} interactions={interactions} loading={interactionLoading} />
                     )}
 
                     {!loading && client && (
@@ -222,7 +222,7 @@ export default function Page() {
                         </div>
                     )}
 
-                    <Link 
+                    <Link
                         href={`${clientId}/projects/create`}
                         className="
                             fixed bottom-6 right-6

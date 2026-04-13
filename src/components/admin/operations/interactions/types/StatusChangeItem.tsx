@@ -2,15 +2,15 @@
 
 import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import StatusBadge from "@/components/admin/operations/StatusBadge"
-import { LEAD_STATUS_META, type LeadStatus } from "@/constants/leadStatus"
 import { INTERACTION_TYPE_META } from "@/constants/interactionTypes"
 import * as Icons from "lucide-react"
+import { STATUS_META_BY_ENTITY } from "@/constants/statusMetaByEntity"
 
-export default function StatusChangeItem({ item }: { item: any }) {
+export default function StatusChangeItem({ entityType, item }: { entityType: number, item: any }) {
     let parsed: {
         action?: string
-        from?: LeadStatus
-        to?: LeadStatus
+        from?: number
+        to?: number
     } | null = null
 
     try {
@@ -19,15 +19,11 @@ export default function StatusChangeItem({ item }: { item: any }) {
         parsed = null
     }
 
-    const fromMeta =
-        parsed?.from !== undefined
-            ? LEAD_STATUS_META[parsed.from]
-            : null
+    const statusMeta = STATUS_META_BY_ENTITY[entityType as keyof typeof STATUS_META_BY_ENTITY]
 
-    const toMeta =
-        parsed?.to !== undefined
-            ? LEAD_STATUS_META[parsed.to]
-            : null
+    const fromMeta = parsed?.from !== undefined ? statusMeta?.[parsed.from] : null
+console.log("Parsed status change item:", { parsed, fromMeta, toMeta: parsed?.to !== undefined ? statusMeta?.[parsed.to] : null })
+    const toMeta = parsed?.to !== undefined ? statusMeta?.[parsed.to] : null
 
     return (
         <div className="flex group gap-3 p-4 rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition">

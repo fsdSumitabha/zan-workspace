@@ -4,11 +4,13 @@ import { AnimatedItem } from "./AnimatedItem"
 import { InteractionItemSkeleton } from "../skeletons/InteractionItemSkeleton"
 
 interface Props {
+    entityType: number
     interactions: Interaction[]
     loading: boolean
 }
 
 export default function InteractionTimeline({
+    entityType,
     interactions,
     loading
 }: Props) {
@@ -32,7 +34,7 @@ export default function InteractionTimeline({
             <div className="space-y-4">
                 {interactions.map((item, index) => (
                     <AnimatedItem key={item._id} index={index}>
-                        <InteractionItem item={item} />
+                        <InteractionItem entityType={entityType} item={item} />
                     </AnimatedItem>
                 ))}
             </div>
