@@ -83,41 +83,10 @@ export default function ProjectDetail({ project }: Props) {
 
             {/* ================= TIMELINE ================= */}
             <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">
-                    Timeline
-                </h3>
-
                 <div className="flex flex-col gap-2 text-sm text-gray-600 dark:text-gray-400">
                     <div>
-                        Created: <TimeAgo date={project.createdAt} />
+                        Updated: <TimeAgo date={project.updatedAt} />
                     </div>
-                    <div>
-                        Last Updated: <TimeAgo date={project.updatedAt} />
-                    </div>
-                </div>
-            </div>
-
-            {/* ================= PLACEHOLDER SECTIONS ================= */}
-            <div className="border-t border-neutral-200 dark:border-neutral-800 pt-4 space-y-3">
-
-                <h3 className="text-sm font-medium text-gray-500">
-                    Activity & Extensions
-                </h3>
-
-                <div className="grid sm:grid-cols-3 gap-4 text-sm">
-
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-dashed border-neutral-300 dark:border-neutral-700 text-center">
-                        Meetings
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-dashed border-neutral-300 dark:border-neutral-700 text-center">
-                        Documents
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-dashed border-neutral-300 dark:border-neutral-700 text-center">
-                        Payments
-                    </div>
-
                 </div>
             </div>
         </div>

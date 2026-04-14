@@ -13,6 +13,8 @@ import { Project } from "@/types/projects"
 
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import LeadInteractionActions from "@/components/admin/operations/LeadInteractionActions"
+import InteractionModal from "@/components/admin/operations/InteractionModal/InteractionInlineForm"
 
 interface ApiResponse {
     success: boolean
@@ -25,9 +27,24 @@ export default function Page() {
 
     const [project, setProject] = useState<Project | null>(null)
     const [loading, setLoading] = useState(true)
+    const [activeType, setActiveType] = useState<number | null>(null)
+    const [isOpen, setIsOpen] = useState(false)
 
     const router = useRouter()
     const [deleting, setDeleting] = useState(false)
+
+    const [interactions, setInteractions] = useState([])
+    const [interactionLoading, setInteractionLoading] = useState(true)
+
+    const handleOpen = (type: number) => {
+        setActiveType(type)
+        setIsOpen(true)
+    }
+
+    const handleClose = () => {
+        setIsOpen(false)
+        setActiveType(null)
+    }
 
     const fetchProject = async () => {
         try {
@@ -52,6 +69,21 @@ export default function Page() {
     useEffect(() => {
         if (projectId) fetchProject()
     }, [projectId])
+
+    const fetchInteractions = async () => {
+        try {
+            const res = await fetch(
+                `/api/admin/operations/leads/${projectId}/interactions`
+            )
+            const data = await res.json()
+
+            setInteractions(data.interactions || [])
+        } catch (err) {
+            console.error("Failed to fetch interactions", err)
+        } finally {
+            setInteractionLoading(false)
+        }
+    }
 
     const deleteProject = async () => {
         if (deleting) return
@@ -118,21 +150,21 @@ export default function Page() {
 
                     {/* Project */}
                     {!loading && project && (
-                        <ProjectDetail
-                            project={project}
-                        />
+                        <>
+                            <ProjectDetail project={project} />
+                            <LeadInteractionActions leadId={projectId} onAction={handleOpen} activeType={activeType} />
+                        </>
                     )}
 
                     {!loading && project && (
                         <div className="flex justify-end">
-                            <button
-                                onClick={handleDelete}
-                                className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
-                            >
+                            <button onClick={handleDelete} className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition" >
                                 Delete Project
                             </button>
                         </div>
                     )}
+
+                    <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={0} entityId={projectId} onSuccess={fetchInteractions} />
                 </div>
 
                 {/* RIGHT */}
