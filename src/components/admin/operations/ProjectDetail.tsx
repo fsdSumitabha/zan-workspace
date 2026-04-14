@@ -1,17 +1,55 @@
 "use client"
 
+import { useState } from "react"
+import { toast } from "sonner"
 import StatusBadge from "./StatusBadge"
 import ServiceBadge from "./ServiceBadge"
 import TimeAgo from "./dayjs/TimeAgo"
 
 import { ProjectStatus, PROJECT_STATUS_META } from "@/constants/projectStatus"
 import { Project } from "@/types/projects"
+import ProjectStatusDropdown from "./statusDropdowns/ProjectStatusDropdown"
+
 
 type Props = {
     project: Project
+    onStatusChange?: (status: ProjectStatus, remarks: string) => Promise<void>
 }
 
-export default function ProjectDetail({ project }: Props) {
+export default function ProjectDetail({ project, onStatusChange }: Props) {
+    const [pendingStatus, setPendingStatus] = useState<ProjectStatus | null>(null)
+    const [remarks, setRemarks] = useState("")
+    const [saving, setSaving] = useState(false)
+
+    const handleStatusSelect = (status: ProjectStatus) => {
+        if (status === project.status) return
+        setPendingStatus(status)
+        setRemarks("")
+    }
+
+    const handleConfirm = async () => {
+        if (!remarks.trim()) {
+            toast.error("Remarks are required")
+            return
+        }
+        if (!pendingStatus || !onStatusChange) return
+
+        setSaving(true)
+        try {
+            await onStatusChange(pendingStatus, remarks)
+            setPendingStatus(null)
+            setRemarks("")
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to update status")
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const handleCancel = () => {
+        setPendingStatus(null)
+        setRemarks("")
+    }
     return (
         <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-6">
 
@@ -27,8 +65,51 @@ export default function ProjectDetail({ project }: Props) {
                     </p>
                 </div>
 
-                <StatusBadge status={project.status} meta={PROJECT_STATUS_META} />
+                {onStatusChange ? (
+                    <ProjectStatusDropdown
+                        currentStatus={project.status}
+                        onSelect={handleStatusSelect}   // just signals selection, no API call here
+                    />
+                ) : (
+                    <StatusBadge status={project.status} meta={PROJECT_STATUS_META} />
+                )}
             </div>
+            
+            {pendingStatus && (
+                <>
+                    <div className="border-t border-neutral-100 dark:border-neutral-800" />
+
+                    <div className="space-y-2">
+                        <p className="text-sm font-medium">
+                            Change to "{PROJECT_STATUS_META[pendingStatus].label}"
+                        </p>
+
+                        <textarea
+                            value={remarks}
+                            onChange={(e) => setRemarks(e.target.value)}
+                            placeholder="Add remarks (required)"
+                            rows={3}
+                            className="w-full p-2 text-sm border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={handleCancel}
+                                className="text-xs px-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded hover:bg-neutral-50 dark:hover:bg-neutral-800 transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirm}
+                                disabled={saving}
+                                className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition"
+                            >
+                                {saving ? "Saving..." : "Confirm"}
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
 
             {/* ================= META ================= */}
             <div className="flex flex-wrap items-center gap-3">

@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation"
 import LeadInteractionActions from "@/components/admin/operations/LeadInteractionActions"
 import InteractionModal from "@/components/admin/operations/InteractionModal/InteractionInlineForm"
 import InteractionTimeline from "@/components/admin/operations/interactions/InteractionTimeline"
+import { ProjectStatus } from "@/constants/projectStatus"
 
 interface ApiResponse {
     success: boolean
@@ -25,7 +26,7 @@ interface ApiResponse {
 export default function Page() {
     const params = useParams()
     const projectId = params.projectId as string
-
+    console.log("Project ID:", projectId)
     const [project, setProject] = useState<Project | null>(null)
     const [loading, setLoading] = useState(true)
     const [activeType, setActiveType] = useState<number | null>(null)
@@ -116,7 +117,7 @@ export default function Page() {
             setDeleting(false)
         }
     }
-    
+
     const handleDelete = () => {
         toast("Are you sure you want to delete this project?", {
             action: {
@@ -125,9 +126,32 @@ export default function Page() {
             },
             cancel: {
                 label: "Cancel",
-                onClick: () => {}
+                onClick: () => { }
             }
         })
+    }
+
+    const handleStatusChange = async (status: ProjectStatus, remarks: string) => {
+        if (!projectId) return
+
+        const res = await fetch(`/api/admin/operations/projects/${projectId}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status, remarks }),
+        })
+
+        if (!res.ok) throw new Error("Failed to update status")
+
+        toast.success("Status updated")
+
+        const updated = await fetch(`/api/admin/operations/projects/${projectId}`)
+        const data = await updated.json()
+
+        if (data?.success && data?.data) {
+            setProject(data.data)
+        }
+
+        fetchInteractions()
     }
 
     return (
@@ -156,7 +180,7 @@ export default function Page() {
                     {/* Project */}
                     {!loading && project && (
                         <>
-                            <ProjectDetail project={project} />
+                            <ProjectDetail project={project} onStatusChange={handleStatusChange} />
                             <LeadInteractionActions leadId={projectId} onAction={handleOpen} activeType={activeType} />
                         </>
                     )}
