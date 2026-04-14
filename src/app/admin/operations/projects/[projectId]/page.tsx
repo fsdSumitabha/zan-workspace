@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import LeadInteractionActions from "@/components/admin/operations/LeadInteractionActions"
 import InteractionModal from "@/components/admin/operations/InteractionModal/InteractionInlineForm"
+import InteractionTimeline from "@/components/admin/operations/interactions/InteractionTimeline"
 
 interface ApiResponse {
     success: boolean
@@ -73,7 +74,7 @@ export default function Page() {
     const fetchInteractions = async () => {
         try {
             const res = await fetch(
-                `/api/admin/operations/leads/${projectId}/interactions`
+                `/api/admin/operations/projects/${projectId}/interactions`
             )
             const data = await res.json()
 
@@ -84,6 +85,10 @@ export default function Page() {
             setInteractionLoading(false)
         }
     }
+
+    useEffect(() => {
+        if (projectId) fetchInteractions()
+    }, [projectId])
 
     const deleteProject = async () => {
         if (deleting) return
@@ -165,6 +170,10 @@ export default function Page() {
                     )}
 
                     <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={0} entityId={projectId} onSuccess={fetchInteractions} />
+
+                    {!loading && project && (
+                        <InteractionTimeline entityType={2} interactions={interactions} loading={interactionLoading} />
+                    )}
                 </div>
 
                 {/* RIGHT */}
