@@ -23,7 +23,7 @@ export async function GET(
 
         // 1. Fetch interactions for PROJECT
         const interactions = await Interaction.find({
-            entityType: 1, // IMPORTANT: project entity type
+            entityType: 2,
             entityId: projectId
         })
             .sort({ createdAt: -1 })
