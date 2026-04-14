@@ -169,7 +169,7 @@ export default function Page() {
                         </div>
                     )}
 
-                    <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={0} entityId={projectId} onSuccess={fetchInteractions} />
+                    <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={2} entityId={projectId} onSuccess={fetchInteractions} />
 
                     {!loading && project && (
                         <InteractionTimeline entityType={2} interactions={interactions} loading={interactionLoading} />
