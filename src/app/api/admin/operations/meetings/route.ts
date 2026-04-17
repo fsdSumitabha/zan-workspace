@@ -8,6 +8,79 @@ import Lead from "@/models/Lead"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
 
+export async function GET(req: NextRequest) {
+    try {
+        await dbConnect()
+
+        const { searchParams } = new URL(req.url)
+
+        // Pagination params
+        const page = Math.max(parseInt(searchParams.get("page") || "1"), 1)
+        const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "10"), 1), 100)
+        const skip = (page - 1) * limit
+
+        // Optional filters
+        const entityType = searchParams.get("entityType")
+        const entityId = searchParams.get("entityId")
+        const status = searchParams.get("status")
+
+        const query: any = {}
+
+        if (entityType !== null) query.entityType = Number(entityType)
+        if (entityId) query.entityId = entityId
+        if (status !== null) query.status = Number(status)
+
+        // Fetch data + total count in parallel
+        const [meetings, total] = await Promise.all([
+            Meeting.find(query)
+                .sort({ scheduledAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+
+            Meeting.countDocuments(query)
+        ])
+
+        // Edge case: page exceeds total data
+        if (page > 1 && meetings.length === 0) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: "Page out of range"
+                },
+                { status: 404 }
+            )
+        }
+
+        return NextResponse.json(
+            {
+                success: true,
+                data: meetings,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit),
+                    hasNextPage: page * limit < total,
+                    hasPrevPage: page > 1
+                }
+            },
+            { status: 200 }
+        )
+
+    } catch (error: any) {
+        console.error("GET MEETINGS ERROR:", error)
+
+        return NextResponse.json(
+            {
+                success: false,
+                message: "Internal server error"
+            },
+            { status: 500 }
+        )
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         await dbConnect()
