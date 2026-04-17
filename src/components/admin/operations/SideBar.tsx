@@ -19,15 +19,30 @@ export default function Sidebar() {
     return (
         <aside className="w-64 bg-gray-50 h-full dark:bg-neutral-950 text-gray-900 dark:text-white border-r-4 border-neutral-800 flex flex-col">
             {/* Logo */}
-            <div className="h-14 flex items-center px-4 border-b border-neutral-800 font-semibold">
+            <Link
+                href="/admin/operations"
+                className="h-14 flex items-center px-4 border-b border-neutral-800 font-semibold"
+            >
+                {/* Light Theme Logo */}
+                <Image
+                    src="/zan-services-color-logo.png"
+                    alt="ZAN CRM Logo"
+                    height={30}
+                    width={90}
+                    priority
+                    className="hidden dark:block"
+                />
+
+                {/* Dark Theme Logo */}
                 <Image
                     src="/zan-logo-white.png"
                     alt="ZAN CRM Logo"
                     height={30}
                     width={90}
                     priority
+                    className="block dark:hidden"
                 />
-            </div>
+            </Link>
 
             {/* Nav */}
             <nav className="flex-1 p-2 space-y-1">
