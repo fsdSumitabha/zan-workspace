@@ -1,6 +1,6 @@
 export default function SearchBar() {
     return (
-        <div className="flex items-center gap-2">
+        <div className="w-full flex items-center gap-2">
 
             <input
                 type="text"

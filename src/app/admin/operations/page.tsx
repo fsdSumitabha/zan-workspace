@@ -74,8 +74,6 @@ export default function Page() {
                 {/* LEFT SIDE */}
                 <div className="lg:col-span-2 space-y-4">
 
-                    <SearchBar />
-
                     {/* ------------------- */}
                     {/* Loading State */}
                     {/* ------------------- */}
