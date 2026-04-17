@@ -21,13 +21,6 @@ export default function MeetingCard({ item }: { item: any }) {
     return (
         <div className="relative flex group gap-3 p-4 rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition">
 
-            {/* Entity Ribbon */}
-            <div className="absolute top-0 right-0">
-                <div className="text-[10px] px-2 py-1 bg-emerald-600 text-white rounded-bl-lg rounded-tr-xl shadow-sm">
-                    {meeting.entity?.label || "Unknown"}
-                </div>
-            </div>
-
             {/* Left Icon */}
             <div className="mt-1">
                 <div className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30">
