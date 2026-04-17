@@ -7,6 +7,7 @@ import StatusBadge from "@/components/admin/operations/StatusBadge"
 
 import { MEETING_STATUS_META } from "@/constants/meetingStatus"
 import { MEETING_TYPE } from "@/constants/meetingTypes"
+import MeetingLinkButton from "@/components/admin/operations/MeetingLinkButton"
 
 export default function MeetingCard({ item }: { item: any }) {
     const Icon =
@@ -16,7 +17,7 @@ export default function MeetingCard({ item }: { item: any }) {
     const meeting = item
 
     // Dynamic entity route
-    const entityHref = `/admin/${meeting.entity?.label?.toLowerCase()}s/${meeting.entityId}`
+    const entityHref = `/admin//operations/${meeting.entity?.label?.toLowerCase()}s/${meeting.entityId}`
 
     return (
         <div className="relative flex group gap-3 p-4 rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition">
@@ -88,14 +89,7 @@ export default function MeetingCard({ item }: { item: any }) {
                     {/* Right */}
                     {meeting.meetingType === MEETING_TYPE.ONLINE &&
                         meeting.meetingLink && (
-                            <a
-                                href={meeting.meetingLink}
-                                target="_blank"
-                                className="text-emerald-600 hover:underline flex items-center gap-1"
-                            >
-                                <Icons.ExternalLink className="w-3 h-3" />
-                                Join
-                            </a>
+                            <MeetingLinkButton link={meeting.meetingLink} />
                         )}
                 </div>
             </div>
