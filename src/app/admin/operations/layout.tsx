@@ -8,7 +8,7 @@ export default function OperationsLayout({
     children: React.ReactNode
 }) {
     return (
-        <div className="flex h-screen bg-neutral-950 text-white">
+        <div className="flex h-screen bg-slate-50 dark:bg-neutral-950 text-white">
             {/* Sidebar */}
             <div className="hidden md:block">
                 <Sidebar />
@@ -17,7 +17,7 @@ export default function OperationsLayout({
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
-                <div className="h-14 border-b border-neutral-800 flex items-center px-4">
+                <div className="h-14 border-b border-neutral-800 text-neutral-800 dark:text-neutral-300 flex items-center px-4">
                     ZAN Operations
                 </div>
 

@@ -10,7 +10,7 @@ const navItems = [
     { name: "Clients", href: "/admin/operations/clients" },
     { name: "Projects", href: "/admin/operations/projects" },
     { name: "Meetings", href: "/admin/operations/meetings" },
-    { name: "Activities", href: "/admin/operations/activities" },
+    // { name: "Activities", href: "/admin/operations/activities" },
 ]
 
 export default function Sidebar() {
@@ -32,7 +32,10 @@ export default function Sidebar() {
             {/* Nav */}
             <nav className="flex-1 p-2 space-y-1">
                 {navItems.map((item) => {
-                    const isActive = pathname === item.href
+                    const isActive =
+                        item.href === "/admin/operations"
+                            ? pathname === item.href
+                            : pathname === item.href || pathname.startsWith(item.href + "/")
 
                     return (
                         <Link
