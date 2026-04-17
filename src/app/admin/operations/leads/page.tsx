@@ -3,8 +3,6 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { useEffect, useState } from "react"
-import SearchBar from "@/components/admin/operations/SearchBar"
-import StatsPanel from "@/components/admin/operations/StatsPanel"
 import { Lead } from "@/types/lead"
 import LeadCard from "@/components/admin/operations/LeadCard"
 import LeadCardSkeleton from "@/components/admin/operations/skeletons/LeadCardSkeleton"
@@ -50,13 +48,9 @@ export default function Page() {
     }, [])
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
-            <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
 
-                {/* LEFT SIDE */}
-                <div className="lg:col-span-2 space-y-4">
+                <div className="">
 
-                    <SearchBar />
                     <CreateActionButton href="leads/create" label="Create New Lead"/>
 
                     {/* Loading Skeleton */}
@@ -105,10 +99,5 @@ export default function Page() {
                             <Plus size={22} />
                         </Link>
                 </div>
-
-                {/* RIGHT SIDE */}
-                <StatsPanel />
-            </div>
-        </div>
     )
 }
