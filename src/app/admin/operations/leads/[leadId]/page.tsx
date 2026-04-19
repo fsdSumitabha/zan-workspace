@@ -1,15 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
+import { toast } from "sonner"
 
-import SearchBar from "@/components/admin/operations/SearchBar"
-import StatsPanel from "@/components/admin/operations/StatsPanel"
 import LeadDetails from "@/components/admin/operations/LeadDetails"
 import type { Interaction } from "@/types/interaction"
-import { toast } from "sonner"
-//import router
-import { useRouter } from "next/navigation"
 
 import type { Lead } from "@/types/lead"
 import LeadDetailsSkeleton from "@/components/admin/operations/skeletons/LeadDetailsSkeleton"
@@ -151,12 +147,7 @@ export default function Page() {
 
     return (
         <StatusProvider>
-            <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
-                <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
-
                     <div className="lg:col-span-2 space-y-4">
-
-                        <SearchBar />
 
                         {/* Loading */}
                         {loading && (
@@ -208,12 +199,6 @@ export default function Page() {
                         )}
 
                     </div>
-
-                    <StatsPanel />
-
-                </div>
-
-            </div>
         </StatusProvider>
     )
 }

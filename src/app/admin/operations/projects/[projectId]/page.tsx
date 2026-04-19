@@ -1,18 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
-
-import SearchBar from "@/components/admin/operations/SearchBar"
-import StatsPanel from "@/components/admin/operations/StatsPanel"
+import { useParams, useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 import ProjectDetail from "@/components/admin/operations/ProjectDetail"
 import ProjectDetailSkeleton from "@/components/admin/operations/skeletons/ProjectDetailSkeleton"
 
 import { Project } from "@/types/projects"
 
-import { toast } from "sonner"
-import { useRouter } from "next/navigation"
 import LeadInteractionActions from "@/components/admin/operations/LeadInteractionActions"
 import InteractionModal from "@/components/admin/operations/InteractionModal/InteractionInlineForm"
 import InteractionTimeline from "@/components/admin/operations/interactions/InteractionTimeline"
@@ -25,14 +21,14 @@ interface ApiResponse {
 
 export default function Page() {
     const params = useParams()
+    const router = useRouter()
     const projectId = params.projectId as string
-    console.log("Project ID:", projectId)
+
     const [project, setProject] = useState<Project | null>(null)
     const [loading, setLoading] = useState(true)
     const [activeType, setActiveType] = useState<number | null>(null)
     const [isOpen, setIsOpen] = useState(false)
 
-    const router = useRouter()
     const [deleting, setDeleting] = useState(false)
 
     const [interactions, setInteractions] = useState([])
@@ -155,13 +151,7 @@ export default function Page() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
-            <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
-
-                {/* LEFT */}
-                <div className="lg:col-span-2 space-y-4">
-
-                    <SearchBar />
+                <div className=" space-y-4">
 
                     {/* Loading */}
                     {loading && (
@@ -200,9 +190,5 @@ export default function Page() {
                     )}
                 </div>
 
-                {/* RIGHT */}
-                <StatsPanel />
-            </div>
-        </div>
     )
 }

@@ -5,9 +5,6 @@ import { Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 
-import SearchBar from "@/components/admin/operations/SearchBar"
-import StatsPanel from "@/components/admin/operations/StatsPanel"
-
 import ClientDetails from "@/components/admin/operations/ClientDetails"
 import ClientDetailsSkeleton from "@/components/admin/operations/skeletons/ClientDetailsSkeleton"
 
@@ -146,12 +143,7 @@ export default function Page() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
-            <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
-
-                <div className="lg:col-span-2 space-y-4">
-
-                    <SearchBar />
+                <div className="space-y-4">
 
                     {/* Loading */}
                     {loading && (
@@ -237,10 +229,5 @@ export default function Page() {
                         <Plus size={22} />
                     </Link>
                 </div>
-
-                <StatsPanel />
-
-            </div>
-        </div>
     )
 }
