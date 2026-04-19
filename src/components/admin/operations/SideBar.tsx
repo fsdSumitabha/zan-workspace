@@ -30,7 +30,7 @@ export default function Sidebar() {
                     height={30}
                     width={90}
                     priority
-                    className="hidden dark:block"
+                    className="block dark:hidden"
                 />
 
                 {/* Dark Theme Logo */}
@@ -40,7 +40,7 @@ export default function Sidebar() {
                     height={30}
                     width={90}
                     priority
-                    className="block dark:hidden"
+                    className="hidden dark:block"
                 />
             </Link>
 
