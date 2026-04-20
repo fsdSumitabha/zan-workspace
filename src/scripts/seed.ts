@@ -3,11 +3,13 @@ import "dotenv/config"
 import seedLeads from "@/seeder/leadSeeder"
 import seedClients from "@/seeder/clientSeeder"
 import seedProjects from "@/seeder/projectSeeder"
+import seedUsers from "@/seeder/userSeeder"
 
 async function runSeed() {
     try {
         console.log("Seeding Started...")
 
+        await seedUsers()
         await seedLeads()
         await seedClients()
         await seedProjects()
