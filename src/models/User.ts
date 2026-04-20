@@ -1,5 +1,6 @@
-import mongoose, { Schema, Document } from "mongoose"
+import { Query } from "mongoose"
 import { UserRole } from "@/constants/userRoles"
+import mongoose, { Schema, Document } from "mongoose"
 import { USER_ROLE_META } from "@/constants/userRoles"
 
 export interface IUser extends Document {
@@ -73,5 +74,9 @@ const UserSchema = new Schema<IUser>(
     },
     { timestamps: true }
 )
+
+UserSchema.pre(/^find/, function (this: Query<any, IUser>) {
+    this.where({ deletedAt: null })
+})
 
 export default mongoose.models.User || mongoose.model<IUser>("User", UserSchema)
