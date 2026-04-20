@@ -5,11 +5,15 @@ const ActivityLogSchema = new mongoose.Schema({
     entityType: {
         type: String,
         enum: [
+            "USER",
             "LEAD",
             "CLIENT",
             "PROJECT",
+            "INTERACTION",
+            "CALL",
             "MEETING",
-            "DOCUMENT"
+            "DOCUMENT",
+            "QUOTATION",
         ]
     },
 
