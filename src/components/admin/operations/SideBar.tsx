@@ -17,7 +17,7 @@ export default function Sidebar() {
     const pathname = usePathname()
 
     return (
-        <aside className="w-64 bg-gray-50 h-full dark:bg-neutral-950 text-gray-900 dark:text-white border-r-4 border-neutral-800 flex flex-col">
+        <aside className="w-64 bg-gray-50 sticky top-0 h-screen dark:bg-neutral-950 text-gray-900 dark:text-white border-r-4 border-neutral-800 flex flex-col">
             {/* Logo */}
             <Link
                 href="/admin/operations"

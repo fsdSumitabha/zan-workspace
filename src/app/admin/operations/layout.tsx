@@ -17,7 +17,7 @@ export default function OperationsLayout({
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-x-hidden">
                 {/* Header */}
                 <div className="h-14 border border-b border-neutral-800 grid grid-cols-12 px-4 px-4 items-center">
                     <div className="col-span-12 md:col-span-8 flex items-center">
