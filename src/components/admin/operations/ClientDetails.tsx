@@ -9,6 +9,7 @@ import { CLIENT_STATUS_META, type ClientStatus } from "@/constants/clientStatus"
 import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import { Mail, Phone, Building2, Clock, RefreshCw } from "lucide-react"
 import type { Client } from "@/types/clients"
+import WhatsAppLink from "./button/WhatsAppLink"
 
 interface Props {
     client: Client
@@ -124,8 +125,7 @@ export default function ClientDetails({ client, onStatusChange }: Props) {
                 )}
                 {client.phone && (
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                        <Phone className="w-4 h-4 text-gray-400 shrink-0" />
-                        <span>{client.phone}</span>
+                        <WhatsAppLink phone={client.phone} />
                     </div>
                 )}
                 {client.company && (

@@ -4,6 +4,8 @@ import ServiceBadge from "./ServiceBadge"
 import { CLIENT_STATUS_META, CLIENT_STATUS } from "@/constants/clientStatus"
 import TimeAgo from "./dayjs/TimeAgo"
 import Link from "next/link"
+import { Mail, Phone } from "lucide-react"
+import WhatsAppLink from "./button/WhatsAppLink"
 
 interface Props {
     id: string
@@ -40,24 +42,43 @@ export default function ClientCard({
     return (
         <Link
             href={`/admin/operations/clients/${id}`}
-            className="block my-4 p-4 rounded-xl bg-slate-100 dark:bg-neutral-950 border border-neutral-600 hover:border-blue-500/40 transition cursor-pointer"
+            className="
+                block my-4 p-4 rounded-xl
+                bg-white dark:bg-neutral-900
+                border border-neutral-200 dark:border-neutral-800
+                hover:border-blue-500/40
+                transition cursor-pointer
+            "
         >
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="font-semibold">{name}</p>
-                    <p className="text-sm text-neutral-400">{company}</p>
+                    <p className="font-semibold text-neutral-900 dark:text-neutral-100">
+                        {name}
+                    </p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                        {company}
+                    </p>
                 </div>
 
                 <StatusBadge status={status} meta={CLIENT_STATUS_META} />
             </div>
 
             {/* Contact Info */}
-            <div className="mt-3 text-sm text-neutral-300 space-y-1">
-                <p>{phone}</p>
-                {email && <p>{email}</p>}
+            <div className="mt-3 text-sm text-neutral-600 dark:text-neutral-400 space-y-1">
+                <p>
+                    <Phone size={16} className="inline mr-2" />
+                    {phone}
+                </p>
 
-                <p className="text-xs text-neutral-500">
+                {email && (
+                    <p>
+                        <Mail size={16} className="inline mr-2" />
+                        {email}
+                    </p>
+                )}
+
+                <p className="text-xs text-neutral-400 dark:text-neutral-500">
                     <TimeAgo date={createdAt} />
                 </p>
             </div>
