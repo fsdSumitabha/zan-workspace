@@ -9,6 +9,7 @@ import TimeAgo from "./dayjs/TimeAgo"
 import { ProjectStatus, PROJECT_STATUS_META } from "@/constants/projectStatus"
 import { Project } from "@/types/projects"
 import ProjectStatusDropdown from "./statusDropdowns/ProjectStatusDropdown"
+import WhatsAppLink from "./button/WhatsAppLink"
 
 
 type Props = {
@@ -63,6 +64,7 @@ export default function ProjectDetail({ project, onStatusChange }: Props) {
                     <p className="text-sm text-gray-500 mt-1">
                         {project.clientId.company} • {project.clientId.name}
                     </p>
+                    <WhatsAppLink phone={project.clientId.phone} />
                 </div>
 
                 {onStatusChange ? (

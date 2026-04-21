@@ -13,7 +13,7 @@ export async function GET(
         const { id } = await context.params
 
         const project = await Project.findById(id)
-            .populate("clientId", "name company")
+            .populate("clientId", "name company phone")
 
         if (!project) {
             return NextResponse.json(
