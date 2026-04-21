@@ -1,8 +1,8 @@
-import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { LEAD_STATUS, LEAD_STATUS_META } from "@/constants/leadStatus"
 import type { Lead } from "@/types/lead"
 import LeadStatusDropdown from "./statusDropdowns/LeadStatusDropdown"
 import ConvertButton from "./ConvertClientButton"
+import WhatsAppLink from "./button/WhatsAppLink"
 
 interface Props {
     lead: Lead
@@ -71,7 +71,7 @@ export default function LeadDetails({ lead }: Props) {
             <div className="grid sm:grid-cols-2 gap-4 text-sm">
                 <div>
                     <p className="text-gray-500">Phone</p>
-                    <p>{lead.phone}</p>
+                    <WhatsAppLink phone={lead.phone} />
                 </div>
 
                 {lead.email && (
