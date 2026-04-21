@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
         const entityType = Number(formData.get("entityType"))
         const entityId = formData.get("entityId") as string
 
-        if (!entityType || !entityId) {
+        if (entityType === undefined || entityType === null || !entityId) {
             return NextResponse.json(
                 { success: false, error: "entityType and entityId are required" },
                 { status: 400 }
@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
         let fileUrl = ""
 
         // 1. Handle file upload
+        // 1. Handle file upload
         if (file) {
             const bytes = await file.arrayBuffer()
             const buffer = Buffer.from(bytes)
@@ -46,12 +47,13 @@ export async function POST(req: NextRequest) {
             // ensure folder exists
             await mkdir(uploadDir, { recursive: true })
 
-            const fileName = `${Date.now()}-${file.name}`
+            const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")
+            const fileName = `${Date.now()}-${safeName}`
             const filePath = path.join(uploadDir, fileName)
 
             await writeFile(filePath, buffer)
 
-            fileUrl = `/uploads/${fileName}`
+            fileUrl = `/uploads/quotations/${fileName}`
         }
 
         // 2. Create quotation

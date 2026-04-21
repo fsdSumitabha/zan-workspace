@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
         const entityType = Number(formData.get("entityType"))
         const entityId = formData.get("entityId") as string
 
-        if (!entityType || !entityId) {
+        if (entityType === undefined || entityType === null || !entityId) {
             return NextResponse.json(
                 { success: false, error: "entityType and entityId are required" },
                 { status: 400 }

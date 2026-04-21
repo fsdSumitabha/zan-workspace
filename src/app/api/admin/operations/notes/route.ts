@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
         await dbConnect()
 
         const body = await req.json()
- 
+
         const {
             entityType,
             entityId,
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
             status
         } = body
 
-        if (!entityType || !entityId) {
+        if (entityType === undefined || entityType === null || !entityId) {
             return NextResponse.json(
                 { success: false, error: "entityType and entityId are required" },
                 { status: 400 }
