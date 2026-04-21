@@ -1,11 +1,12 @@
 import StatusBadge from "./StatusBadge"
 import InteractionCard from "./InteractionCard"
 import ServiceBadge from "./ServiceBadge"
-import { CLIENT_STATUS_META, CLIENT_STATUS } from "@/constants/clientStatus"
+import { CLIENT_STATUS_META, ClientStatus } from "@/constants/clientStatus"
 import TimeAgo from "./dayjs/TimeAgo"
 import Link from "next/link"
 import { Mail, Phone } from "lucide-react"
-import WhatsAppLink from "./button/WhatsAppLink"
+import { InteractionType } from "@/config/interactionTypes"
+import { ServiceType } from "@/constants/services"
 
 interface Props {
     id: string
@@ -15,15 +16,15 @@ interface Props {
     phone: string
     createdAt: string
 
-    status: CLIENT_STATUS
+    status: ClientStatus
 
-    service?: "Web Development" | "Digital Marketing" | "BlockChain" | "Mobile APP" | "SEO"
+    service?: ServiceType
 
     interaction?: {
-        type: "MEETING" | "NOTE" | "DOCUMENT" | "PROPOSAL"
+        type: InteractionType
         title: string
         subtitle?: string
-        time: string
+        createdAt: string
         user: string
     }
 }

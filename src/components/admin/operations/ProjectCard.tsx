@@ -7,7 +7,7 @@ import ServiceBadge from "./ServiceBadge"
 import { PROJECT_STATUS_META, ProjectStatus } from "@/constants/projectStatus"
 import TimeAgo from "./dayjs/TimeAgo"
 import { ServiceType } from "@/constants/services"
-
+import { InteractionType } from "@/constants/interactionTypes"
 
 interface Props {
     id: string
@@ -28,10 +28,10 @@ interface Props {
     createdAt: string
 
     interaction?: {
-        type: "MEETING" | "NOTE" | "DOCUMENT" | "PROPOSAL"
+        type: InteractionType
         title: string
         subtitle?: string
-        time: string
+        createdAt: string
         user: string
     }
 }
