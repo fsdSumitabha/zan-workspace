@@ -1,4 +1,5 @@
 import { ProjectStatus } from "@/constants/projectStatus"
+import { ServiceType } from "@/constants/services"
 
 export interface Project {
     _id: string
@@ -12,7 +13,7 @@ export interface Project {
     companyName?: string
     title: string
     description?: string
-    serviceType?: number
+    serviceType?: ServiceType
 
     status: ProjectStatus
 

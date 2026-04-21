@@ -4,8 +4,9 @@ import Link from "next/link"
 import StatusBadge from "./StatusBadge"
 import InteractionCard from "./InteractionCard"
 import ServiceBadge from "./ServiceBadge"
-import { PROJECT_STATUS_META, PROJECT_STATUS } from "@/constants/projectStatus"
+import { PROJECT_STATUS_META, ProjectStatus } from "@/constants/projectStatus"
 import TimeAgo from "./dayjs/TimeAgo"
+import { ServiceType } from "@/constants/services"
 
 
 interface Props {
@@ -19,9 +20,9 @@ interface Props {
 
     title: string
     description?: string
-    serviceType?: string
+    serviceType?: ServiceType
 
-    status: PROJECT_STATUS
+    status: ProjectStatus
     budget?: number
 
     createdAt: string
