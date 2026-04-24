@@ -1,33 +1,51 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+
 
 export default function Page() {
+    const router = useRouter()
+
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
-
     const [loading, setLoading] = useState(false)
+
     const [error, setError] = useState<string | null>(null)
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
 
+        if (!email || !password) {
+            toast.error("Email and password are required")
+            return
+        }
+
         setLoading(true)
-        setError(null)
 
         try {
-            // TODO: replace with actual API call
-            await new Promise((res) => setTimeout(res, 1200))
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ email, password })
+            })
 
-            // fake error
-            if (email !== "admin@test.com") {
-                throw new Error("Invalid credentials")
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(data.message || "Login failed")
             }
 
-            // redirect later
-            console.log("Logged in")
+            toast.success("Login successful")
+
+            // redirect after login
+            router.push("/admin/operations")
+
         } catch (err: any) {
-            setError(err.message || "Something went wrong")
+            toast.error(err.message || "Something went wrong")
         } finally {
             setLoading(false)
         }
