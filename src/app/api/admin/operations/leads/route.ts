@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Lead from "@/models/Lead"
 import { SortOrder } from "mongoose"
-import { Types } from "mongoose"
+import { requireAuth } from "@/lib/auth/requireAuth"
+import { requireRole } from "@/lib/auth/requireRole"
+import { AuthError } from "@/lib/auth/requireAuth"
 
 export async function GET(req: NextRequest) {
     try {
+        await requireAuth(req)
+
         await dbConnect()
 
         const { searchParams } = new URL(req.url)
@@ -53,7 +57,18 @@ export async function GET(req: NextRequest) {
                 pages: Math.ceil(total / limit)
             }
         })
-    } catch (error) {
+    } catch (error: any) {
+        // 2. Handle auth errors properly
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: error.message
+                },
+                { status: error.statusCode }
+            )
+        }
+
         return NextResponse.json(
             {
                 success: false,
@@ -67,6 +82,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        await requireRole(req, [10, 60])
+
         await dbConnect()
 
         const body = await req.json()
@@ -96,67 +113,19 @@ export async function POST(req: NextRequest) {
             },
             { status: 201 }
         )
-    } catch {
+    } catch (error: any) {
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: error.message
+                },
+                { status: error.statusCode }
+            )
+        }
+
         return NextResponse.json(
             { success: false, message: "Failed to create lead" },
-            { status: 500 }
-        )
-    }
-}
-
-
-export async function DELETE(req: NextRequest) {
-    try {
-        await dbConnect()
-
-        const { searchParams } = new URL(req.url)
-        const leadId = searchParams.get("leadId")
-
-        // 1. Validate presence
-        if (!leadId) {
-            return NextResponse.json(
-                { success: false, message: "leadId is required" },
-                { status: 400 }
-            )
-        }
-
-        // 2. Validate MongoDB ObjectId
-        if (!Types.ObjectId.isValid(leadId)) {
-            return NextResponse.json(
-                { success: false, message: "Invalid leadId" },
-                { status: 400 }
-            )
-        }
-
-        // 3. Check existence
-        const existingLead = await Lead.findById(leadId)
-
-        if (!existingLead) {
-            return NextResponse.json(
-                { success: false, message: "Lead not found" },
-                { status: 404 }
-            )
-        }
-
-        // 4. Delete
-        await Lead.findByIdAndDelete(leadId)
-
-        return NextResponse.json(
-            {
-                success: true,
-                message: "Lead deleted successfully"
-            },
-            { status: 200 }
-        )
-
-    } catch (error) {
-        console.error("DELETE LEAD ERROR:", error)
-
-        return NextResponse.json(
-            {
-                success: false,
-                message: "Internal server error"
-            },
             { status: 500 }
         )
     }

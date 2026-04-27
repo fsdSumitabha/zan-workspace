@@ -13,7 +13,7 @@ export async function requireRole(
     const user = await requireAuth(req)
 
     if (!allowedRoles.includes(user.role)) {
-        throw new AuthError("Forbidden", 403)
+        throw new AuthError("You aren't authorized to perform this action.", 403)
     }
 
     return user
