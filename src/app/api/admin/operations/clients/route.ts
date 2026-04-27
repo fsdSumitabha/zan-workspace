@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Client from "@/models/Client"
 import { SortOrder } from "mongoose"
+import { requireAuth } from "@/lib/auth/requireAuth"
+import { requireRole } from "@/lib/auth/requireRole"
+import { AuthError } from "@/lib/auth/requireAuth"
 
 export async function GET(req: NextRequest) {
     try {
+
+        await requireAuth(req)
+
         await dbConnect()
 
         const { searchParams } = new URL(req.url)
@@ -55,7 +61,18 @@ export async function GET(req: NextRequest) {
                 pages: Math.ceil(total / limit)
             }
         })
-    } catch {
+    } catch (error: any) {
+
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: error.message
+                },
+                { status: error.statusCode }
+            )
+        }
+
         return NextResponse.json(
             { success: false, message: "Failed to fetch clients" },
             { status: 500 }
@@ -65,6 +82,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        await requireRole(req, [10, 60])
+
         await dbConnect()
 
         const body = await req.json()
@@ -91,7 +110,16 @@ export async function POST(req: NextRequest) {
             { success: true, data: client },
             { status: 201 }
         )
-    } catch {
+    } catch (error: any) {
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: error.message
+                },
+                { status: error.statusCode }
+            )
+        }
         return NextResponse.json(
             { success: false, message: "Failed to create client" },
             { status: 500 }
