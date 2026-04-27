@@ -3,10 +3,11 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function Page() {
     const router = useRouter()
+    const { refreshUser } = useAuth()
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -40,6 +41,8 @@ export default function Page() {
             }
 
             toast.success("Login successful")
+
+            await refreshUser()
 
             // redirect after login
             router.push("/admin/operations")

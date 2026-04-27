@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { UserRole } from "@/constants/userRoles"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 interface AuthUser {
     id: string
@@ -22,6 +24,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+    const router = useRouter()
+
     const [user, setUser] = useState<AuthUser | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -29,17 +33,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const res = await fetch("/api/auth/me", {
                 method: "GET",
-                credentials: "include"
+                credentials: "include",
+                cache: "no-store" // IMPORTANT (Next 16)
             })
 
-            const data = await res.json()
+            if (!res.ok) {
+                setUser(null)
+                return
+            }
 
-            if (res.ok && data.data) {
+            const data = await res.json().catch(() => null)
+
+            if (data?.data) {
                 setUser(data.data)
             } else {
                 setUser(null)
             }
-        } catch {
+
+        } catch (error) {
+            console.error("FETCH_USER_ERROR:", error)
             setUser(null)
         } finally {
             setLoading(false)
@@ -57,12 +69,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         try {
-            await fetch("/api/auth/logout", {
+            const res = await fetch("/api/auth/logout", {
                 method: "POST"
             })
-        } catch {}
 
-        setUser(null)
+            if (!res.ok) {
+                throw new Error("Logout failed")
+            }
+
+            // clear context
+            setUser(null)
+
+            toast.success("Logged out successfully")
+
+            // small delay so user sees toast
+            setTimeout(() => {
+                router.push("/admin/authentication/login")
+            }, 500)
+
+        } catch (err: any) {
+            toast.error(err.message || "Something went wrong")
+        }
     }
 
     return (
