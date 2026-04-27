@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useAuth } from "@/contexts/AuthContext"
+import { Eye, EyeOff } from "lucide-react"
 
 export default function Page() {
     const router = useRouter()
@@ -12,6 +13,7 @@ export default function Page() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
 
     const [error, setError] = useState<string | null>(null)
 
@@ -108,25 +110,42 @@ export default function Page() {
                         </div>
 
                         {/* Password */}
+                        {/* Password */}
                         <div>
                             <label className="text-xs text-neutral-500">
                                 Password
                             </label>
-                            <input
-                                type="password"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="mt-1 w-full px-3 py-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-transparent text-sm outline-none focus:ring-2 focus:ring-neutral-400"
-                                placeholder="••••••••"
-                            />
+
+                            <div className="relative mt-1">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full px-3 py-2 pr-10 rounded-md border border-neutral-300 dark:border-neutral-700 bg-transparent text-sm outline-none focus:ring-2 focus:ring-neutral-400"
+                                    placeholder="Enter password"
+                                />
+
+                                {/* Toggle Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(prev => !prev)}
+                                    className="absolute inset-y-0 right-2 flex items-center text-neutral-500 hover:text-neutral-700"
+                                >
+                                    {showPassword ? (
+                                        <EyeOff size={16} />
+                                    ) : (
+                                        <Eye size={16} />
+                                    )}
+                                </button>
+                            </div>
                         </div>
 
                         {/* Button */}
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-2 rounded-md bg-neutral-900 text-white text-sm hover:bg-neutral-800 disabled:opacity-60"
+                            className="w-full py-2 rounded-md bg-neutral-800 text-white text-sm hover:bg-neutral-800 disabled:opacity-60"
                         >
                             {loading ? "Signing in..." : "Sign In"}
                         </button>
