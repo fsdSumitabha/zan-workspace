@@ -49,7 +49,7 @@ export default function Page() {
 
     return (
 
-                <div className="">
+                <div className="space-y-4">
 
                     <CreateActionButton href="leads/create" label="Create New Lead"/>
 
