@@ -5,19 +5,19 @@ import dbConnect from "@/lib/db/dbConnect"
 import Project from "@/models/Project"
 import Interaction from "@/models/Interaction"
 
-import {
-    PROJECT_STATUS,
-    PROJECT_STATUS_META,
-    type ProjectStatus
-} from "@/constants/projectStatus"
+import { PROJECT_STATUS, type ProjectStatus } from "@/constants/projectStatus"
 
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
+import { requireRole } from "@/lib/auth/requireRole"
+import { AuthError } from "@/lib/auth/requireAuth"
 
 export async function PATCH(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        await requireRole(req, [10, 60])
+
         await dbConnect()
 
         const { id } = await context.params
@@ -130,8 +130,15 @@ export async function PATCH(
             },
             { status: 200 }
         )
-    } catch (error) {
+    } catch (error : any) {
         console.error("Update Project Status Error:", error)
+
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: error.statusCode }
+            )
+        }
 
         return NextResponse.json(
             {

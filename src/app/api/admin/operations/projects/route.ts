@@ -3,9 +3,13 @@ import dbConnect from "@/lib/db/dbConnect"
 import Project from "@/models/Project"
 import "@/models/Client"
 import { SortOrder } from "mongoose"
+import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
+import { requireRole } from "@/lib/auth/requireRole"
 
 export async function GET(req: NextRequest) {
     try {
+        await requireAuth(req)
+
         await dbConnect()
 
         const { searchParams } = new URL(req.url)
@@ -62,7 +66,15 @@ export async function GET(req: NextRequest) {
                 pages: Math.ceil(total / limit)
             }
         })
-    } catch {
+    } catch (error : any) {
+
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: error.statusCode }
+            )
+        }
+
         return NextResponse.json(
             { success: false, message: "Failed to fetch projects" },
             { status: 500 }
@@ -72,6 +84,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        await requireRole(req, [10, 60])
+
         await dbConnect()
 
         const body = await req.json()
@@ -89,7 +103,14 @@ export async function POST(req: NextRequest) {
             { success: true, data: project },
             { status: 201 }
         )
-    } catch {
+    } catch(error : any) {
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: error.statusCode }
+            )
+        }
+
         return NextResponse.json(
             { success: false, message: "Failed to create project" },
             { status: 500 }

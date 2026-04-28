@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Project from "@/models/Project"
 import { Types } from "mongoose"
+import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
+import { requireRole } from "@/lib/auth/requireRole"
 
 export async function GET(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        await requireAuth(req)
+
         await dbConnect()
 
         const { id } = await context.params
@@ -26,7 +30,14 @@ export async function GET(
             success: true,
             data: project
         })
-    } catch {
+    } catch(error : any) {
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: error.statusCode }
+            )
+        }
+
         return NextResponse.json(
             { success: false, message: "Invalid ID" },
             { status: 400 }
@@ -39,6 +50,8 @@ export async function PATCH(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        await requireRole(req, [10, 60])
+
         await dbConnect()
 
         const { id } = await context.params
@@ -61,7 +74,14 @@ export async function PATCH(
             success: true,
             data: project
         })
-    } catch {
+    } catch(error : any) {
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: error.statusCode }
+            )
+        }
+
         return NextResponse.json(
             { success: false, message: "Update failed" },
             { status: 400 }
@@ -74,6 +94,8 @@ export async function DELETE(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        await requireRole(req, [10, 60])
+
         const { id } = await context.params
 
         // 1. Validate ID
@@ -106,8 +128,15 @@ export async function DELETE(
             { status: 200 }
         )
 
-    } catch (error) {
+    } catch (error : any) {
         console.error("DELETE PROJECT ERROR:", error)
+        
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: error.statusCode }
+            )
+        }
 
         return NextResponse.json(
             { success: false, message: "Internal server error" },
