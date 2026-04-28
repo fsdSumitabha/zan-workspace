@@ -9,9 +9,12 @@ import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import Lead from "@/models/Lead"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
+import { requireRole } from "@/lib/auth/requireRole"
+import { AuthError } from "@/lib/auth/requireAuth"
 
 export async function POST(req: NextRequest) {
     try {
+        requireRole(req, [10, 60])
         await dbConnect()
 
         const formData = await req.formData()
@@ -108,8 +111,15 @@ export async function POST(req: NextRequest) {
             { success: true, data: quotation },
             { status: 201 }
         )
-    } catch (error) {
+    } catch (error : any) {
         console.error(error)
+
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, error: error.message },
+                { status: error.statusCode }
+            )
+        }
 
         return NextResponse.json(
             { success: false, error: "Failed to create quotation" },

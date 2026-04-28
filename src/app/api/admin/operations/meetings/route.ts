@@ -8,9 +8,13 @@ import Lead from "@/models/Lead"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
 import { Meeting as IMeeting } from "@/types/meeting"
+import { AuthError, requireAuth } from "@/lib/auth/requireAuth"
+import { requireRole } from "@/lib/auth/requireRole"
 
 export async function GET(req: NextRequest) {
     try {
+        requireAuth(req)
+
         await dbConnect()
 
         const { searchParams } = new URL(req.url)
@@ -125,8 +129,15 @@ export async function GET(req: NextRequest) {
             { status: 200 }
         )
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("GET MEETINGS ERROR:", error)
+
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, error: error.message },
+                { status: error.statusCode }
+            )
+        }
 
         return NextResponse.json(
             {
@@ -140,6 +151,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        await requireRole(req, [10, 60])
+
         await dbConnect()
 
         const body = await req.json()
@@ -217,8 +230,15 @@ export async function POST(req: NextRequest) {
             { success: true, data: meeting },
             { status: 201 }
         )
-    } catch (error) {
+    } catch (error : any) {
         console.error(error)
+
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, error: error.message },
+                { status: error.statusCode }
+            )
+        }
 
         return NextResponse.json(
             { success: false, error: "Failed to create meeting" },

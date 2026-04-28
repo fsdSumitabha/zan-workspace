@@ -10,9 +10,14 @@ import Project from "@/models/Project"
 
 import path from "path"
 import { writeFile, mkdir } from "fs/promises"
+import { requireRole } from "@/lib/auth/requireRole"
+import { AuthError } from "@/lib/auth/requireAuth"
+
 
 export async function POST(req: NextRequest) {
     try {
+        await requireRole(req, [10, 60])
+
         await dbConnect()
 
         const formData = await req.formData()
@@ -116,8 +121,15 @@ export async function POST(req: NextRequest) {
             { status: 201 }
         )
 
-    } catch (error) {
+    } catch (error : any) {
         console.error(error)
+        
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, error: error.message },
+                { status: error.statusCode }
+            )
+        }
 
         return NextResponse.json(
             { success: false, error: "Failed to create call" },
