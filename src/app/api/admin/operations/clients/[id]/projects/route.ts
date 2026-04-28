@@ -1,15 +1,18 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import mongoose from "mongoose"
 
 import dbConnect from "@/lib/db/dbConnect"
 import Project from "@/models/Project"
 import Client from "@/models/Client"
+import { AuthError, requireAuth } from "@/lib/auth/requireAuth"
 
 export async function GET(
-    req: Request,
+    req: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        await requireAuth(req)
+
         await dbConnect()
 
         // get params using await (important)
@@ -46,6 +49,13 @@ export async function GET(
         )
     } catch (error) {
         console.error("GET CLIENT PROJECTS ERROR:", error)
+
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: error.statusCode }
+            )
+        }
 
         return NextResponse.json(
             {

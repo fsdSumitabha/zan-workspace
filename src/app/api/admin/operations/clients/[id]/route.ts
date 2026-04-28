@@ -3,12 +3,17 @@ import dbConnect from "@/lib/db/dbConnect"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
 import { Types } from "mongoose"
+import { requireAuth } from "@/lib/auth/requireAuth"
+import { requireRole } from "@/lib/auth/requireRole"
+import { AuthError } from "@/lib/auth/requireAuth"
 
 export async function GET(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        await requireAuth(req)
+
         await dbConnect()
 
         const { id } = await context.params
@@ -34,7 +39,13 @@ export async function GET(
                 projects
             }
         })
-    } catch (error) {
+    } catch (error : any) {
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: 401 }
+            )
+        }
         return NextResponse.json(
             {
                 success: false,
@@ -86,6 +97,8 @@ export async function DELETE(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        await requireRole(req, [10, 60])
+
         const { id } = await context.params
 
         // 1. Validate ID
@@ -121,6 +134,13 @@ export async function DELETE(
     } catch (error) {
         console.error("DELETE CLIENT ERROR:", error)
 
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: error.statusCode }
+            )
+        }
+        
         return NextResponse.json(
             { success: false, message: "Internal server error" },
             { status: 500 }

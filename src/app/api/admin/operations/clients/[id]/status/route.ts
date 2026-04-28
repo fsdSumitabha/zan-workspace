@@ -8,12 +8,16 @@ import Interaction from "@/models/Interaction"
 import { CLIENT_STATUS, CLIENT_STATUS_META, type ClientStatus } from "@/constants/clientStatus"
 
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
+import { requireRole } from "@/lib/auth/requireRole"
+import { AuthError, requireAuth } from "@/lib/auth/requireAuth"
 
 export async function PATCH(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        await requireRole(req, [10, 60])
+        
         await dbConnect()
 
         const { id } = await context.params
@@ -126,6 +130,13 @@ export async function PATCH(
         )
     } catch (error) {
         console.error("Update Client Status Error:", error)
+
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: error.statusCode }
+            )
+        }
 
         return NextResponse.json(
             {
