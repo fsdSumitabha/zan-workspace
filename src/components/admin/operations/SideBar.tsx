@@ -7,17 +7,24 @@ import { usePathname } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 
 const navItems = [
-    { name: "Dashboard", href: "/admin/operations" },
-    { name: "Leads", href: "/admin/operations/leads" },
-    { name: "Clients", href: "/admin/operations/clients" },
-    { name: "Projects", href: "/admin/operations/projects" },
-    { name: "Meetings", href: "/admin/operations/meetings" },
-    // { name: "Activities", href: "/admin/operations/activities" },
+    { name: "Dashboard", href: "/admin/operations", roles: [10, 20, 30, 40, 50, 60, 70, 80] },
+    { name: "Leads", href: "/admin/operations/leads", roles: [10, 20, 30, 40, 50, 60, 70, 80] },
+    { name: "Clients", href: "/admin/operations/clients", roles: [10, 20, 30, 40, 50, 60, 70, 80] },
+    { name: "Projects", href: "/admin/operations/projects", roles: [10, 20, 30, 40, 50, 60, 70, 80] },
+    { name: "Meetings", href: "/admin/operations/meetings", roles: [10, 20, 30, 40, 50, 60, 70, 80] },
+    { name: "Users", href: "/admin/operations/users", roles: [10, 20,] },
 ]
 
 export default function Sidebar() {
     const pathname = usePathname()
     const { user, loading, logout } = useAuth()
+
+    if (loading) return null
+    if (!user) return null
+
+    const filteredNavItems = navItems.filter(item =>
+        item.roles.includes(user.role)
+    )
 
     return (
         <aside className="w-64 bg-gray-50 sticky top-0 h-screen dark:bg-neutral-950 text-gray-900 dark:text-white border-r-4 border-neutral-800 flex flex-col">
@@ -49,7 +56,7 @@ export default function Sidebar() {
 
             {/* Nav */}
             <nav className="flex-1 p-2 space-y-1">
-                {navItems.map((item) => {
+                {filteredNavItems.map((item) => {
                     const isActive =
                         item.href === "/admin/operations"
                             ? pathname === item.href
