@@ -1,9 +1,14 @@
+import path from "path"
+import fs from "fs/promises"
+import bcrypt from "bcryptjs"
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
 import { SortOrder } from "mongoose"
 import { requireRole } from "@/lib/auth/requireRole"
-import { AuthError } from "@/lib/auth/requireAuth"
+import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
+import { USER_ROLE_META } from "@/constants/userRoles"
+
 
 export async function GET(req: NextRequest) {
     try {
@@ -85,6 +90,129 @@ export async function GET(req: NextRequest) {
                 success: false,
                 message: "Failed to fetch users"
             },
+            { status: 500 }
+        )
+    }
+}
+
+
+export async function POST(req: NextRequest) {
+    try {
+        const authUser = await requireAuth(req)
+
+        await dbConnect()
+
+        const formData = await req.formData()
+
+        const name = formData.get("name")?.toString().trim()
+        const email = formData.get("email")?.toString().toLowerCase().trim()
+        const password = formData.get("password")?.toString()
+        const role = Number(formData.get("role"))
+        const isActive = formData.get("isActive") === "true"
+
+        const file = formData.get("avatarFile") as File | null
+
+        if (!name || !email || !password) {
+            return NextResponse.json(
+                { success: false, message: "Missing required fields" },
+                { status: 400 }
+            )
+        }
+
+        if (!(role in USER_ROLE_META)) {
+            return NextResponse.json(
+                { success: false, message: "Invalid role" },
+                { status: 400 }
+            )
+        }
+
+        if (password.length < 6) {
+            return NextResponse.json(
+                { success: false, message: "Password must be at least 6 characters" },
+                { status: 400 }
+            )
+        }
+
+        const existingUser = await User.findOne({ email })
+
+        if (existingUser) {
+            return NextResponse.json(
+                { success: false, message: "Email already exists" },
+                { status: 409 }
+            )
+        }
+
+        let avatarUrl = ""
+
+        if (file && file.size > 0) {
+            if (!["image/jpeg", "image/png"].includes(file.type)) {
+                return NextResponse.json(
+                    { success: false, message: "Invalid file type" },
+                    { status: 415 }
+                )
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                return NextResponse.json(
+                    { success: false, message: "File too large (max 5MB)" },
+                    { status: 413 }
+                )
+            }
+
+            const bytes = await file.arrayBuffer()
+            const buffer = Buffer.from(bytes)
+
+            const fileName = `${Date.now()}-${file.name.replace(/\s/g, "")}`
+
+            const uploadDir = path.join(process.cwd(), "public/uploads/avatars")
+
+            await fs.mkdir(uploadDir, { recursive: true })
+
+            const filePath = path.join(uploadDir, fileName)
+
+            await fs.writeFile(filePath, buffer)
+
+            avatarUrl = `/uploads/avatars/${fileName}`
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10)
+
+        const user = await User.create({
+            name,
+            email,
+            password: hashedPassword,
+            role,
+            isActive,
+            avatar: avatarUrl,
+            createdBy: authUser._id
+        })
+
+        return NextResponse.json(
+            {
+                success: true,
+                data: {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    isActive: user.isActive,
+                    avatar: user.avatar
+                }
+            },
+            { status: 201 }
+        )
+    } catch (error: any) {
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: error.statusCode }
+            )
+        }
+
+        console.error("Create user error:", error)
+
+        return NextResponse.json(
+            { success: false, message: "Failed to create user" },
             { status: 500 }
         )
     }

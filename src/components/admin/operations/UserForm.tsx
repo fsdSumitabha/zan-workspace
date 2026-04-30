@@ -187,7 +187,7 @@ export default function UserForm({
                                             ? URL.createObjectURL(form.avatarFile)
                                             : form.avatar
                                     }
-                                    className="w-16 h-16 rounded-full object-cover border border-gray-200 dark:border-neutral-700"
+                                    className="w-full h-full rounded-full object-cover border border-gray-200 dark:border-neutral-700"
                                     alt="Avatar preview"
                                 />
                                 <button

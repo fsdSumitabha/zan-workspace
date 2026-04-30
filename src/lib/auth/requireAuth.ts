@@ -13,10 +13,7 @@ export class AuthError extends Error {
     }
 }
 
-/**
- * Ensures the request has a valid authenticated user
- * Throws AuthError if not authenticated
- */
+
 export async function requireAuth(req: NextRequest): Promise<AuthUser> {
     const user = await getUserFromRequest(req)
 
