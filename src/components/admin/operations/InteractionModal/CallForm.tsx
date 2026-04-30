@@ -95,7 +95,7 @@ export default function CallForm({ entityType, entityId, onClose, onSuccess }: P
                     <input
                         required
                         type="tel"
-                        placeholder="+91 99999 00000"
+                        placeholder="Enter 10-digit phone number"
                         pattern="[0-9]{10}"
                         value={form.contactPersonPhone}
                         onChange={set("contactPersonPhone")}
