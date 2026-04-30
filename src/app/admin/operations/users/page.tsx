@@ -1,9 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import Link from "next/link"
+import { Plus } from "lucide-react"
 import { User } from "@/types/user"
+import { useEffect, useState } from "react"
 import UserCard from "@/components/admin/operations/UserCard"
 import UserCardSkeleton from "@/components/admin/operations/UserCardSkeleton"
+import CreateActionButton from "@/components/admin/operations/CreateActionButton"
 
 interface ApiResponse {
     success: boolean
@@ -51,6 +54,7 @@ export default function Page() {
 
     return (
         <div className="space-y-4">
+            <CreateActionButton href="users/create" label="Create New User" />
 
             {/* Loading */}
             {loading && (
@@ -121,6 +125,21 @@ export default function Page() {
                     </div>
                 </div>
             )}
+
+            <Link
+                href={"leads/create"}
+                className="
+                                fixed bottom-6 right-6
+                                h-14 w-14 rounded-full
+                                bg-blue-600 hover:bg-blue-500
+                                text-white
+                                flex items-center justify-center
+                                shadow-lg hover:shadow-xl
+                                transition
+                            "
+            >
+                <Plus size={22} />
+            </Link>
         </div>
     )
 }
