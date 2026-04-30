@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { User } from "@/types/user"
 import UserCard from "@/components/admin/operations/UserCard"
-import LeadCardSkeleton from "@/components/admin/operations/skeletons/LeadCardSkeleton"
+import UserCardSkeleton from "@/components/admin/operations/UserCardSkeleton"
 
 interface ApiResponse {
     success: boolean
@@ -53,7 +53,7 @@ export default function Page() {
                 <div className="space-y-4">
                     {loading &&
                         Array.from({ length: 5 }).map((_, i) => (
-                            <p key={i} className="bg-gray-200 h-4 rounded" />
+                            <UserCardSkeleton key={i} />
                         ))}
                 </div>
             )}
