@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { USER_ROLE_META, UserRole } from "@/constants/userRoles"
 import FileUpload from "@/components/admin/operations/dropzone/FileUpload"
+import AvatarPreview from "@/components/admin/operations/AvatarPreview"
 
 interface UserFormValues {
     name: string
@@ -46,8 +47,7 @@ export default function UserForm({
         } else {
             setForm((prev) => ({
                 ...prev,
-                [name]:
-                    name === "role" ? Number(value) : value
+                [name]: name === "role" ? Number(value) : value
             }))
         }
     }
@@ -162,48 +162,32 @@ export default function UserForm({
 
                 {/* RIGHT SIDE: Avatar Upload Container */}
                 <div className="lg:col-span-5">
-                    <div className="border border-gray-200 dark:border-neutral-700 rounded-xl p-5 bg-gray-50 dark:bg-neutral-800/50 h-full">
-                        <label className="block text-sm mb-3 text-gray-600 dark:text-gray-300 font-medium">
+                    <div className="rounded-xl p-5 bg-gray-50 dark:bg-neutral-800/50 h-full">
+                        <label className="block text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
                             Avatar
                         </label>
 
-                        <FileUpload
-                            file={form.avatarFile ?? null}
-                            setFile={(file) =>
-                                setForm((prev) => ({
-                                    ...prev,
-                                    avatarFile: file
-                                }))
-                            }
-                            acceptedTypes={["image/jpeg", "image/png"]}
-                        />
-
-                        {/* Preview */}
-                        {(form.avatarFile || form.avatar) && (
-                            <div className="mt-4 flex items-center gap-3">
-                                <img
-                                    src={
-                                        form.avatarFile
-                                            ? URL.createObjectURL(form.avatarFile)
-                                            : form.avatar
-                                    }
-                                    className="w-full h-full rounded-full object-cover border border-gray-200 dark:border-neutral-700"
-                                    alt="Avatar preview"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setForm((prev) => ({
-                                            ...prev,
-                                            avatarFile: null,
-                                            avatar: ""
-                                        }))
-                                    }
-                                    className="text-sm text-red-500 hover:text-red-600 transition-colors"
-                                >
-                                    Remove
-                                </button>
-                            </div>
+                        {!form.avatarFile && !form.avatar ? (
+                            // Empty state — dropzone
+                            <FileUpload
+                                file={form.avatarFile ?? null}
+                                setFile={(file) =>
+                                    setForm((prev) => ({ ...prev, avatarFile: file }))
+                                }
+                                acceptedTypes={["image/jpeg", "image/png"]}
+                            />
+                        ) : (
+                            // Filled state — circular preview + file info row
+                            <AvatarPreview
+                                file={form.avatarFile ?? null}
+                                fallbackUrl={form.avatar}
+                                onReplace={(file) =>
+                                    setForm((prev) => ({ ...prev, avatarFile: file, avatar: "" }))
+                                }
+                                onRemove={() =>
+                                    setForm((prev) => ({ ...prev, avatarFile: null, avatar: "" }))
+                                }
+                            />
                         )}
                     </div>
                 </div>
