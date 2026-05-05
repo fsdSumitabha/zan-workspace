@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
             role,
             isActive,
             avatar: avatarUrl,
-            createdBy: authUser._id
+            createdBy: authUser.id
         })
 
         return NextResponse.json(

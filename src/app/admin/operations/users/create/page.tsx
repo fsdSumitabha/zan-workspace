@@ -1,9 +1,28 @@
 "use client"
 
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import UserForm from "@/components/admin/operations/UserForm"
 
+interface UserFormValues {
+    name: string
+    email: string
+    password: string
+    role: number
+    isActive: boolean
+    avatar?: string
+    avatarFile?: File | null
+}
+
 export default function Page() {
-    const handleCreateUser = async (data: any) => {
+    const router = useRouter()
+    const [loading, setLoading] = useState(false)
+
+    const handleCreateUser = async (data: UserFormValues) => {
+        setLoading(true)
+        const toastId = toast.loading("Creating user...")
+
         try {
             const fd = new FormData()
             fd.append("name", data.name)
@@ -23,15 +42,30 @@ export default function Page() {
 
             const json = await res.json()
 
-            if (!json.success) {
-                throw new Error(json.message)
+            if (!res.ok || !json.success) {
+                throw new Error(json.message || "Failed to create user")
             }
 
-            console.log("User created")
+            toast.success(`${json.data.name} has been created`, {
+                id: toastId,
+                description: json.data.email
+            })
+
+            // Redirect to user list (adjust path to your route)
+            router.push("/admin/operations/users")
+            router.refresh()
         } catch (err) {
-            console.error(err)
+            const message =
+                err instanceof Error ? err.message : "Something went wrong"
+
+            toast.error("Failed to create user", {
+                id: toastId,
+                description: message
+            })
+        } finally {
+            setLoading(false)
         }
     }
 
-    return <UserForm onSubmit={handleCreateUser} />
+    return <UserForm onSubmit={handleCreateUser} loading={loading} />
 }
