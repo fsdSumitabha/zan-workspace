@@ -17,7 +17,7 @@ export async function POST(
     const session = await mongoose.startSession()
 
     try {
-        await requireRole(req, [10, 60])
+        const authUser = await requireRole(req, [10, 60])
         await dbConnect()
 
         const { id } = await context.params
@@ -71,6 +71,7 @@ export async function POST(
                     phone: lead.phone,
                     email: lead.email,
                     status: CLIENT_STATUS.ACTIVE,
+                    createdBy: authUser.id,
                 },
             ],
             { session }

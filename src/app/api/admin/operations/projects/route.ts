@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        await requireRole(req, [10, 60])
+        const authUser = await requireRole(req, [10, 60])
 
         await dbConnect()
 
@@ -97,7 +97,16 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const project = await Project.create(body)
+        const { clientId, title, description, startDate, endDate } = body
+
+        const project = await Project.create({
+            clientId,
+            title,
+            description,
+            startDate,
+            endDate,
+            createdBy: authUser.id
+        })
 
         return NextResponse.json(
             { success: true, data: project },

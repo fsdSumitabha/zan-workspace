@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        await requireRole(req, [10, 60])
+        const authUser = await requireRole(req, [10, 60])
 
         await dbConnect()
 
@@ -104,7 +104,15 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const lead = await Lead.create(body)
+        const { name, email, phone, source } = body
+
+        const lead = await Lead.create({
+            name,
+            email,
+            phone,
+            source,
+            createdBy: authUser.id,
+        })
 
         return NextResponse.json(
             {
