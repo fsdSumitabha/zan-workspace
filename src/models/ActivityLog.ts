@@ -1,6 +1,15 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Document } from "mongoose"
 
-const ActivityLogSchema = new mongoose.Schema({
+export interface IActivityLog extends Document {
+    entityType?: | "USER" | "LEAD" | "CLIENT" | "PROJECT" | "INTERACTION" | "CALL" | "MEETING" | "DOCUMENT" | "QUOTATION"
+    entityId?: mongoose.Types.ObjectId
+    action?: string
+    oldData?: Record<string, unknown>
+    newData?: Record<string, unknown>
+    userId?: mongoose.Types.ObjectId
+}
+
+const ActivityLogSchema = new mongoose.Schema<IActivityLog>({
 
     entityType: {
         type: String,
@@ -32,4 +41,4 @@ const ActivityLogSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
-export default mongoose.models.ActivityLog || mongoose.model("ActivityLog", ActivityLogSchema)
+export default mongoose.models.ActivityLog || mongoose.model<IActivityLog>("ActivityLog", ActivityLogSchema)

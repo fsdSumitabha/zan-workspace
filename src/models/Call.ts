@@ -1,6 +1,20 @@
 import mongoose from "mongoose"
 
-const CallSchema = new mongoose.Schema({
+export interface ICall extends Document {
+    entityType: number
+    entityId: mongoose.Types.ObjectId
+    contactPersonName: string
+    contactPersonPhone?: string
+    callTime: Date
+    duration: number
+    recordingUrl?: string
+    notes?: string
+    direction: number
+    status: number
+    createdBy?: mongoose.Types.ObjectId
+}
+
+const CallSchema = new mongoose.Schema<ICall>({
 
     entityType: {
         type: Number,
@@ -64,4 +78,4 @@ const CallSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
-export default mongoose.models.Call || mongoose.model("Call", CallSchema)
+export default mongoose.models.Call || mongoose.model<ICall>("Call", CallSchema)

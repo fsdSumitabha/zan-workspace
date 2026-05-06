@@ -1,6 +1,16 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-const InteractionSchema = new mongoose.Schema({
+export interface IInteraction extends Document {
+    entityType: number
+    entityId: mongoose.Types.ObjectId
+    type: number
+    title?: string
+    description?: string
+    refId?: mongoose.Types.ObjectId
+    createdBy?: mongoose.Types.ObjectId
+}
+
+const InteractionSchema = new mongoose.Schema<IInteraction>({
 
     entityType: {
         type: Number,
@@ -31,4 +41,4 @@ const InteractionSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
-export default mongoose.models.Interaction || mongoose.model("Interaction", InteractionSchema) 
+export default mongoose.models.Interaction || mongoose.model<IInteraction>("Interaction", InteractionSchema) 

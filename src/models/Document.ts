@@ -1,6 +1,15 @@
-import mongoose from "mongoose";
+import mongoose, {Schema, Document} from "mongoose";
 
-const DocumentSchema = new mongoose.Schema({
+export interface IDocument extends Document {
+    clientId?: mongoose.Types.ObjectId
+    projectId?: mongoose.Types.ObjectId
+    title?: string
+    type?: "PROPOSAL" | "CONTRACT" | "REQUIREMENT" | "INVOICE" | "OTHER"
+    url?: string
+    uploadedBy?: mongoose.Types.ObjectId
+}
+
+const DocumentSchema = new mongoose.Schema<IDocument>({
 
     clientId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -34,4 +43,4 @@ const DocumentSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
-export default mongoose.models.Document || mongoose.model("Document", DocumentSchema)
+export default mongoose.models.Document || mongoose.model<IDocument>("Document", DocumentSchema)

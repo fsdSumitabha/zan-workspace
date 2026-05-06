@@ -11,6 +11,8 @@ export interface IClient extends Document {
 
     lastInteractionAt?: Date
     lastInteractionId?: mongoose.Types.ObjectId
+    createdBy?: mongoose.Types.ObjectId
+
 }
 
 const ClientSchema = new Schema<IClient>(
@@ -29,7 +31,11 @@ const ClientSchema = new Schema<IClient>(
         lastInteractionId: {
             type: Schema.Types.ObjectId,
             ref: "Interaction"
-        }
+        },
+        createdBy: {
+            type: Schema.Types.ObjectId,
+            ref: "User"
+        },
 
     },
     { timestamps: true }

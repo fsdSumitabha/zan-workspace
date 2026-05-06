@@ -1,6 +1,34 @@
-import mongoose from "mongoose"
+import mongoose, { Schema, Document } from "mongoose"
 
-const MeetingSchema = new mongoose.Schema({
+interface IRescheduleEntry {
+    oldDate?: Date
+    newDate?: Date
+    reason?: string
+    changedBy?: mongoose.Types.ObjectId
+    changedAt?: Date
+}
+
+export interface IMeeting extends Document {
+    entityType: number
+    entityId: mongoose.Types.ObjectId
+    title: string
+    agenda: string
+    description?: string
+    meetingType?: number
+    meetingLink?: string
+    attendees?: mongoose.Types.ObjectId[]
+    scheduledAt: Date
+    status: number
+    outcome?: string
+    rescheduleHistory?: IRescheduleEntry[]
+    external?: {
+        provider?: string
+        eventId?: string
+    }
+    createdBy?: mongoose.Types.ObjectId
+}
+
+const MeetingSchema = new mongoose.Schema<IMeeting>({
 
     entityType: {
         type: Number,
@@ -34,7 +62,7 @@ const MeetingSchema = new mongoose.Schema({
     meetingLink: {
         type: String,
         validate: {
-            validator: function(value: string) {
+            validator: function (this: IMeeting, value: string) {
                 if (this.meetingType === 0) return !!value
                 return true
             },
@@ -61,7 +89,7 @@ const MeetingSchema = new mongoose.Schema({
 
     outcome: {
         type: String,
-        required : function() {
+        required: function () {
             return this.status === 1050 // COMPLETED
         }
     },
@@ -95,4 +123,4 @@ const MeetingSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
-export default mongoose.models.Meeting || mongoose.model("Meeting", MeetingSchema)
+export default mongoose.models.Meeting || mongoose.model<IMeeting>("Meeting", MeetingSchema)
