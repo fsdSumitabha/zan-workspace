@@ -11,6 +11,12 @@ interface UserCardProps {
         avatar?: string
         lastLoginAt?: string
         createdAt: string
+        createdBy?: {
+            _id: string
+            name: string
+            email: string
+            role: UserRole
+        }
     }
 }
 

@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
         const [data, total] = await Promise.all([
             User.find(query)
                 .select("-password")
+                .populate("createdBy", "name email role") 
                 .sort(sortOption)
                 .skip(skip)
                 .limit(limit)
