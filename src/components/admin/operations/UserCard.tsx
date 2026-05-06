@@ -1,5 +1,6 @@
 import { USER_ROLE_META, UserRole } from "@/constants/userRoles"
 import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
+import Tooltip from "./tooltip/Tooltip"
 
 interface UserCardProps {
     user: {
@@ -137,6 +138,9 @@ export default function UserCard({ user }: UserCardProps) {
                     </span>
                 )}
             </div>
+            {user.createdBy && (
+                <Tooltip content={`Created by ${user.createdBy.name} `}/>
+            )}
         </div>
     )
 }
