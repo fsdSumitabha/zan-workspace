@@ -48,6 +48,7 @@ export async function GET(req: NextRequest) {
         const [data, total] = await Promise.all([
             Project.find(query)
                 .populate("clientId", "name company") // useful for UI
+                .populate("createdBy", "name email")
                 .sort(sortOption)
                 .skip(skip)
                 .limit(limit)

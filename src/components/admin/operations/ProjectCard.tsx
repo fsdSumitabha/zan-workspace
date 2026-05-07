@@ -2,37 +2,30 @@
 
 import Link from "next/link"
 import StatusBadge from "./StatusBadge"
-import InteractionCard from "./InteractionCard"
 import ServiceBadge from "./ServiceBadge"
 import { PROJECT_STATUS_META, ProjectStatus } from "@/constants/projectStatus"
 import TimeAgo from "./dayjs/TimeAgo"
 import { ServiceType } from "@/constants/services"
-import { InteractionType } from "@/constants/interactionTypes"
+
+import Tooltip from "./tooltip/Tooltip"
 
 interface Props {
     id: string
-
     client: {
         id: string
         name: string
         company: string
     }
-
     title: string
     description?: string
     serviceType?: ServiceType
-
     status: ProjectStatus
     budget?: number
-
     createdAt: string
-
-    interaction?: {
-        type: InteractionType
-        title: string
-        subtitle?: string
-        createdAt: string
-        user: string
+    createdBy?: {
+        _id: string
+        name: string
+        email: string
     }
 }
 
@@ -45,7 +38,7 @@ export default function ProjectCard({
     status,
     budget,
     createdAt,
-    interaction
+    createdBy
 }: Props) {
     return (
         <Link
@@ -91,9 +84,9 @@ export default function ProjectCard({
             <div className="flex gap-2 mt-3">
                 {serviceType && <ServiceBadge service={serviceType as any} />}
             </div>
-
-            {/* Interaction */}
-            {interaction && <InteractionCard {...interaction} />}
+            {createdBy && (
+                <Tooltip content={`Created by ${createdBy.name} `} />
+            )}
         </Link>
     )
 }

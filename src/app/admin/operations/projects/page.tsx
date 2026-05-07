@@ -80,6 +80,7 @@ export default function Page() {
                                 status={project.status}
                                 budget={project.budget}
                                 createdAt={project.createdAt}
+                                createdBy={project.createdBy}
                             />
                         ))}
                 </div>

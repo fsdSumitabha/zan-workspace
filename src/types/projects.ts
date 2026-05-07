@@ -24,4 +24,9 @@ export interface Project {
 
     lastInteractionAt?: string
     lastInteractionId?: string
+    createdBy?: {
+        _id: string
+        name: string
+        email: string
+    }
 }
