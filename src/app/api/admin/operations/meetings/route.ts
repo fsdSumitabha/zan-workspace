@@ -151,7 +151,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        await requireRole(req, [10, 60])
+        const authUser = await requireRole(req, [10, 60])
 
         await dbConnect()
 
@@ -186,7 +186,8 @@ export async function POST(req: NextRequest) {
             meetingType,
             meetingLink,
             scheduledAt,
-            status
+            status,
+            createdBy: authUser.id
         })
 
         // 2. Create Interaction (timeline entry)
@@ -196,6 +197,7 @@ export async function POST(req: NextRequest) {
             type: INTERACTION_TYPE.MEETING_SCHEDULED,
             title: title,
             description: agenda,
+            createdBy: authUser.id,
             refId: meeting._id
         })
 

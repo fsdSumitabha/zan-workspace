@@ -9,9 +9,10 @@ import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 
+
 export async function POST(req: NextRequest) {
     try {
-        requireRole(req, [10, 60])
+        const authUser = await requireRole(req, [10, 60])
 
         await dbConnect()
 
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
             type: INTERACTION_TYPE.NOTE_ADDED,
             title,
             description,
+            createdBy: authUser.id
         })
 
         // 2. Prepare update payload

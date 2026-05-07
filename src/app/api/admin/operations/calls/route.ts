@@ -16,7 +16,7 @@ import { AuthError } from "@/lib/auth/requireAuth"
 
 export async function POST(req: NextRequest) {
     try {
-        await requireRole(req, [10, 60])
+        const authUser = await requireRole(req, [10, 60])
 
         await dbConnect()
 
@@ -76,7 +76,8 @@ export async function POST(req: NextRequest) {
             direction,
             status,
             notes,
-            recordingUrl
+            recordingUrl,
+            createdBy: authUser.id
         })
 
         // 3. Create Interaction (timeline entry)
@@ -86,6 +87,7 @@ export async function POST(req: NextRequest) {
             type: INTERACTION_TYPE.CALL_MADE,
             title: title || `Call with ${contactPersonName}`,
             notes,
+            createdBy: authUser.id,
             refId: call._id
         })
 

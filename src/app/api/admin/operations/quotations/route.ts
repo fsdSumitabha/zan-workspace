@@ -14,7 +14,7 @@ import { AuthError } from "@/lib/auth/requireAuth"
 
 export async function POST(req: NextRequest) {
     try {
-        requireRole(req, [10, 60])
+        const authUser = await requireRole(req, [10, 60])
         await dbConnect()
 
         const formData = await req.formData()
@@ -67,7 +67,8 @@ export async function POST(req: NextRequest) {
             amount,
             gst_percentage,
             url: fileUrl,
-            status
+            status,
+            createdBy: authUser.id
         })
 
         // 3. Create interaction
@@ -78,6 +79,7 @@ export async function POST(req: NextRequest) {
             title,
             description,
             status,
+            createdBy: authUser.id,
             refId: quotation._id
         })
 
