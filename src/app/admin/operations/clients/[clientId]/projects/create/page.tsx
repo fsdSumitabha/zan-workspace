@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
 import { toast } from "sonner"
+import { useState } from "react"
+import { Service } from "@/constants/services"
 import { useRouter, useParams } from "next/navigation"
 import { PROJECT_STATUS } from "@/constants/projectStatus"
 import ClientInfoCard from "@/components/admin/operations/ClientInfoCard"
+
 
 export default function CreateProjectPage() {
     const router = useRouter()
@@ -118,14 +120,22 @@ export default function CreateProjectPage() {
                             className="w-full border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600"
                         />
 
-                        <input
+                        <select
                             name="serviceType"
-                            placeholder="Service Type (Web, SEO, etc.)"
                             value={form.serviceType}
                             onChange={handleChange}
-                            required
                             className="w-full border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600"
-                        />
+                        >
+                            <option value="">Select Service Type</option>
+
+                            {Object.entries(Service)
+                                .filter(([key]) => isNaN(Number(key)))
+                                .map(([key, value]) => (
+                                    <option key={value} value={value}>
+                                        {key.replaceAll("_", " ")}
+                                    </option>
+                                ))}
+                        </select>
 
                         <select
                             name="status"

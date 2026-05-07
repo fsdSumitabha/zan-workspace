@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { PROJECT_STATUS } from "@/constants/projectStatus"
+import { Service } from "@/constants/services"
 
 export default function CreateProjectPage() {
     const router = useRouter()
@@ -114,13 +115,20 @@ export default function CreateProjectPage() {
                         className="w-full border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600"
                     />
 
-                    <input
+                    <select
                         name="serviceType"
-                        placeholder="Service Type (Web, SEO, etc.)"
                         value={form.serviceType}
                         onChange={handleChange}
                         className="w-full border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600"
-                    />
+                    >
+                        <option value="">Select Service Type</option>
+
+                        {Object.entries(Service).map(([key, value]) => (
+                            <option key={value} value={value}>
+                                {key.replaceAll("_", " ")}
+                            </option>
+                        ))}
+                    </select>
 
                     <select
                         name="status"

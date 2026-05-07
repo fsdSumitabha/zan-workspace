@@ -97,14 +97,14 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const { clientId, title, description, startDate, endDate } = body
+        const { clientId, title, description, serviceType, status } = body
 
         const project = await Project.create({
             clientId,
             title,
             description,
-            startDate,
-            endDate,
+            serviceType,
+            status,
             createdBy: authUser.id
         })
 
