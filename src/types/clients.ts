@@ -13,5 +13,11 @@ export interface Client {
     updatedAt: string
 
     lastInteractionAt?: string
-    lastInteractionId?: string
+    lastInteractionId?: string,
+    createdBy?: {
+        _id: string
+        name: string
+        email: string
+        role: number
+    }
 }

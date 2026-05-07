@@ -7,6 +7,7 @@ import Link from "next/link"
 import { Mail, Phone } from "lucide-react"
 import { InteractionType } from "@/config/interactionTypes"
 import { ServiceType } from "@/constants/services"
+import Tooltip from "./tooltip/Tooltip"
 
 interface Props {
     id: string
@@ -26,6 +27,12 @@ interface Props {
         subtitle?: string
         createdAt: string
         user: string
+    },
+    createdBy?: {
+        _id: string
+        name: string
+        email: string
+        role: number
     }
 }
 
@@ -38,7 +45,7 @@ export default function ClientCard({
     createdAt,
     status,
     service,
-    interaction
+    createdBy
 }: Props) {
     return (
         <Link
@@ -89,8 +96,9 @@ export default function ClientCard({
                 {service && <ServiceBadge service={service} />}
             </div>
 
-            {/* Interaction */}
-            {interaction && <InteractionCard {...interaction} />}
+            {createdBy && (
+                <Tooltip content={`Created by ${createdBy.name} `} />
+            )}
         </Link>
     )
 }

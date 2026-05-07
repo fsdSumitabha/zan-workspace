@@ -75,6 +75,7 @@ export default function Page() {
                                 phone={client.phone}
                                 createdAt={client.createdAt}
                                 status={client.status}
+                                createdBy={client.createdBy}
                             />
                         ))}
                 </div>

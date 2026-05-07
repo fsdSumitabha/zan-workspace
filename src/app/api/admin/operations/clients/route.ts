@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
 
         const [data, total] = await Promise.all([
             Client.find(query)
+                .populate("createdBy", "name email role")
                 .sort(sortOption)
                 .skip(skip)
                 .limit(limit)
