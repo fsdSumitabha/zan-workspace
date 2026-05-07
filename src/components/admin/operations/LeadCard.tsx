@@ -1,11 +1,13 @@
 import StatusBadge from "./StatusBadge"
 import ServiceBadge from "./ServiceBadge"
 import InteractionCard from "./InteractionCard"
-import { LEAD_STATUS_META, LEAD_STATUS } from "@/constants/leadStatus"
+import { LEAD_STATUS_META, LeadStatus, LEAD_STATUS } from "@/constants/leadStatus"
 import TimeAgo from "./dayjs/TimeAgo"
 import Link from "next/link"
 import { SquaresIntersect } from "lucide-react"
 import ConvertButton from "./ConvertClientButton"
+import { UserRole } from "@/constants/userRoles"
+import Tooltip from "./tooltip/Tooltip"
 
 
 interface Props {
@@ -16,14 +18,12 @@ interface Props {
     phone: string
     source: string
     createdAt: string
-    service?: "Web Development" | "Digital Marketing" | "BlockChain" | "Mobile APP" | "SEO"
-    status: LEAD_STATUS
-    interaction?: {
-        type: "MEETING" | "NOTE" | "DOCUMENT" | "PROPOSAL"
-        title: string
-        subtitle?: string
-        time: string
-        user: string
+    status: LeadStatus
+    createdBy?: {
+        _id: string
+        name: string
+        email: string
+        role: UserRole
     }
 }
 
@@ -35,9 +35,8 @@ export default function LeadCard({
     phone,
     source,
     createdAt,
-    service,
     status,
-    interaction
+    createdBy
 }: Props & { id: string }) {
     return (
         <Link href={`/admin/operations/leads/${id}`} className="block my-4 p-4 rounded-xl bg-slate-100 dark:bg-neutral-950 border border-neutral-600 hover:border-blue-500/40 transition cursor-pointer">
@@ -67,13 +66,9 @@ export default function LeadCard({
                 </div>
             </div>
 
-            {/* Service */}
-            <div className="flex gap-2 mt-3">
-                {service && <ServiceBadge service={service} />}
-            </div>
-
-            {/* Interaction */}
-            {interaction && <InteractionCard {...interaction} />}
+            {createdBy && (
+                <Tooltip content={`Created by ${createdBy.name} `} />
+            )}
         </Link>
     )
 }

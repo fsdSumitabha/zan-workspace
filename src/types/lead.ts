@@ -1,4 +1,5 @@
 import { LeadStatus } from "@/constants/leadStatus"
+import { UserRole } from "@/constants/userRoles"
 
 export interface Lead {
     _id: string
@@ -17,4 +18,10 @@ export interface Lead {
 
     lastInteractionAt?: string
     lastInteractionId?: string
+    createdBy?: {
+        _id: string
+        name: string
+        email: string
+        role: UserRole
+    }
 }

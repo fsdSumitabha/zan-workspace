@@ -81,6 +81,7 @@ export default function Page() {
                                 source={lead.source}
                                 createdAt={lead.createdAt}
                                 status={lead.status}
+                                createdBy={lead.createdBy}
                             />
                         ))}
 
