@@ -24,8 +24,9 @@ export async function GET(
         // 1. Fetch interactions
         const interactions = await Interaction.find({
             entityType: 1,
-            entityId: clientId
+            entityId: clientId,
         })
+            .populate("createdBy", "name email role")
             .sort({ createdAt: -1 })
             .lean()
 
@@ -93,6 +94,7 @@ export async function GET(
                 title: i.title,
                 description: i.description,
                 createdAt: i.createdAt,
+                createdBy: i.createdBy,
 
                 meeting,
                 document,
