@@ -16,7 +16,7 @@ export async function PATCH(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireRole(req, [10, 60])
+        const authUser = await requireRole(req, [10, 60])
 
         await dbConnect()
 
@@ -108,7 +108,7 @@ export async function PATCH(
             }),
 
             description: remarks,
-            createdBy: null
+            createdBy: authUser.id
         })
 
         // 3. Optional tracking (only if you later add fields)
