@@ -6,12 +6,16 @@ import Lead from "@/models/Lead"
 import Interaction from "@/models/Interaction"
 import { LEAD_STATUS, LEAD_STATUS_META, LeadStatus } from "@/constants/leadStatus"
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
+import { requireRole } from "@/lib/auth/requireRole"
+import { AuthError } from "@/lib/auth/requireAuth"
 
 export async function PATCH(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const authUser = await requireRole(req, [10, 60])
+        
         await dbConnect()
 
         const { id } = await context.params
@@ -121,7 +125,7 @@ export async function PATCH(
 
             description: remarks,
 
-            createdBy: null
+            createdBy: authUser.id
         })
 
         return NextResponse.json(
@@ -138,6 +142,16 @@ export async function PATCH(
         )
     } catch (error) {
         console.error("Update Lead Status Error:", error)
+
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: error.message
+                },
+                { status: error.statusCode }
+            )
+        }
 
         return NextResponse.json(
             {
