@@ -7,6 +7,7 @@ import Project from "@/models/Project"
 import "@/models/Interaction"
 
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { email } from "zod"
 
 export async function GET(req: NextRequest) {
     try {
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
                     select: "type title createdAt"
                 })
                 .lean(),
-        
+
             Client.find({ lastInteractionAt: { $ne: null } })
                 .select("name company phone email status lastInteractionAt lastInteractionId")
                 .populate({
@@ -29,13 +30,19 @@ export async function GET(req: NextRequest) {
                     select: "type title createdAt"
                 })
                 .lean(),
-        
+
             Project.find({ lastInteractionAt: { $ne: null } })
                 .select("title companyName serviceType description status lastInteractionAt lastInteractionId clientId")
-                .populate({
-                    path: "lastInteractionId",
-                    select: "type title createdAt"
-                })
+                .populate([
+                    {
+                        path: "lastInteractionId",
+                        select: "type title createdAt",
+                    },
+                    {
+                        path: "clientId",
+                        select: "name email phone company",
+                    },
+                ])
                 .lean()
         ])
 
@@ -43,7 +50,7 @@ export async function GET(req: NextRequest) {
         const normalized = [
             ...leads.map(item => {
                 const { lastInteractionId, ...rest } = item
-        
+
                 return {
                     _id: rest._id,
                     entityType: ENTITY_TYPE.LEAD,
@@ -56,10 +63,10 @@ export async function GET(req: NextRequest) {
                     lastInteraction: lastInteractionId || null
                 }
             }),
-        
+
             ...clients.map(item => {
                 const { lastInteractionId, ...rest } = item
-        
+
                 return {
                     _id: rest._id,
                     entityType: ENTITY_TYPE.CLIENT,
@@ -72,21 +79,23 @@ export async function GET(req: NextRequest) {
                     lastInteraction: lastInteractionId || null
                 }
             }),
-        
+
             ...projects.map(item => {
                 const { lastInteractionId, ...rest } = item
-        
+
                 return {
                     _id: rest._id,
                     entityType: ENTITY_TYPE.PROJECT,
                     name: rest.title,
                     title: rest.title,
-                    companyName: rest.companyName,
+                    companyName: item.clientId?.company || rest.companyName,
                     serviceType: rest.serviceType,
                     description: rest.description,
                     status: rest.status,
                     lastInteractionAt: rest.lastInteractionAt,
-                    lastInteraction: lastInteractionId || null
+                    lastInteraction: lastInteractionId || null,
+                    email: item.clientId?.email || null,
+                    phone: item.clientId?.phone || null
                 }
             })
         ]

@@ -38,6 +38,7 @@ export default function EntityCard({ item }: EntityCardProps) {
         serviceType,
         description
     } = item
+    console.log("Rendering EntityCard with item:", item)
 
     // -----------------------------
     // Config based on entity type
