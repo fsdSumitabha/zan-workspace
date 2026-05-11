@@ -22,6 +22,8 @@ import CreateActionButton from "@/components/admin/operations/CreateActionButton
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { ClientStatus } from "@/constants/clientStatus"
+import { InteractionType } from "@/constants/interactionTypes"
+
 
 export default function Page() {
     const params = useParams()
@@ -34,7 +36,7 @@ export default function Page() {
     const [interactions, setInteractions] = useState<Interaction[]>([])
     const [interactionLoading, setInteractionLoading] = useState(true)
 
-    const [activeType, setActiveType] = useState<number | null>(null)
+    const [activeType, setActiveType] = useState<InteractionType | null>(null)
     const [isOpen, setIsOpen] = useState(false)
 
     const router = useRouter()
@@ -59,7 +61,7 @@ export default function Page() {
     }, [clientId])
 
     const handleOpen = (type: number) => {
-        setActiveType(type)
+        setActiveType(type as InteractionType)
         setIsOpen(true)
     }
 
