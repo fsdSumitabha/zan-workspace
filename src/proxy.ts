@@ -13,10 +13,10 @@ const OBJECT_ID = String.raw`[a-f0-9]{24}`
 
 // Centralized RBAC config — add new protected paths here
 const routePermissions: Array<{ pattern: RegExp; roles: number[] }> = [
+    { pattern: /^\/admin\/operations\/users(\/|$)/, roles: [10, 20] },
     { pattern: /^\/admin\/operations\/leads\/create(\/|$)/, roles: [10, 60] },
     { pattern: new RegExp(`^/admin/operations/leads/${OBJECT_ID}/convert(/|$)`), roles: [10, 60], },
     { pattern: new RegExp(`^/admin/operations/clients/${OBJECT_ID}/projects/create(/|$)`), roles: [10, 60], },
-
 ]
 
 function getRequiredRoles(pathname: string): number[] | null {
@@ -63,14 +63,14 @@ export async function proxy(req: NextRequest) {
             if (requiredRoles && !requiredRoles.includes(user.role)) {
                 // Authenticated but not authorized
                 return NextResponse.redirect(
-                    new URL("/admin/authentication/login", req.url)
+                    new URL("/admin/authentication/unauthorized", req.url)
                 )
             }
 
             return NextResponse.next()
         } catch {
             return NextResponse.redirect(
-                new URL("/admin/authentication/login", req.url)
+                new URL("/admin/authentication/unauthorized", req.url)
             )
         }
     }
