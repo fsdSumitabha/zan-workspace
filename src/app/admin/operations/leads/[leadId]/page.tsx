@@ -14,6 +14,7 @@ import InteractionModal from "@/components/admin/operations/InteractionModal/Int
 import InteractionTimeline from "@/components/admin/operations/interactions/InteractionTimeline"
 import { InteractionItemSkeleton } from "@/components/admin/operations/skeletons/InteractionItemSkeleton"
 import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/ActionTypeSkeleton"
+import { InteractionType } from "@/constants/interactionTypes"
 
 export default function Page() {
     const params = useParams()
@@ -42,10 +43,10 @@ export default function Page() {
         if (leadId) fetchLead()
     }, [leadId])
 
-    const [activeType, setActiveType] = useState<number | null>(null)
+    const [activeType, setActiveType] = useState<InteractionType | null>(null)
     const [isOpen, setIsOpen] = useState(false)
 
-    const handleOpen = (type: number) => {
+    const handleOpen = (type: InteractionType) => {
         setActiveType(type)
         setIsOpen(true)
     }
