@@ -12,7 +12,12 @@ export interface User {
     isActive: boolean
 
     lastLoginAt?: string
-    createdBy?: string
+    createdBy?: {
+        _id: string
+        name: string
+        email: string
+        role: UserRole
+    }
 
     avatar?: string
 
