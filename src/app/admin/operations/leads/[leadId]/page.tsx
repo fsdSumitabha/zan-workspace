@@ -1,8 +1,8 @@
 "use client"
 
+import { toast } from "sonner"
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { toast } from "sonner"
 
 import LeadDetails from "@/components/admin/operations/LeadDetails"
 import type { Interaction } from "@/types/interaction"
@@ -14,8 +14,6 @@ import InteractionModal from "@/components/admin/operations/InteractionModal/Int
 import InteractionTimeline from "@/components/admin/operations/interactions/InteractionTimeline"
 import { InteractionItemSkeleton } from "@/components/admin/operations/skeletons/InteractionItemSkeleton"
 import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/ActionTypeSkeleton"
-import { StatusProvider } from "@/contexts/StatusContext"
-import StatusRemarksPanel from "@/components/admin/operations/StatusRemarksPanel"
 
 export default function Page() {
     const params = useParams()
@@ -81,9 +79,7 @@ export default function Page() {
             `/api/admin/operations/leads/${leadId}/status`,
             {
                 method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status, remarks })
             }
         )
@@ -94,12 +90,14 @@ export default function Page() {
             throw new Error(data?.message || "Failed to update status")
         }
 
-        // refresh lead + timeline
-        setLoading(true)
-        await Promise.all([fetchInteractions()])
-        setLoading(false)
+        toast.success("Status updated")
 
-        return data
+        // refresh lead
+        const updated = await fetch(`/api/admin/operations/leads/${leadId}`)
+        const updatedData = await updated.json()
+        setLead(updatedData.data)
+
+        await fetchInteractions()
     }
 
     const router = useRouter()
@@ -146,7 +144,6 @@ export default function Page() {
     }
 
     return (
-        <StatusProvider>
                     <div className="lg:col-span-2 space-y-4">
 
                         {/* Loading */}
@@ -174,7 +171,7 @@ export default function Page() {
                         {/* List */}
                         {!loading && lead && (
                             <>
-                                <LeadDetails lead={lead} />
+                                <LeadDetails lead={lead} onStatusChange={handleStatusChange} />
                                 <LeadInteractionActions leadId={leadId} onAction={handleOpen} activeType={activeType} />
                             </>
                         )}
@@ -189,8 +186,6 @@ export default function Page() {
                                 </button>
                             </div>
                         )}
-                        
-                        <StatusRemarksPanel onConfirm={handleStatusChange} />
 
                         <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={0} entityId={leadId} onSuccess={fetchInteractions} />
 
@@ -199,6 +194,5 @@ export default function Page() {
                         )}
 
                     </div>
-        </StatusProvider>
     )
 }

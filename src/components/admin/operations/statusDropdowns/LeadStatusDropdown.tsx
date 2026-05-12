@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { LEAD_STATUS, LEAD_STATUS_META, type LeadStatus } from "@/constants/leadStatus"
 import clsx from "clsx"
 import { toast } from "sonner"
-import { useStatus } from "@/contexts/StatusContext"
 
 type Props = {
     currentStatus: LeadStatus
@@ -38,15 +37,11 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
         run()
     }, [pendingStatus])
 
-    const { setNextStatus, setShowRemarks } = useStatus()
-
     const handleSelect = (status: LeadStatus) => {
         if (status === currentStatus || loading) return
 
         setOpen(false)
-
-        setNextStatus(status)
-        setShowRemarks(true)
+        onChange(status)
     }
 
     return (
