@@ -1,0 +1,212 @@
+/* ============================================================
+ * Bottom nav theming.
+ *
+ * All visible "nav-surface" pieces (nav body, hood, halo, and the
+ * ::before/::after cutouts) are driven by a single --menu-clr token
+ * so they always merge into one continuous shape. The gradient hood
+ * needs a matching "alpha 0" variant of that same color so it can
+ * fade out cleanly without interpolating through gray.
+ *
+ * Light mode is the default. Dark mode is applied automatically when
+ * the user agent reports prefers-color-scheme: dark, which matches
+ * how the rest of the app handles theming (see app/globals.css).
+ * ============================================================ */
+
+.bottomNav {
+    --indicator-clr: #0f214b    ; /* emerald-500 */
+    --indicator-glow: rgba(16, 185, 129, 0.4);
+    --indicator-icon-clr: #ffffff;
+    --indicator-inset: rgba(0, 0, 0, 0.12);
+
+    /* Light theme (default) */
+    --menu-clr: #ffffff;
+    --menu-clr-fade: rgba(255, 255, 255, 0);
+    --items-icons-clr: #525252; /* neutral-600 */
+    --items-text-clr: #262626; /* neutral-800 */
+    --nav-shadow:
+        0 -12px 32px rgba(0, 0, 0, 0.08),
+        0 -1px 0 rgba(0, 0, 0, 0.05) inset;
+
+    --menu-padding-left: 1.25rem;
+    --menu-padding-right: 1.25rem;
+    --menu-padding-top: 0.95rem;
+    /* Extra room at the bottom so the active label has a dedicated
+       track BELOW the indicator (instead of being painted over it). */
+    --menu-padding-bottom: 1.6rem;
+    --item-width: 3.25rem;
+
+    position: relative;
+    background-color: var(--menu-clr);
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+    box-shadow: var(--nav-shadow);
+    isolation: isolate;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+    .bottomNav {
+        --indicator-glow: rgba(16, 185, 129, 0.5);
+        --indicator-inset: rgba(0, 0, 0, 0.18);
+
+        --menu-clr: rgb(23, 23, 23); /* neutral-900 */
+        --menu-clr-fade: rgba(23, 23, 23, 0);
+        --items-icons-clr: #a3a3a3; /* neutral-400 */
+        --items-text-clr: #e5e5e5; /* neutral-200 */
+        --nav-shadow:
+            0 -12px 32px rgba(0, 0, 0, 0.55),
+            0 -1px 0 rgba(255, 255, 255, 0.05) inset;
+    }
+}
+
+/* Solid "hood" above the nav. Fully opaque for most of its
+   height (so it completely covers the indicator's floating top
+   half), then fades to transparent so the transition with the
+   scrolling page above is still soft. */
+/* .hood {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 40px;
+    background: linear-gradient(
+        to top,
+        var(--menu-clr) 0%,
+        var(--menu-clr) 70%,
+        var(--menu-clr-fade) 100%
+    );
+    pointer-events: none;
+} */
+
+.menu {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--menu-clr) !important;
+    padding: var(--menu-padding-top) var(--menu-padding-left)
+        var(--menu-padding-bottom) var(--menu-padding-right);
+    list-style: none;
+    margin: 0;
+}
+
+.menu li {
+    flex: 0 0 var(--item-width);
+}
+
+.menu li a {
+    width: var(--item-width);
+    height: 100%;
+    padding: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    text-decoration: none;
+    -webkit-user-drag: none;
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--items-icons-clr);
+    transition:
+        transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
+        color 240ms ease;
+}
+
+.menu li a:not(.active):active .icon {
+    transform: scale(0.92);
+}
+
+.menu li a.active .icon {
+    /* Pull the icon up so it lands at the indicator's center
+       (which lives at the nav's top edge). */
+    transform: translateY(calc(-50% - var(--menu-padding-top) - 0.05rem));
+    color: var(--indicator-icon-clr);
+}
+
+/* The label lives in the padding-bottom "track" below the link,
+   so it stays clear of the indicator's bottom edge. We use only
+   a tiny vertical slide for the on/off animation. */
+.text {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translateX(-50%) translateY(0.35rem);
+    opacity: 0;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    line-height: 1;
+    color: var(--items-text-clr);
+    pointer-events: none;
+    transition:
+        opacity 240ms ease,
+        transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: 40ms;
+}
+
+.menu li a.active .text {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-0.05rem);
+}
+
+/* Floating circular indicator. Halo + cutouts use the SAME solid
+   --menu-clr as the nav surface and hood, so all three pieces
+   render as a single continuous shape — the curves merge perfectly
+   into both the nav (below) and the hood (above), in both themes. */
+.indicator {
+    --halo-size: 0.22rem;
+    position: absolute;
+    height: 100%;
+    aspect-ratio: 1;
+    background-color: var(--indicator-clr);
+    border: var(--halo-size) solid var(--menu-clr);
+    border-radius: 50%;
+    left: var(--menu-padding-left);
+    top: -50%;
+    
+    transform: translateX(
+        calc(
+            ((var(--item-width) - 100%) / 2) +
+                (var(--gap, 0px) + var(--item-width)) * var(--item, 0)
+        )
+    );
+    transition: transform 460ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+    /* Bottom-only cyan glow under the navy indicator.
+       - Alpha keeps the cyan readable as a *glow*, not paint.
+       - Negative spread shrinks the shadow inward so it doesn't
+         halo the sides/top of the circle.
+       - Two layers: a wide soft puddle + a tighter inner accent. */
+    box-shadow:
+        0 18px 26px -8px rgba(103, 232, 249, 0.45),
+        0 8px 12px -6px rgba(103, 232, 249, 0.35);
+}
+
+.indicator::before,
+.indicator::after {
+    --size: 0.75rem;
+    content: "";
+    position: absolute;
+    width: var(--size);
+    height: var(--size);
+    top: 50%;
+    background-color: transparent;
+    box-shadow: 0 calc(var(--size) / -2) 0 var(--menu-clr);
+    z-index: -1;
+}
+
+.indicator::before {
+    right: 100%;
+    border-top-right-radius: 100%;
+}
+
+.indicator::after {
+    left: 100%;
+    border-top-left-radius: 100%;
+}
