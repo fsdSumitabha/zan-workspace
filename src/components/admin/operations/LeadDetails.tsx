@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { toast } from "sonner"
-import { LEAD_STATUS, LEAD_STATUS_META } from "@/constants/leadStatus"
+import { LEAD_STATUS, LEAD_STATUS_META, LeadStatus } from "@/constants/leadStatus"
 import type { Lead } from "@/types/lead"
 import LeadStatusDropdown from "./statusDropdowns/LeadStatusDropdown"
 import ConvertButton from "./ConvertClientButton"
@@ -8,17 +8,17 @@ import WhatsAppLink from "./button/WhatsAppLink"
 
 type Props = {
     lead: Lead
-    onStatusChange?: (status: number, remarks: string) => Promise<any>
+    onStatusChange?: (status: LeadStatus, remarks: string) => Promise<any>
 }
 
 export default function LeadDetails({ lead, onStatusChange }: Props) {
     const leadId = lead._id
 
-    const [pendingStatus, setPendingStatus] = useState<number | null>(null)
+    const [pendingStatus, setPendingStatus] = useState<LeadStatus  | null>(null)
     const [remarks, setRemarks] = useState("")
     const [saving, setSaving] = useState(false)
 
-    const handleStatusSelect = (status: number) => {
+    const handleStatusSelect = (status: LeadStatus) => {
         if (status === lead.status) return
         setPendingStatus(status)
         setRemarks("")
