@@ -7,7 +7,7 @@ import { toast } from "sonner"
 
 type Props = {
     currentStatus: LeadStatus
-    onChange: (status: LeadStatus) => Promise<{ message?: string }>
+    onChange: (status: LeadStatus) => void | Promise<{ message?: string } | void>
 }
 
 export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
@@ -25,7 +25,9 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
             setLoading(true)
             try {
                 const res = await onChange(pendingStatus)
-                toast.success(res?.message || "Status updated successfully")
+                if (res && typeof res === "object" && "message" in res) {
+                    toast.success(res.message || "Status updated successfully")
+                }
             } catch (err: any) {
                 toast.error(err?.message || "Failed to update status")
             } finally {
@@ -39,9 +41,8 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
 
     const handleSelect = (status: LeadStatus) => {
         if (status === currentStatus || loading) return
-
         setOpen(false)
-        onChange(status)
+        setPendingStatus(status)
     }
 
     return (
