@@ -10,6 +10,7 @@ import { ProjectStatus, PROJECT_STATUS_META } from "@/constants/projectStatus"
 import { Project } from "@/types/projects"
 import ProjectStatusDropdown from "./statusDropdowns/ProjectStatusDropdown"
 import WhatsAppLink from "./button/WhatsAppLink"
+import Link from "next/link"
 
 
 type Props = {
@@ -67,14 +68,25 @@ export default function ProjectDetail({ project, onStatusChange }: Props) {
                     <WhatsAppLink phone={project.clientId.phone} />
                 </div>
 
-                {onStatusChange ? (
-                    <ProjectStatusDropdown
-                        currentStatus={project.status}
-                        onSelect={handleStatusSelect}   // just signals selection, no API call here
-                    />
-                ) : (
-                    <StatusBadge status={project.status} meta={PROJECT_STATUS_META} />
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                    <Link
+                        href={`/admin/operations/projects/${project._id}/edit`}
+                        className="text-xs px-3 py-1.5 rounded border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition"
+                    >
+                        Edit
+                    </Link>
+                    {onStatusChange ? (
+                        <ProjectStatusDropdown
+                            currentStatus={project.status}
+                            onSelect={handleStatusSelect}
+                        />
+                    ) : (
+                        <StatusBadge
+                            status={project.status}
+                            meta={PROJECT_STATUS_META}
+                        />
+                    )}
+                </div>
             </div>
             
             {pendingStatus && (

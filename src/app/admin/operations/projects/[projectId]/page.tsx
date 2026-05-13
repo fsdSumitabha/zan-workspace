@@ -183,7 +183,7 @@ export default function Page() {
                             </button>
                         </div>
                     )}
-``
+{/* Interaction Modal */}
                     <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={2} entityId={projectId} onSuccess={fetchInteractions} />
 
                     {!loading && project && (
