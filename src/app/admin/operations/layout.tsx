@@ -1,15 +1,15 @@
 // app/admin/operations/layout.tsx
 
-import Sidebar from "@/components/admin/operations/SideBar"
-import SearchBar from "@/components/admin/operations/SearchBar"
-import StatsPanel from "@/components/admin/operations/StatsPanel"
-import OperationsMobileNav from "@/components/admin/operations/OperationsMobileNav"
-import OperationsMobileTopBar from "@/components/admin/operations/OperationsMobileTopBar"
+import Sidebar from "@/components/admin/operations/SideBar";
+import SearchBar from "@/components/admin/operations/SearchBar";
+import StatsPanel from "@/components/admin/operations/StatsPanel";
+import OperationsMobileNav from "@/components/admin/operations/MobileNav";
+import OperationsMobileTopBar from "@/components/admin/operations/MobileTopBar";
 
 export default function OperationsLayout({
     children,
 }: {
-    children: React.ReactNode
+    children: React.ReactNode;
 }) {
     return (
         <div className="flex min-h-screen bg-slate-50 dark:bg-neutral-950 text-white">
@@ -36,10 +36,8 @@ export default function OperationsLayout({
                 </div>
 
                 {/* Page Content */}
-               <div className="flex-1 overflow-y-auto max-w-7xl mx-auto px-3 md:px-4 py-5 md:py-6 grid lg:grid-cols-3 gap-6 w-full">
-                    <div className="lg:col-span-2 space-y-4">
-                        {children}
-                    </div>
+                <div className="flex-1 overflow-y-auto max-w-7xl mx-auto px-3 md:px-4 py-5 md:py-6 grid lg:grid-cols-3 gap-6 w-full">
+                    <div className="lg:col-span-2 space-y-4">{children}</div>
                     <StatsPanel />
                 </div>
 
@@ -47,5 +45,5 @@ export default function OperationsLayout({
                 <OperationsMobileNav />
             </div>
         </div>
-    )
+    );
 }
