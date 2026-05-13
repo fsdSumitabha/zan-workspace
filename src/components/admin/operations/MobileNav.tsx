@@ -10,7 +10,7 @@ import {
     Handshake,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import styles from "./MobileNav.module.css";
+import styles from "@/assets/css/MobileNav.module.css";
 
 const navItems: Array<{
     name: string;
