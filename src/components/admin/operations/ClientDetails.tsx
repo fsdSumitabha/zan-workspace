@@ -7,9 +7,10 @@ import StatusBadge from "./StatusBadge"
 import ClientStatusDropdown from "./statusDropdowns/ClientStatusDropdown"
 import { CLIENT_STATUS_META, type ClientStatus } from "@/constants/clientStatus"
 import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
-import { Mail, Phone, Building2, Clock, RefreshCw } from "lucide-react"
+import { Mail, Building2, Clock, RefreshCw } from "lucide-react"
 import type { Client } from "@/types/clients"
 import WhatsAppLink from "./button/WhatsAppLink"
+import Link from "next/link"
 
 interface Props {
     client: Client
@@ -66,14 +67,22 @@ export default function ClientDetails({ client, onStatusChange }: Props) {
                     </p>
                 </div>
 
-                {onStatusChange ? (
-                    <ClientStatusDropdown
-                        currentStatus={client.status}
-                        onSelect={handleStatusSelect}   // just signals selection, no API call here
-                    />
-                ) : (
-                    <StatusBadge status={client.status} meta={CLIENT_STATUS_META} />
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                    <Link
+                        href={`/admin/operations/clients/${client._id}/edit`}
+                        className="text-xs px-3 py-1.5 rounded border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition"
+                    >
+                        Edit
+                    </Link>
+                    {onStatusChange ? (
+                        <ClientStatusDropdown
+                            currentStatus={client.status}
+                            onSelect={handleStatusSelect}
+                        />
+                    ) : (
+                        <StatusBadge status={client.status} meta={CLIENT_STATUS_META} />
+                    )}
+                </div>
             </div>
 
             {/* Inline remarks — only mounts when a status is pending */}

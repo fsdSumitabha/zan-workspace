@@ -62,15 +62,46 @@ export async function PATCH(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await context.params
+
+        if (!id || !Types.ObjectId.isValid(id)) {
+            return NextResponse.json(
+                { success: false, message: "Invalid client ID" },
+                { status: 400 }
+            )
+        }
+
+        await requireRole(req, [10, 60])
+
+        const body = await req.json()
+
+        if (!body.name || !body.company || !body.phone) {
+            return NextResponse.json(
+                { success: false, message: "Missing required fields" },
+                { status: 400 }
+            )
+        }
+
         await dbConnect()
 
-        const { id } = await context.params
-        const body = await req.json()
+        const existing = await Client.findOne({
+            phone: body.phone,
+            _id: { $ne: id }
+        })
+
+        if (existing) {
+            return NextResponse.json(
+                { success: false, message: "Phone already exists" },
+                { status: 409 }
+            )
+        }
+
+        const { name, company, email, phone } = body
 
         const client = await Client.findByIdAndUpdate(
             id,
-            body,
-            { new: true }
+            { name, company, email, phone },
+            { new: true, runValidators: true }
         )
 
         if (!client) {
@@ -84,10 +115,20 @@ export async function PATCH(
             success: true,
             data: client
         })
-    } catch {
+    } catch (error: any) {
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: error.message
+                },
+                { status: error.statusCode }
+            )
+        }
+
         return NextResponse.json(
-            { success: false, message: "Update failed" },
-            { status: 400 }
+            { success: false, message: "Failed to update client" },
+            { status: 500 }
         )
     }
 }
