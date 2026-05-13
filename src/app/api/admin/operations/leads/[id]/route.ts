@@ -42,14 +42,44 @@ export async function PATCH(
 ) {
     try {
         const { id } = await context.params
-        await dbConnect()
+        if (!id || !Types.ObjectId.isValid(id)) {
+            return NextResponse.json(
+                { success: false, message: "Invalid lead ID" },
+                { status: 400 }
+            )
+        }
+
+        await requireRole(req, [10, 60])
 
         const body = await req.json()
 
+        if (!body.name || !body.phone || !body.source) {
+            return NextResponse.json(
+                { success: false, message: "Missing required fields" },
+                { status: 400 }
+            )
+        }
+
+        await dbConnect()
+
+        const existing = await Lead.findOne({
+            phone: body.phone,
+            _id: { $ne: id }
+        })
+
+        if (existing) {
+            return NextResponse.json(
+                { success: false, message: "Phone already exists" },
+                { status: 409 }
+            )
+        }
+
+        const { name, email, phone, source } = body
+
         const lead = await Lead.findByIdAndUpdate(
             id,
-            body,
-            { new: true }
+            { name, email, phone, source },
+            { new: true, runValidators: true }
         )
 
         if (!lead) {
@@ -63,10 +93,20 @@ export async function PATCH(
             success: true,
             data: lead
         })
-    } catch {
+    } catch (error: any) {
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: error.message
+                },
+                { status: error.statusCode }
+            )
+        }
+
         return NextResponse.json(
-            { success: false, message: "Update failed" },
-            { status: 400 }
+            { success: false, message: "Failed to update lead" },
+            { status: 500 }
         )
     }
 }

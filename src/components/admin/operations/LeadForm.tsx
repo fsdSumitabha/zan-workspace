@@ -1,13 +1,30 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-export default function LeadForm() {
+type LeadFormValues = {
+    name: string
+    email: string
+    phone: string
+    source: string
+}
+
+interface LeadFormProps {
+    mode?: "create" | "edit"
+    leadId?: string
+    initialValues?: Partial<LeadFormValues>
+}
+
+export default function LeadForm({
+    mode = "create",
+    leadId,
+    initialValues
+}: LeadFormProps) {
     const router = useRouter()
 
-    const [form, setForm] = useState({
+    const [form, setForm] = useState<LeadFormValues>({
         name: "",
         email: "",
         phone: "",
@@ -15,6 +32,17 @@ export default function LeadForm() {
     })
 
     const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+        if (mode === "edit" && initialValues) {
+            setForm({
+                name: initialValues.name || "",
+                email: initialValues.email || "",
+                phone: initialValues.phone || "",
+                source: initialValues.source || ""
+            })
+        }
+    }, [mode, initialValues])
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement>
@@ -34,8 +62,15 @@ export default function LeadForm() {
         try {
             setLoading(true)
 
-            const res = await fetch("/api/admin/operations/leads", {
-                method: "POST",
+            const endpoint =
+                mode === "edit" && leadId
+                    ? `/api/admin/operations/leads/${leadId}`
+                    : "/api/admin/operations/leads"
+
+            const method = mode === "edit" ? "PATCH" : "POST"
+
+            const res = await fetch(endpoint, {
+                method,
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -44,14 +79,21 @@ export default function LeadForm() {
 
             const data = await res.json()
 
-            if (!res.ok) {
-                throw new Error(data.message || "Failed to create lead")
+            if (!res.ok || !data.success) {
+                throw new Error(
+                    data.message ||
+                    (mode === "edit" ? "Failed to update lead" : "Failed to create lead")
+                )
             }
 
-            toast.success("Lead created successfully")
+            toast.success(
+                mode === "edit"
+                    ? "Lead updated successfully"
+                    : "Lead created successfully"
+            )
 
-            // redirect to detail page
-            router.push(`/admin/operations/leads/${data.data._id}`)
+            const redirectLeadId = mode === "edit" ? leadId : data.data._id
+            router.push(`/admin/operations/leads/${redirectLeadId}`)
 
         } catch (error: any) {
             console.error(error)
@@ -66,7 +108,9 @@ export default function LeadForm() {
             onSubmit={handleSubmit}
             className="p-5 rounded-xl border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 space-y-4"
         >
-            <h2 className="text-lg font-semibold">Create Lead</h2>
+            <h2 className="text-lg font-semibold">
+                {mode === "edit" ? "Edit Lead" : "Create Lead"}
+            </h2>
 
             <div className="grid sm:grid-cols-2 gap-4">
                 <div>
@@ -127,7 +171,13 @@ export default function LeadForm() {
                 disabled={loading}
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50"
             >
-                {loading ? "Creating..." : "Create Lead"}
+                {loading
+                    ? mode === "edit"
+                        ? "Updating..."
+                        : "Creating..."
+                    : mode === "edit"
+                        ? "Update Lead"
+                        : "Create Lead"}
             </button>
         </form>
     )
