@@ -5,22 +5,41 @@ import * as Icons from "lucide-react"
 import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import StatusBadge from "@/components/admin/operations/StatusBadge"
 
-import { MEETING_STATUS_META } from "@/constants/meetingStatus"
+import { MEETING_STATUS, MEETING_STATUS_META } from "@/constants/meetingStatus"
 import { MEETING_TYPE } from "@/constants/meetingTypes"
 import MeetingLinkButton from "@/components/admin/operations/MeetingLinkButton"
+import { getMeetingTemporalStatus } from "@/utils/MeetingTemporalStatus"
+import TemporalBadge from "./TemporalBadge "
 
 export default function MeetingCard({ item }: { item: any }) {
+
     const Icon =
         (Icons as any)[item.icon?.charAt(0).toUpperCase() + item.icon?.slice(1)] ||
         Icons.Calendar
 
     const meeting = item
 
+    const temporalStatus = getMeetingTemporalStatus(meeting.scheduledAt)
+    const isCancelledOrMissed = meeting.status === MEETING_STATUS.CANCELLED || meeting.status === MEETING_STATUS.MISSED
+    const isCompleted = meeting.status === MEETING_STATUS.COMPLETED
+    const isScheduled = meeting.status === MEETING_STATUS.SCHEDULED || meeting.status === MEETING_STATUS.RESCHEDULED
+    const isUpcoming = isScheduled && temporalStatus === "UPCOMING"
+    const isToday = isScheduled && temporalStatus === "TODAY"
+
+    const dotColor = (isUpcoming || isToday) ? "green" : (isScheduled && temporalStatus === "PAST") ? "red" : null
+
     // Dynamic entity route
     const entityHref = `/admin//operations/${meeting.entity?.label?.toLowerCase()}s/${meeting.entityId}`
 
     return (
-        <div className="relative flex group gap-3 p-4 rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition">
+        <div className={`relative flex gap-3 p-4 rounded-xl bg-white dark:bg-neutral-900 transition break-words border hover:border-neutral-400 hover:shadow-sm ${isCancelledOrMissed ? "border-red-500 opacity-70" : isCompleted ? "border-green-500 opacity-80" : isToday ? "border-emerald-500" : isUpcoming ? "border-blue-500" : isScheduled ? "border-neutral-800" : "border-neutral-800"}`}>
+            
+            {dotColor && (
+                <span className="absolute flex h-2 w-2">
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dotColor === "green" ? "bg-green-400" : "bg-red-400"}`}></span>
+                    <span className={`relative inline-flex rounded-full h-2 w-2 ${dotColor === "green" ? "bg-green-500" : "bg-red-500"}`}></span>
+                </span>
+            )}
 
             {/* Left Icon */}
             <div className="mt-1">
@@ -46,6 +65,13 @@ export default function MeetingCard({ item }: { item: any }) {
                                 meta={MEETING_STATUS_META}
                             />
                         )}
+
+                        {(meeting.status === MEETING_STATUS.SCHEDULED ||
+                            meeting.status === MEETING_STATUS.RESCHEDULED) &&
+                            temporalStatus && (
+                                <TemporalBadge status={temporalStatus} />
+                            )}
+
                     </div>
 
                     <span className="text-xs text-gray-500 whitespace-nowrap flex gap-2">
@@ -87,8 +113,7 @@ export default function MeetingCard({ item }: { item: any }) {
                     </div>
 
                     {/* Right */}
-                    {meeting.meetingType === MEETING_TYPE.ONLINE &&
-                        meeting.meetingLink && (
+                    {meeting.meetingType === MEETING_TYPE.ONLINE && meeting.meetingLink && isScheduled && (
                             <MeetingLinkButton link={meeting.meetingLink} />
                         )}
                 </div>
