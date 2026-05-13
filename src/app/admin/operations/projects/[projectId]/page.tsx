@@ -13,6 +13,7 @@ import LeadInteractionActions from "@/components/admin/operations/LeadInteractio
 import InteractionModal from "@/components/admin/operations/InteractionModal/InteractionInlineForm"
 import InteractionTimeline from "@/components/admin/operations/interactions/InteractionTimeline"
 import { ProjectStatus } from "@/constants/projectStatus"
+import { InteractionType } from "@/constants/interactionTypes"
 
 interface ApiResponse {
     success: boolean
@@ -26,7 +27,7 @@ export default function Page() {
 
     const [project, setProject] = useState<Project | null>(null)
     const [loading, setLoading] = useState(true)
-    const [activeType, setActiveType] = useState<number | null>(null)
+    const [activeType, setActiveType] = useState<InteractionType | null>(null)
     const [isOpen, setIsOpen] = useState(false)
 
     const [deleting, setDeleting] = useState(false)
@@ -34,7 +35,7 @@ export default function Page() {
     const [interactions, setInteractions] = useState([])
     const [interactionLoading, setInteractionLoading] = useState(true)
 
-    const handleOpen = (type: number) => {
+    const handleOpen = (type: InteractionType) => {
         setActiveType(type)
         setIsOpen(true)
     }
@@ -182,7 +183,7 @@ export default function Page() {
                             </button>
                         </div>
                     )}
-
+``
                     <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={2} entityId={projectId} onSuccess={fetchInteractions} />
 
                     {!loading && project && (

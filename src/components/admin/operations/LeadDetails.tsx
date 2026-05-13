@@ -1,53 +1,51 @@
-import { LEAD_STATUS, LEAD_STATUS_META } from "@/constants/leadStatus"
+import { useState } from "react"
+import { toast } from "sonner"
+import { LEAD_STATUS, LEAD_STATUS_META, LeadStatus } from "@/constants/leadStatus"
 import type { Lead } from "@/types/lead"
 import LeadStatusDropdown from "./statusDropdowns/LeadStatusDropdown"
 import ConvertButton from "./ConvertClientButton"
 import WhatsAppLink from "./button/WhatsAppLink"
 
-interface Props {
+type Props = {
     lead: Lead
+    onStatusChange?: (status: LeadStatus, remarks: string) => Promise<any>
 }
 
-export default function LeadDetails({ lead }: Props) {
+export default function LeadDetails({ lead, onStatusChange }: Props) {
     const leadId = lead._id
 
-    const handleStatusChange = async (status: number) => {
-        try {
-            const res = await fetch(
-                `/api/admin/operations/leads/${leadId}/status`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ status })
-                }
-            )
+    const [pendingStatus, setPendingStatus] = useState<LeadStatus  | null>(null)
+    const [remarks, setRemarks] = useState("")
+    const [saving, setSaving] = useState(false)
 
-            let data: any = null
+    const handleStatusSelect = (status: LeadStatus) => {
+        if (status === lead.status) return
+        setPendingStatus(status)
+        setRemarks("")
+    }
 
-            try {
-                data = await res.json()
-            } catch {
-                // response not JSON
-            }
-
-            if (!res.ok || !data?.success) {
-                throw new Error(
-                    data?.message || "Failed to update status"
-                )
-            }
-
-            return data
-
-        } catch (err: any) {
-            console.log("Status update failed:", err)
-
-            // IMPORTANT: rethrow so UI can handle it
-            throw new Error(
-                err?.message || "Something went wrong"
-            )
+    const handleConfirm = async () => {
+        if (!remarks.trim()) {
+            toast.error("Remarks are required")
+            return
         }
+        if (pendingStatus === null || !onStatusChange) return
+
+        setSaving(true)
+        try {
+            await onStatusChange(pendingStatus, remarks)
+            setPendingStatus(null)
+            setRemarks("")
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to update status")
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const handleCancel = () => {
+        setPendingStatus(null)
+        setRemarks("")
     }
 
     return (
@@ -60,12 +58,49 @@ export default function LeadDetails({ lead }: Props) {
                     <p className="text-sm text-gray-500">{lead.source}</p>
                 </div>
 
-                <LeadStatusDropdown currentStatus={lead.status} onChange={handleStatusChange} />
+                <LeadStatusDropdown currentStatus={lead.status} onChange={handleStatusSelect} />
             </div>
 
             <div className="absolute top-1/2 right-4 -translate-y-1/2">
                 {lead.status === LEAD_STATUS.NEGOTIATION && <ConvertButton id={leadId} />}
             </div>
+
+            {/* Inline remarks — only mounts when a status is pending */}
+            {pendingStatus !== null && (
+                <>
+                    <div className="border-t border-neutral-100 dark:border-neutral-800" />
+
+                    <div className="space-y-2">
+                        <p className="text-sm font-medium">
+                            Change to "{LEAD_STATUS_META[pendingStatus]?.label}"
+                        </p>
+
+                        <textarea
+                            value={remarks}
+                            onChange={(e) => setRemarks(e.target.value)}
+                            placeholder="Add remarks (required)"
+                            rows={3}
+                            className="w-full p-2 text-sm border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={handleCancel}
+                                className="text-xs px-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded hover:bg-neutral-50 dark:hover:bg-neutral-800 transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirm}
+                                disabled={saving}
+                                className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition"
+                            >
+                                {saving ? "Saving..." : "Confirm"}
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
 
             {/* Contact Info */}
             <div className="grid sm:grid-cols-2 gap-4 text-sm">
