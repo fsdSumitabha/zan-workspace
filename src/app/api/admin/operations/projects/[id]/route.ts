@@ -50,18 +50,61 @@ export async function PATCH(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await context.params
+
+        if (!id || !Types.ObjectId.isValid(id)) {
+            return NextResponse.json(
+                { success: false, message: "Invalid project ID" },
+                { status: 400 }
+            )
+        }
+
         await requireRole(req, [10, 60])
 
         await dbConnect()
 
-        const { id } = await context.params
         const body = await req.json()
 
-        const project = await Project.findByIdAndUpdate(
-            id,
-            body,
-            { new: true }
-        )
+        if (!body.clientId || !body.title) {
+            return NextResponse.json(
+                { success: false, message: "Missing required fields" },
+                { status: 400 }
+            )
+        }
+
+        if (!Types.ObjectId.isValid(body.clientId)) {
+            return NextResponse.json(
+                { success: false, message: "Invalid client ID" },
+                { status: 400 }
+            )
+        }
+
+        const { clientId, title, description, serviceType, status, companyName, budget } =
+            body
+
+        const update: Record<string, unknown> = {
+            clientId,
+            title,
+            description,
+            serviceType,
+            status
+        }
+
+        if (companyName !== undefined) {
+            update.companyName = companyName
+        }
+
+        if (budget !== undefined && budget !== null && budget !== "") {
+            const n = Number(budget)
+            if (!Number.isNaN(n)) {
+                update.budget = n
+            }
+        }
+
+        const project = await Project.findByIdAndUpdate(id, update, {
+            new: true,
+            runValidators: true
+        })
 
         if (!project) {
             return NextResponse.json(
@@ -83,8 +126,8 @@ export async function PATCH(
         }
 
         return NextResponse.json(
-            { success: false, message: "Update failed" },
-            { status: 400 }
+            { success: false, message: "Failed to update project" },
+            { status: 500 }
         )
     }
 }
