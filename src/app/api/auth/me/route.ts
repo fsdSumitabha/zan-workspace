@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
         await dbConnect()
 
         const user = await User.findById(userId).select(
-            "_id name email role isActive"
+            "_id name email role isActive avatar"
         )
 
         // 6. User not found / inactive
@@ -78,7 +78,8 @@ export async function GET(req: NextRequest) {
                     id: user._id,
                     name: user.name,
                     email: user.email,
-                    role: user.role
+                    role: user.role,
+                    avatar: user.avatar || ""
                 }
             },
             { status: 200 }
