@@ -3,19 +3,27 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LogOut, MoreVertical, User } from "lucide-react";
+import { LogOut, MoreVertical, User, UserCircle, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function OperationsMobileTopBar() {
     const { user, loading, logout } = useAuth();
     const [open, setOpen] = useState(false);
     const [moreOpen, setMoreOpen] = useState(false);
+    const [avatarBroken, setAvatarBroken] = useState(false);
     const menuWrapRef = useRef<HTMLDivElement | null>(null);
 
     const displayName = useMemo(() => {
         if (!user) return "";
         return user.name || user.email || "";
     }, [user]);
+
+    const avatarUrl = user?.avatar?.trim() || "";
+    const showAvatarImage = Boolean(avatarUrl) && !avatarBroken;
+
+    useEffect(() => {
+        setAvatarBroken(false);
+    }, [avatarUrl]);
 
     useEffect(() => {
         if (!open && !moreOpen) return;
@@ -82,13 +90,20 @@ export default function OperationsMobileTopBar() {
                                 setOpen((v) => !v);
                                 if (!open) setMoreOpen(false);
                             }}
-                            className="h-9 w-9 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-neutral-900/60 flex items-center justify-center"
+                            className="h-9 w-9 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-neutral-900/60 flex items-center justify-center overflow-hidden text-neutral-700 dark:text-neutral-200"
                             aria-label="Profile menu"
                         >
-                            <User
-                                size={18}
-                                className="text-neutral-700 dark:text-neutral-200"
-                            />
+                            {showAvatarImage ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                    src={avatarUrl}
+                                    alt=""
+                                    className="h-full w-full object-cover"
+                                    onError={() => setAvatarBroken(true)}
+                                />
+                            ) : (
+                                <User size={18} />
+                            )}
                         </button>
 
                         {open && (
@@ -103,6 +118,23 @@ export default function OperationsMobileTopBar() {
                                             : displayName || "Unknown"}
                                     </div>
                                 </div>
+                                <div className="border-t border-neutral-200 dark:border-neutral-800" />
+                                <Link
+                                    href="/admin/operations/profile"
+                                    onClick={() => setOpen(false)}
+                                    className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900"
+                                >
+                                    <UserCircle size={16} />
+                                    Profile
+                                </Link>
+                                <Link
+                                    href="/admin/operations/profile/edit"
+                                    onClick={() => setOpen(false)}
+                                    className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900"
+                                >
+                                    <Pencil size={16} />
+                                    Edit profile
+                                </Link>
                                 <div className="border-t border-neutral-200 dark:border-neutral-800" />
                                 <button
                                     type="button"

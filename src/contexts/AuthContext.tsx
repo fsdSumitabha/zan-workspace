@@ -10,6 +10,8 @@ interface AuthUser {
     name?: string
     email?: string
     role: UserRole
+    /** Public URL path under `/public`, e.g. `/uploads/avatars/...` */
+    avatar?: string
 }
 
 interface AuthContextType {
