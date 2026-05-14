@@ -27,7 +27,7 @@ export default function Home() {
                     />
                 </div>
 
-                <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
+                <h1 className="text-2xl font-semibold tracking-wider text-neutral-900 dark:text-neutral-50">
                     Zan Workspace
                 </h1>
                 <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
