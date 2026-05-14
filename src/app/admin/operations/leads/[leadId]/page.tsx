@@ -15,6 +15,7 @@ import InteractionTimeline from "@/components/admin/operations/interactions/Inte
 import { InteractionItemSkeleton } from "@/components/admin/operations/skeletons/InteractionItemSkeleton"
 import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/ActionTypeSkeleton"
 import { InteractionType } from "@/constants/interactionTypes"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function Page() {
     const params = useParams()
@@ -25,6 +26,8 @@ export default function Page() {
 
     const [interactions, setInteractions] = useState<Interaction[]>([])
     const [interactionLoading, setInteractionLoading] = useState(true)
+
+    const { role } = useAuth()
 
     useEffect(() => {
         const fetchLead = async () => {
@@ -177,7 +180,7 @@ export default function Page() {
                             </>
                         )}
                         
-                        {!loading && lead && (
+                        {!loading && lead && role === 10 && (
                             <div className="flex justify-end">
                                 <button
                                     onClick={handleDelete}

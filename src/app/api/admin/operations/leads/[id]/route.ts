@@ -126,17 +126,24 @@ export async function DELETE(
             )
         }
 
-        await requireRole(req, [10])
+        const authUser = await requireRole(req, [10])
 
         await dbConnect()
 
-        // 2. Delete lead
-        const lead = await Lead.findByIdAndDelete(id)
+        // 2. Soft delete: only act on a lead that isn't already deleted
+        const lead = await Lead.findOneAndUpdate(
+            { _id: id, deletedAt: null },
+            {
+                deletedAt: new Date(),
+                deletedBy: authUser.id
+            },
+            { new: true }
+        )
 
-        // 3. Not found
+        // 3. Not found (or already deleted)
         if (!lead) {
             return NextResponse.json(
-                { success: false, message: "Lead not found" },
+                { success: false, message: "Lead not found or already deleted" },
                 { status: 404 }
             )
         }

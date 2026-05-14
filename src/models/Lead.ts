@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose"
+import mongoose, { Schema, Document, Query } from "mongoose"
 import { LEAD_STATUS } from "@/constants/leadStatus"
 
 export interface ILead extends Document {
@@ -11,10 +11,13 @@ export interface ILead extends Document {
 
     assignedTo?: mongoose.Types.ObjectId
     convertedClientId?: mongoose.Types.ObjectId
-    
+
     lastInteractionAt?: Date
     lastInteractionId?: mongoose.Types.ObjectId
     createdBy?: mongoose.Types.ObjectId
+
+    deletedAt: Date | null
+    deletedBy?: mongoose.Types.ObjectId
 }
 
 const LeadSchema = new Schema<ILead>(
@@ -48,9 +51,24 @@ const LeadSchema = new Schema<ILead>(
             type: Schema.Types.ObjectId,
             ref: "User"
         },
+
+        deletedAt: {
+            type: Date,
+            default: null
+        },
+
+        deletedBy: {
+            type: Schema.Types.ObjectId,
+            ref: "User"
+        }
+
     },
     { timestamps: true }
 )
+
+LeadSchema.pre(/^find/, function (this: Query<any, ILead>) {
+    this.where({ deletedAt: null })
+})
 
 export default mongoose.models.Lead ||
     mongoose.model<ILead>("Lead", LeadSchema)
