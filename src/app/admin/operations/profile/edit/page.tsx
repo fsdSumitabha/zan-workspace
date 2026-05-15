@@ -3,19 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import {
-    User,
-    Lock,
-    Camera,
-    Eye,
-    EyeOff,
-    ArrowLeft
-} from "lucide-react"
+import { User, Lock, Camera, Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { USER_ROLE_META } from "@/constants/userRoles"
 import type { AuthProfileUser } from "@/types/authProfile"
+import { Image } from "@imagekit/next"
 
 function PasswordField({
     id,
@@ -263,9 +257,17 @@ export default function ProfileEditPage() {
                 <div className="w-20 h-20 shrink-0 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 overflow-hidden flex items-center justify-center">
                     {showAvatar ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                             src={avatarUrl}
                             alt=""
+                            width={80}
+                            height={80}
+                            transformation={[
+                                {
+                                    width: 160,
+                                    height: 160,
+                                }
+                            ]}
                             className="w-full h-full object-cover"
                             onError={() => setAvatarBroken(true)}
                         />
