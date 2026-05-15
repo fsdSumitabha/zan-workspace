@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose"
 import { CLIENT_STATUS } from "@/constants/clientStatus"
+import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 
 export interface IClient extends Document {
     name: string
@@ -41,5 +42,12 @@ const ClientSchema = new Schema<IClient>(
     { timestamps: true }
 )
 
-export default mongoose.models.Client ||
+ensureAuditPlugin(ClientSchema, "CLIENT")
+
+const Client =
+    mongoose.models.Client ||
     mongoose.model<IClient>("Client", ClientSchema)
+
+ensureAuditPlugin(Client.schema, "CLIENT")
+
+export default Client

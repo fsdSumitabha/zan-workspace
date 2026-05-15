@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose"
+import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 
 interface IRescheduleEntry {
     oldDate?: Date
@@ -123,4 +124,12 @@ const MeetingSchema = new mongoose.Schema<IMeeting>({
 
 }, { timestamps: true })
 
-export default mongoose.models.Meeting || mongoose.model<IMeeting>("Meeting", MeetingSchema)
+ensureAuditPlugin(MeetingSchema, "MEETING")
+
+const Meeting =
+    mongoose.models.Meeting ||
+    mongoose.model<IMeeting>("Meeting", MeetingSchema)
+
+ensureAuditPlugin(Meeting.schema, "MEETING")
+
+export default Meeting

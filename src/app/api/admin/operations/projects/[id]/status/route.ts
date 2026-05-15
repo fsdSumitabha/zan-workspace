@@ -10,6 +10,7 @@ import { PROJECT_STATUS, type ProjectStatus } from "@/constants/projectStatus"
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
+import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
 
 export async function PATCH(
     req: NextRequest,
@@ -91,14 +92,25 @@ export async function PATCH(
             )
         }
 
-        // 1. Update project
-        project.status = status
-        await project.save()
+        const updatedProject = await auditedFindByIdAndUpdate(
+            Project,
+            "PROJECT",
+            id,
+            { status },
+            {},
+            authUser.id
+        )
 
-        // 2. Create interaction log
+        if (!updatedProject) {
+            return NextResponse.json(
+                { success: false, message: "Project not found" },
+                { status: 404 }
+            )
+        }
+
         const interaction = await Interaction.create({
-            entityType: 2, // assuming: 1 = client, 2 = project
-            entityId: project._id,
+            entityType: 2,
+            entityId: updatedProject._id,
             type: INTERACTION_TYPE.STATUS_CHANGED,
 
             title: JSON.stringify({
@@ -111,21 +123,26 @@ export async function PATCH(
             createdBy: authUser.id
         })
 
-        // 3. Optional tracking (only if you later add fields)
-        if ("lastInteractionAt" in project) {
-            project.lastInteractionAt = new Date()
-            project.lastInteractionId = interaction._id
-            await project.save()
-        }
+        await auditedFindByIdAndUpdate(
+            Project,
+            "PROJECT",
+            id,
+            {
+                lastInteractionAt: new Date(),
+                lastInteractionId: interaction._id,
+            },
+            {},
+            authUser.id
+        )
 
         return NextResponse.json(
             {
                 success: true,
                 message: "Project status updated successfully",
                 data: {
-                    id: project._id,
+                    id: updatedProject._id,
                     oldStatus,
-                    newStatus: project.status
+                    newStatus: status
                 }
             },
             { status: 200 }

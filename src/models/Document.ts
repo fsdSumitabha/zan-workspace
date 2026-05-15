@@ -1,4 +1,5 @@
-import mongoose, {Schema, Document} from "mongoose";
+import mongoose, { Schema, Document } from "mongoose"
+import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 
 export interface IDocument extends Document {
     clientId?: mongoose.Types.ObjectId
@@ -43,4 +44,12 @@ const DocumentSchema = new mongoose.Schema<IDocument>({
 
 }, { timestamps: true })
 
-export default mongoose.models.Document || mongoose.model<IDocument>("Document", DocumentSchema)
+ensureAuditPlugin(DocumentSchema, "DOCUMENT")
+
+const DocumentModel =
+    mongoose.models.Document ||
+    mongoose.model<IDocument>("Document", DocumentSchema)
+
+ensureAuditPlugin(DocumentModel.schema, "DOCUMENT")
+
+export default DocumentModel

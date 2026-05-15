@@ -10,6 +10,7 @@ import Project from "@/models/Project"
 import { Meeting as IMeeting } from "@/types/meeting"
 import { AuthError, requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
+import { auditedUpdateByNumericEntityType } from "@/lib/activity-log"
 
 export async function GET(req: NextRequest) {
     try {
@@ -207,18 +208,16 @@ export async function POST(req: NextRequest) {
             lastInteractionId: interaction._id
         }
 
-        // 3. Update corresponding entity
         switch (entityType) {
             case ENTITY_TYPE.LEAD:
-                await Lead.findByIdAndUpdate(entityId, updatePayload)
-                break
-
             case ENTITY_TYPE.CLIENT:
-                await Client.findByIdAndUpdate(entityId, updatePayload)
-                break
-
             case ENTITY_TYPE.PROJECT:
-                await Project.findByIdAndUpdate(entityId, updatePayload)
+                await auditedUpdateByNumericEntityType(
+                    entityType,
+                    entityId,
+                    updatePayload,
+                    authUser.id
+                )
                 break
 
             default:

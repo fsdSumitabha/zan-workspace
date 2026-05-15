@@ -5,6 +5,7 @@ import "@/models/Client"
 import { SortOrder } from "mongoose"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
+import { auditedCreate } from "@/lib/activity-log"
 
 export async function GET(req: NextRequest) {
     try {
@@ -100,14 +101,19 @@ export async function POST(req: NextRequest) {
 
         const { clientId, title, description, serviceType, status } = body
 
-        const project = await Project.create({
-            clientId,
-            title,
-            description,
-            serviceType,
-            status,
-            createdBy: authUser.id
-        })
+        const project = await auditedCreate(
+            Project,
+            "PROJECT",
+            {
+                clientId,
+                title,
+                description,
+                serviceType,
+                status,
+                createdBy: authUser.id,
+            },
+            authUser.id
+        )
 
         return NextResponse.json(
             { success: true, data: project },

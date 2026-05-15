@@ -9,7 +9,8 @@ import { CLIENT_STATUS, CLIENT_STATUS_META, type ClientStatus } from "@/constant
 
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { requireRole } from "@/lib/auth/requireRole"
-import { AuthError, requireAuth } from "@/lib/auth/requireAuth"
+import { AuthError } from "@/lib/auth/requireAuth"
+import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
 
 export async function PATCH(
     req: NextRequest,
@@ -91,14 +92,25 @@ export async function PATCH(
             )
         }
 
-        // 1. Update client
-        client.status = status
-        await client.save()
+        const updatedClient = await auditedFindByIdAndUpdate(
+            Client,
+            "CLIENT",
+            id,
+            { status },
+            {},
+            authUser.id
+        )
 
-        // 2. Create interaction log
+        if (!updatedClient) {
+            return NextResponse.json(
+                { success: false, message: "Client not found" },
+                { status: 404 }
+            )
+        }
+
         const interaction = await Interaction.create({
             entityType: 1,
-            entityId: client._id,
+            entityId: updatedClient._id,
             type: INTERACTION_TYPE.STATUS_CHANGED,
 
             title: JSON.stringify({
@@ -111,19 +123,26 @@ export async function PATCH(
             createdBy: authUser.id
         })
 
-        // 3. Update last interaction tracking (nice touch)
-        client.lastInteractionAt = new Date()
-        client.lastInteractionId = interaction._id
-        await client.save()
+        await auditedFindByIdAndUpdate(
+            Client,
+            "CLIENT",
+            id,
+            {
+                lastInteractionAt: new Date(),
+                lastInteractionId: interaction._id,
+            },
+            {},
+            authUser.id
+        )
 
         return NextResponse.json(
             {
                 success: true,
                 message: "Client status updated successfully",
                 data: {
-                    id: client._id,
+                    id: updatedClient._id,
                     oldStatus,
-                    newStatus: client.status
+                    newStatus: status
                 }
             },
             { status: 200 }

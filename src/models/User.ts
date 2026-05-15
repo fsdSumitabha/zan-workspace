@@ -2,6 +2,7 @@ import { Query } from "mongoose"
 import { UserRole } from "@/constants/userRoles"
 import mongoose, { Schema, Document } from "mongoose"
 import { USER_ROLE_META } from "@/constants/userRoles"
+import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 
 export interface IUser extends Document {
     name: string
@@ -79,4 +80,11 @@ UserSchema.pre(/^find/, function (this: Query<any, IUser>) {
     this.where({ deletedAt: null })
 })
 
-export default mongoose.models.User || mongoose.model<IUser>("User", UserSchema)
+ensureAuditPlugin(UserSchema, "USER")
+
+const User =
+    mongoose.models.User || mongoose.model<IUser>("User", UserSchema)
+
+ensureAuditPlugin(User.schema, "USER")
+
+export default User

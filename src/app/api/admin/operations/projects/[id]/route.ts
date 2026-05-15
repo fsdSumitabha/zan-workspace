@@ -4,6 +4,7 @@ import Project from "@/models/Project"
 import { Types } from "mongoose"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
+import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
 
 export async function GET(
     req: NextRequest,
@@ -59,10 +60,6 @@ export async function PATCH(
             )
         }
 
-        await requireRole(req, [10, 60])
-
-        await dbConnect()
-
         const body = await req.json()
 
         if (!body.clientId || !body.title) {
@@ -78,6 +75,9 @@ export async function PATCH(
                 { status: 400 }
             )
         }
+
+        await dbConnect()
+        const user = await requireRole(req, [10, 60])
 
         const { clientId, title, description, serviceType, status, companyName, budget } =
             body
@@ -101,10 +101,14 @@ export async function PATCH(
             }
         }
 
-        const project = await Project.findByIdAndUpdate(id, update, {
-            new: true,
-            runValidators: true
-        })
+        const project = await auditedFindByIdAndUpdate(
+            Project,
+            "PROJECT",
+            id,
+            update,
+            {},
+            user.id
+        )
 
         if (!project) {
             return NextResponse.json(

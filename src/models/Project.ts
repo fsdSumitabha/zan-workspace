@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose"
 import { PROJECT_STATUS } from "@/constants/projectStatus"
+import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 
 export interface IProject extends Document {
     clientId: mongoose.Types.ObjectId
@@ -50,5 +51,12 @@ const ProjectSchema = new Schema<IProject>(
     { timestamps: true }
 )
 
-export default mongoose.models.Project ||
+ensureAuditPlugin(ProjectSchema, "PROJECT")
+
+const Project =
+    mongoose.models.Project ||
     mongoose.model<IProject>("Project", ProjectSchema)
+
+ensureAuditPlugin(Project.schema, "PROJECT")
+
+export default Project

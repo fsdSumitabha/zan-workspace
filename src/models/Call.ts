@@ -1,4 +1,5 @@
 import mongoose from "mongoose"
+import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 
 export interface ICall extends Document {
     entityType: number
@@ -78,4 +79,11 @@ const CallSchema = new mongoose.Schema<ICall>({
 
 }, { timestamps: true })
 
-export default mongoose.models.Call || mongoose.model<ICall>("Call", CallSchema)
+ensureAuditPlugin(CallSchema, "CALL")
+
+const Call =
+    mongoose.models.Call || mongoose.model<ICall>("Call", CallSchema)
+
+ensureAuditPlugin(Call.schema, "CALL")
+
+export default Call
