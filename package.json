@@ -9,11 +9,13 @@
     "seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
+    "@imagekit/next": "^2.1.5",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.20",
     "dotenv": "^17.3.1",
     "framer-motion": "^12.38.0",
+    "imagekit": "^6.0.0",
     "jose": "^6.2.2",
     "lucide-react": "^0.577.0",
     "mongoose": "^9.3.0",
