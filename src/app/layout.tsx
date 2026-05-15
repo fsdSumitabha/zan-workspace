@@ -29,7 +29,7 @@ export default function RootLayout({
         <html lang="en">
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} >
                 <AuthProvider>
-                    <ImageKitProvider urlEndpoint={process.env.IMAGEKIT_URL_ENDPOINT!}>
+                    <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!}>
                     <Toaster position="top-center" theme="dark" richColors />
                     {children}
                     </ImageKitProvider>
