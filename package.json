@@ -9,6 +9,7 @@
     "seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
+    "@imagekit/next": "^2.1.5",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.20",
