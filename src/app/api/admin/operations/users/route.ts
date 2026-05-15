@@ -8,7 +8,7 @@ import { SortOrder } from "mongoose"
 import { requireRole } from "@/lib/auth/requireRole"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { USER_ROLE_META } from "@/constants/userRoles"
-
+import { imagekit } from "@/lib/imagekit/imagekit"
 
 export async function GET(req: NextRequest) {
     try {
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
         const [data, total] = await Promise.all([
             User.find(query)
                 .select("-password")
-                .populate("createdBy", "name email role") 
+                .populate("createdBy", "name email role")
                 .sort(sortOption)
                 .skip(skip)
                 .limit(limit)
@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const authUser = await requireAuth(req)
+        const authUser = await requireRole(req, [10, 20])
 
         await dbConnect()
 
@@ -163,17 +163,15 @@ export async function POST(req: NextRequest) {
             const bytes = await file.arrayBuffer()
             const buffer = Buffer.from(bytes)
 
-            const fileName = `${Date.now()}-${file.name.replace(/\s/g, "")}`
+            const uploadResponse = await imagekit.upload({
+                file: buffer,
+                fileName: `${Date.now()}-${file.name.replace(/\s/g, "")}`,
+                folder: "/avatars",
+                useUniqueFileName: true,
+                tags: ["avatar", `role:${role}`],
+            })
 
-            const uploadDir = path.join(process.cwd(), "public/uploads/avatars")
-
-            await fs.mkdir(uploadDir, { recursive: true })
-
-            const filePath = path.join(uploadDir, fileName)
-
-            await fs.writeFile(filePath, buffer)
-
-            avatarUrl = `/uploads/avatars/${fileName}`
+            avatarUrl = uploadResponse.url
         }
 
         const hashedPassword = await bcrypt.hash(password, 10)
