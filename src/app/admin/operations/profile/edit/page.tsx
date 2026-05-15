@@ -264,10 +264,8 @@ export default function ProfileEditPage() {
                             height={80}
                             transformation={[
                                 {
-                                    width: 160,      // 2x for retina
+                                    width: 160,
                                     height: 160,
-                                    cropMode: "extract",
-                                    focus: "face"
                                 }
                             ]}
                             className="w-full h-full object-cover"
