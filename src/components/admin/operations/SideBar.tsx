@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
+import { Image } from "@imagekit/next"
 import { User, LogOut } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -101,19 +101,25 @@ export default function Sidebar() {
                     <div className="flex items-center justify-between gap-2 group">
                         <Link
                             href="/admin/operations/profile"
-                            className={`flex items-center gap-3 min-w-0 flex-1 rounded-lg px-1 py-1 -mx-1 transition outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 ${
-                                pathname === "/admin/operations/profile" ||
-                                pathname.startsWith("/admin/operations/profile/")
+                            className={`flex items-center gap-3 min-w-0 flex-1 rounded-lg px-1 py-1 -mx-1 transition outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 ${pathname === "/admin/operations/profile" ||
+                                    pathname.startsWith("/admin/operations/profile/")
                                     ? "bg-emerald-50 dark:bg-emerald-500/10 ring-1 ring-emerald-500/30"
                                     : "hover:bg-gray-200/80 dark:hover:bg-neutral-800/80"
-                            }`}
+                                }`}
                         >
                             <div className="w-9 h-9 shrink-0 rounded-full bg-emerald-500/10 text-emerald-400 overflow-hidden flex items-center justify-center border border-emerald-500/20">
                                 {showAvatarImage ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
+                                    <Image
                                         src={avatarUrl}
                                         alt=""
+                                        width={36}
+                                        height={36}
+                                        transformation={[
+                                            {
+                                                width: 72,       // 2x for retina
+                                                height: 72,
+                                            }
+                                        ]}
                                         className="h-full w-full object-cover"
                                         onError={() => setAvatarBroken(true)}
                                     />
