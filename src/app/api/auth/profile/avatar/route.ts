@@ -1,33 +1,9 @@
-import path from "path"
-import fs from "fs/promises"
 import { NextRequest, NextResponse } from "next/server"
 
 import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
 import { verifyToken } from "@/lib/auth/verifyToken"
-
-const AVATARS_PUBLIC_PREFIX = "/uploads/avatars/"
-
-function safeAvatarDiskPath(publicUrl: string): string | null {
-    if (!publicUrl || !publicUrl.startsWith(AVATARS_PUBLIC_PREFIX)) {
-        return null
-    }
-
-    const relative = publicUrl.replace(/^\//, "")
-    const avatarsRoot = path.resolve(
-        process.cwd(),
-        "public",
-        "uploads",
-        "avatars"
-    )
-    const resolved = path.resolve(process.cwd(), "public", relative)
-
-    if (!resolved.startsWith(avatarsRoot)) {
-        return null
-    }
-
-    return resolved
-}
+import { imagekit } from "@/lib/imagekit/imagekit"
 
 export async function POST(req: NextRequest) {
     try {
@@ -86,33 +62,30 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const oldDiskPath = user.avatar
-            ? safeAvatarDiskPath(user.avatar)
-            : null
+        // remember the old fileId so we can delete it after the new upload succeeds
+        const oldFileId = user.avatarFileId || null
 
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
 
-        const fileName = `${Date.now()}-${file.name.replace(/\s/g, "")}`
+        const uploadResponse = await imagekit.upload({
+            file: buffer,
+            fileName: `${Date.now()}-${file.name.replace(/\s/g, "")}`,
+            folder: "/avatars",
+            useUniqueFileName: true,
+            tags: ["avatar", `user:${user._id}`]
+        })
 
-        const uploadDir = path.join(process.cwd(), "public/uploads/avatars")
-
-        await fs.mkdir(uploadDir, { recursive: true })
-
-        const filePath = path.join(uploadDir, fileName)
-
-        await fs.writeFile(filePath, buffer)
-
-        const avatarUrl = `${AVATARS_PUBLIC_PREFIX}${fileName}`
-
-        user.avatar = avatarUrl
+        user.avatar = uploadResponse.url
+        user.avatarFileId = uploadResponse.fileId
         await user.save()
 
-        if (oldDiskPath) {
+        // best-effort cleanup of the previous avatar — don't fail the request if this fails
+        if (oldFileId) {
             try {
-                await fs.unlink(oldDiskPath)
-            } catch {
-                // ignore missing or permission errors
+                await imagekit.deleteFile(oldFileId)
+            } catch (err) {
+                console.warn("Failed to delete old avatar from ImageKit:", err)
             }
         }
 

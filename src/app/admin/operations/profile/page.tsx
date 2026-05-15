@@ -3,20 +3,12 @@
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import {
-    User,
-    Mail,
-    Shield,
-    Calendar,
-    Clock,
-    UserCircle,
-    RefreshCw,
-    Pencil
-} from "lucide-react"
+import { User, Mail, Shield, Calendar, Clock, UserCircle, RefreshCw, Pencil } from "lucide-react"
 import { toast } from "sonner"
 
 import { USER_ROLE_META } from "@/constants/userRoles"
 import type { AuthProfileUser } from "@/types/authProfile"
+import { Image } from "@imagekit/next"
 
 export default function ProfilePage() {
     const router = useRouter()
@@ -124,10 +116,11 @@ export default function ProfilePage() {
                 <div className="p-6 md:p-8 flex flex-col sm:flex-row sm:items-start gap-6 border-b border-neutral-100 dark:border-neutral-800">
                     <div className="w-24 h-24 shrink-0 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 overflow-hidden flex items-center justify-center">
                         {showAvatar ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
+                            <Image
                                 src={avatarUrl}
                                 alt=""
+                                width={80}
+                                height={80}
                                 className="w-full h-full object-cover"
                                 onError={() => setAvatarBroken(true)}
                             />
