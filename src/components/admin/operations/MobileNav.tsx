@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
+    Activity,
     FolderKanban,
     Home,
     Users,
@@ -47,6 +48,12 @@ const navItems: Array<{
         href: "/admin/operations/users",
         roles: [10, 20],
         icon: UserRoundCog,
+    },
+    {
+        name: "Activity",
+        href: "/admin/operations/activity-logs",
+        roles: [10, 20],
+        icon: Activity,
     },
 ];
 

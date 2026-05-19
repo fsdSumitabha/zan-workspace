@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server"
+import { enterAuditContext } from "@/lib/activity-log/auditContext"
 import { getUserFromRequest, AuthUser } from "./getUserFromRequest"
 
 export class AuthError extends Error {
@@ -24,6 +25,8 @@ export async function requireAuth(req: NextRequest): Promise<AuthUser> {
     if (!user.isActive) {
         throw new AuthError("Your account is deactivated.", 403)
     }
+
+    enterAuditContext(user.id)
 
     return user
 }

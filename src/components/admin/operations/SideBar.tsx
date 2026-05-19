@@ -14,6 +14,7 @@ const navItems = [
     { name: "Projects", href: "/admin/operations/projects", roles: [10, 20, 30, 40, 50, 60, 70, 80] },
     { name: "Meetings", href: "/admin/operations/meetings", roles: [10, 20, 30, 40, 50, 60, 70, 80] },
     { name: "Users", href: "/admin/operations/users", roles: [10, 20,] },
+    { name: "Activity Log", href: "/admin/operations/activity-logs", roles: [10, 20] },
 ]
 
 export default function Sidebar() {

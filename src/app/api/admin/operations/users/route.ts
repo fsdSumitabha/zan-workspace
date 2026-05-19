@@ -8,6 +8,8 @@ import { SortOrder } from "mongoose"
 import { requireRole } from "@/lib/auth/requireRole"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { USER_ROLE_META } from "@/constants/userRoles"
+import { auditedCreate } from "@/lib/activity-log"
+
 import { imagekit } from "@/lib/imagekit/imagekit"
 
 export async function GET(req: NextRequest) {
@@ -176,15 +178,20 @@ export async function POST(req: NextRequest) {
 
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        const user = await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            role,
-            isActive,
-            avatar: avatarUrl,
-            createdBy: authUser.id
-        })
+        const user = await auditedCreate(
+            User,
+            "USER",
+            {
+                name,
+                email,
+                password: hashedPassword,
+                role,
+                isActive,
+                avatar: avatarUrl,
+                createdBy: authUser.id,
+            },
+            authUser.id
+        )
 
         return NextResponse.json(
             {

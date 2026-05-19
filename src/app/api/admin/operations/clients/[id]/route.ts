@@ -6,6 +6,7 @@ import { Types } from "mongoose"
 import { requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
+import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
 
 export async function GET(
     req: NextRequest,
@@ -71,8 +72,6 @@ export async function PATCH(
             )
         }
 
-        await requireRole(req, [10, 60])
-
         const body = await req.json()
 
         if (!body.name || !body.company || !body.phone) {
@@ -83,6 +82,8 @@ export async function PATCH(
         }
 
         await dbConnect()
+
+        const user = await requireRole(req, [10, 60])
 
         const existing = await Client.findOne({
             phone: body.phone,
@@ -98,10 +99,13 @@ export async function PATCH(
 
         const { name, company, email, phone } = body
 
-        const client = await Client.findByIdAndUpdate(
+        const client = await auditedFindByIdAndUpdate(
+            Client,
+            "CLIENT",
             id,
             { name, company, email, phone },
-            { new: true, runValidators: true }
+            {},
+            user.id
         )
 
         if (!client) {
@@ -138,8 +142,6 @@ export async function DELETE(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireRole(req, [10, 60])
-
         const { id } = await context.params
 
         // 1. Validate ID
@@ -151,6 +153,8 @@ export async function DELETE(
         }
 
         await dbConnect()
+
+        await requireRole(req, [10, 60])
 
         // 2. Delete lead
         const lead = await Client.findByIdAndDelete(id)

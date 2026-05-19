@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose"
+import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 
 export interface IQuotation extends Document {
     entityType: number
@@ -49,5 +50,12 @@ const QuotationSchema = new Schema<IQuotation>(
     { timestamps: true }
 )
 
-export default mongoose.models.Quotation ||
+ensureAuditPlugin(QuotationSchema, "QUOTATION")
+
+const Quotation =
+    mongoose.models.Quotation ||
     mongoose.model<IQuotation>("Quotation", QuotationSchema)
+
+ensureAuditPlugin(Quotation.schema, "QUOTATION")
+
+export default Quotation

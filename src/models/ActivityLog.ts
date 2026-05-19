@@ -39,6 +39,9 @@ const ActivityLogSchema = new mongoose.Schema<IActivityLog>({
         ref: "User"
     }
 
-}, { timestamps: true })
+}, { timestamps: true, collection: "activity_logs" })
+
+ActivityLogSchema.index({ entityType: 1, entityId: 1, createdAt: -1 })
+ActivityLogSchema.index({ userId: 1, createdAt: -1 })
 
 export default mongoose.models.ActivityLog || mongoose.model<IActivityLog>("ActivityLog", ActivityLogSchema)

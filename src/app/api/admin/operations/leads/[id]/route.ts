@@ -4,6 +4,7 @@ import Lead from "@/models/Lead"
 import { Types } from "mongoose"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
+import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
 
 export async function GET(
     req: NextRequest,
@@ -49,8 +50,6 @@ export async function PATCH(
             )
         }
 
-        await requireRole(req, [10, 60])
-
         const body = await req.json()
 
         if (!body.name || !body.phone || !body.source) {
@@ -61,6 +60,7 @@ export async function PATCH(
         }
 
         await dbConnect()
+        const user = await requireRole(req, [10, 60])
 
         const existing = await Lead.findOne({
             phone: body.phone,
@@ -76,10 +76,13 @@ export async function PATCH(
 
         const { name, email, phone, source } = body
 
-        const lead = await Lead.findByIdAndUpdate(
+        const lead = await auditedFindByIdAndUpdate(
+            Lead,
+            "LEAD",
             id,
             { name, email, phone, source },
-            { new: true, runValidators: true }
+            {},
+            user.id
         )
 
         if (!lead) {
@@ -126,18 +129,19 @@ export async function DELETE(
             )
         }
 
+        await dbConnect()
         const authUser = await requireRole(req, [10])
 
-        await dbConnect()
-
-        // 2. Soft delete: only act on a lead that isn't already deleted
-        const lead = await Lead.findOneAndUpdate(
-            { _id: id, deletedAt: null },
+        const lead = await auditedFindByIdAndUpdate(
+            Lead,
+            "LEAD",
+            id,
             {
                 deletedAt: new Date(),
-                deletedBy: authUser.id
+                deletedBy: authUser.id,
             },
-            { new: true }
+            {},
+            authUser.id
         )
 
         // 3. Not found (or already deleted)

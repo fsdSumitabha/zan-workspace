@@ -11,6 +11,7 @@ import Client from "@/models/Client"
 import Project from "@/models/Project"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
+import { auditedUpdateByNumericEntityType } from "@/lib/activity-log"
 
 export async function POST(req: NextRequest) {
     try {
@@ -89,18 +90,16 @@ export async function POST(req: NextRequest) {
             lastInteractionId: interaction._id
         }
 
-        // 5. Update corresponding entity
         switch (entityType) {
             case ENTITY_TYPE.LEAD:
-                await Lead.findByIdAndUpdate(entityId, updatePayload)
-                break
-
             case ENTITY_TYPE.CLIENT:
-                await Client.findByIdAndUpdate(entityId, updatePayload)
-                break
-
             case ENTITY_TYPE.PROJECT:
-                await Project.findByIdAndUpdate(entityId, updatePayload)
+                await auditedUpdateByNumericEntityType(
+                    entityType,
+                    entityId,
+                    updatePayload,
+                    authUser.id
+                )
                 break
 
             default:

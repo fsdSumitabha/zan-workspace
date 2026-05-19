@@ -4,6 +4,7 @@ import Client from "@/models/Client"
 import { SortOrder } from "mongoose"
 import { requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
+import { auditedCreate } from "@/lib/activity-log"
 import { AuthError } from "@/lib/auth/requireAuth"
 
 export async function GET(req: NextRequest) {
@@ -83,7 +84,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        await requireRole(req, [10, 60])
+        const authUser = await requireRole(req, [10, 60])
 
         await dbConnect()
 
@@ -105,7 +106,12 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const client = await Client.create(body)
+        const client = await auditedCreate(
+            Client,
+            "CLIENT",
+            body,
+            authUser.id
+        )
 
         return NextResponse.json(
             { success: true, data: client },

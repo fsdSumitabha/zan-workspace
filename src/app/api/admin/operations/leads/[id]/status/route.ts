@@ -8,6 +8,7 @@ import { LEAD_STATUS, LEAD_STATUS_META, LeadStatus } from "@/constants/leadStatu
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
+import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
 
 export async function PATCH(
     req: NextRequest,
@@ -107,11 +108,23 @@ export async function PATCH(
 
         const oldStatus = lead.status
 
-        // 1. Update lead
-        lead.status = status
-        await lead.save()
+        const updatedLead = await auditedFindByIdAndUpdate(
+            Lead,
+            "LEAD",
+            id,
+            { status },
+            {},
+            authUser.id
+        )
 
-        // 2. Create interaction (THIS IS THE NEW PART)
+        if (!updatedLead) {
+            return NextResponse.json(
+                { success: false, message: "Lead not found" },
+                { status: 404 }
+            )
+        }
+
+        // Create interaction (timeline entry)
         await Interaction.create({
             entityType: 0,
             entityId: lead._id,
@@ -133,9 +146,9 @@ export async function PATCH(
                 success: true,
                 message: "Lead status updated successfully",
                 data: {
-                    id: lead._id,
+                    id: updatedLead._id,
                     oldStatus,
-                    newStatus: lead.status
+                    newStatus: updatedLead.status
                 }
             },
             { status: 200 }

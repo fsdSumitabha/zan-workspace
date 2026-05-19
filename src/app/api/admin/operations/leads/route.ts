@@ -4,6 +4,7 @@ import Lead from "@/models/Lead"
 import { SortOrder } from "mongoose"
 import { requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
+import { auditedCreate } from "@/lib/activity-log"
 import { AuthError } from "@/lib/auth/requireAuth"
 
 export async function GET(req: NextRequest) {
@@ -107,13 +108,18 @@ export async function POST(req: NextRequest) {
 
         const { name, email, phone, source } = body
 
-        const lead = await Lead.create({
-            name,
-            email,
-            phone,
-            source,
-            createdBy: authUser.id,
-        })
+        const lead = await auditedCreate(
+            Lead,
+            "LEAD",
+            {
+                name,
+                email,
+                phone,
+                source,
+                createdBy: authUser.id,
+            },
+            authUser.id
+        )
 
         return NextResponse.json(
             {
