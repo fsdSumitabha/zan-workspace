@@ -2,11 +2,12 @@
 
 import Link from "next/link"
 import { Plus } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Lead } from "@/types/lead"
 import LeadCard from "@/components/admin/operations/LeadCard"
 import LeadCardSkeleton from "@/components/admin/operations/skeletons/LeadCardSkeleton"
 import CreateActionButton from "@/components/admin/operations/CreateActionButton"
+import Pagination from "@/components/admin/operations/Pagination"
 
 interface ApiResponse {
     success: boolean
@@ -19,33 +20,38 @@ interface ApiResponse {
     }
 }
 
+const PAGE_SIZE = 10
+
 export default function Page() {
     const [leads, setLeads] = useState<Lead[]>([])
     const [loading, setLoading] = useState(true)
+    const [page, setPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(1)
 
-    const fetchLeads = async () => {
+    const fetchLeads = useCallback(async () => {
         try {
             setLoading(true)
 
             const res = await fetch(
-                "/api/admin/operations/leads?page=1&limit=10"
+                `/api/admin/operations/leads?page=${page}&limit=${PAGE_SIZE}`
             )
 
             const json: ApiResponse = await res.json()
 
             if (json.success) {
                 setLeads(json.data)
+                setTotalPages(json.pagination?.pages ?? 1)
             }
         } catch (error) {
             console.error("Failed to fetch leads", error)
         } finally {
             setLoading(false)
         }
-    }
+    }, [page])
 
     useEffect(() => {
         fetchLeads()
-    }, [])
+    }, [fetchLeads])
 
     return (
 
@@ -85,7 +91,17 @@ export default function Page() {
                             />
                         ))}
 
-                        <Link 
+                    {/* Pagination */}
+                    {!loading && (
+                        <Pagination
+                            page={page}
+                            totalPages={totalPages}
+                            disabled={loading}
+                            onChange={setPage}
+                        />
+                    )}
+
+                        <Link
                             href={"leads/create"}
                             className="
                                 fixed bottom-6 right-6
