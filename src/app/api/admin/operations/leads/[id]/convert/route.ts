@@ -63,24 +63,23 @@ export async function POST(
 
         session.startTransaction()
 
-        const client = await Client.create(
-            [
-                {
-                    name: lead.name,
-                    company: body.company,
-                    phone: lead.phone,
-                    email: lead.email,
-                    status: CLIENT_STATUS.ACTIVE,
-                    createdBy: authUser.id,
-                },
-            ],
-            { session }
-        )
-
-        const createdClient = client[0]
+        // Manual $locals stamp instead of auditedCreate — that helper
+        // doesn't support transaction sessions. The plugin reads
+        // _auditUserId off $locals to attribute the activity log.
+        const createdClient = new Client({
+            name: lead.name,
+            company: body.company,
+            phone: lead.phone,
+            email: lead.email,
+            status: CLIENT_STATUS.ACTIVE,
+            createdBy: authUser.id,
+        })
+        createdClient.$locals._auditUserId = authUser.id
+        await createdClient.save({ session })
 
         lead.status = LEAD_STATUS.CONVERTED
         lead.convertedClientId = createdClient._id
+        lead.$locals._auditUserId = authUser.id
         await lead.save({ session })
 
         await session.commitTransaction()

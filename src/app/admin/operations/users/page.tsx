@@ -3,10 +3,11 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { User } from "@/types/user"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import UserCard from "@/components/admin/operations/UserCard"
 import UserCardSkeleton from "@/components/admin/operations/UserCardSkeleton"
 import CreateActionButton from "@/components/admin/operations/CreateActionButton"
+import Pagination from "@/components/admin/operations/Pagination"
 
 interface ApiResponse {
     success: boolean
@@ -19,38 +20,38 @@ interface ApiResponse {
     }
 }
 
+const PAGE_SIZE = 5
+
 export default function Page() {
     const [users, setUsers] = useState<User[]>([])
     const [loading, setLoading] = useState(true)
-
     const [page, setPage] = useState(1)
-    const [limit] = useState(5)
-    const [pagination, setPagination] = useState<ApiResponse["pagination"] | null>(null)
+    const [totalPages, setTotalPages] = useState(1)
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         try {
             setLoading(true)
 
             const res = await fetch(
-                `/api/admin/operations/users?page=${page}&limit=${limit}`
+                `/api/admin/operations/users?page=${page}&limit=${PAGE_SIZE}`
             )
 
             const json: ApiResponse = await res.json()
 
             if (json.success) {
                 setUsers(json.data)
-                setPagination(json.pagination)
+                setTotalPages(json.pagination?.pages ?? 1)
             }
         } catch (error) {
             console.error("Failed to fetch users", error)
         } finally {
             setLoading(false)
         }
-    }
+    }, [page])
 
     useEffect(() => {
         fetchUsers()
-    }, [page])
+    }, [fetchUsers])
 
     return (
         <div className="space-y-4">
@@ -59,7 +60,7 @@ export default function Page() {
             {/* Loading */}
             {loading && (
                 <div className="space-y-4">
-                    {Array.from({ length: limit }).map((_, i) => (
+                    {Array.from({ length: PAGE_SIZE }).map((_, i) => (
                         <UserCardSkeleton key={i} />
                     ))}
                 </div>
@@ -79,55 +80,17 @@ export default function Page() {
                 ))}
 
             {/* Pagination */}
-            {!loading && pagination && pagination.pages > 1 && (
-                <div className="flex items-center justify-between pt-4">
-
-                    {/* Info */}
-                    <p className="text-sm text-gray-500 dark:text-neutral-400">
-                        Page {pagination.page} of {pagination.pages}
-                    </p>
-
-                    {/* Controls */}
-                    <div className="flex gap-2">
-
-                        <button
-                            onClick={() => setPage((p) => p - 1)}
-                            disabled={page === 1}
-                            className="
-                                px-3 py-1 rounded-md border text-sm
-                                bg-white border-gray-200
-                                hover:bg-gray-100
-                                disabled:opacity-50 disabled:cursor-not-allowed
-
-                                dark:bg-neutral-900 dark:border-neutral-700
-                                dark:hover:bg-neutral-800
-                            "
-                        >
-                            Prev
-                        </button>
-
-                        <button
-                            onClick={() => setPage((p) => p + 1)}
-                            disabled={page === pagination.pages}
-                            className="
-                                px-3 py-1 rounded-md border text-sm
-                                bg-white border-gray-200
-                                hover:bg-gray-100
-                                disabled:opacity-50 disabled:cursor-not-allowed
-
-                                dark:bg-neutral-900 dark:border-neutral-700
-                                dark:hover:bg-neutral-800
-                            "
-                        >
-                            Next
-                        </button>
-
-                    </div>
-                </div>
+            {!loading && (
+                <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    disabled={loading}
+                    onChange={setPage}
+                />
             )}
 
             <Link
-                href={"leads/create"}
+                href={"users/create"}
                 className="
                                 fixed bottom-6 right-6
                                 h-14 w-14 rounded-full

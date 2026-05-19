@@ -8,7 +8,7 @@ import { LEAD_STATUS, LEAD_STATUS_META, LeadStatus } from "@/constants/leadStatu
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
-import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
+import { auditedCreate, auditedFindByIdAndUpdate } from "@/lib/activity-log"
 
 export async function PATCH(
     req: NextRequest,
@@ -125,21 +125,23 @@ export async function PATCH(
         }
 
         // Create interaction (timeline entry)
-        await Interaction.create({
-            entityType: 0,
-            entityId: lead._id,
-            type: INTERACTION_TYPE.STATUS_CHANGED,
-
-            title: JSON.stringify({
-                action: "STATUS_CHANGE",
-                from: oldStatus,
-                to: status
-            }),
-
-            description: remarks,
-
-            createdBy: authUser.id
-        })
+        await auditedCreate(
+            Interaction,
+            "INTERACTION",
+            {
+                entityType: 0,
+                entityId: lead._id,
+                type: INTERACTION_TYPE.STATUS_CHANGED,
+                title: JSON.stringify({
+                    action: "STATUS_CHANGE",
+                    from: oldStatus,
+                    to: status
+                }),
+                description: remarks,
+                createdBy: authUser.id
+            },
+            authUser.id
+        )
 
         return NextResponse.json(
             {

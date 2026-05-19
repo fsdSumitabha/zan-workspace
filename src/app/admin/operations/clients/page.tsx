@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Client } from "@/types/clients"
 import ClientCard from "@/components/admin/operations/ClientCard"
 import ClientCardSkeleton from "@/components/admin/operations/skeletons/ClientCardSkeleton"
+import Pagination from "@/components/admin/operations/Pagination"
 
 interface ApiResponse {
     success: boolean
@@ -16,36 +17,41 @@ interface ApiResponse {
     }
 }
 
+const PAGE_SIZE = 10
+
 export default function Page() {
     const [clients, setClients] = useState<Client[]>([])
     const [loading, setLoading] = useState(true)
+    const [page, setPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(1)
 
-    const fetchClients = async () => {
+    const fetchClients = useCallback(async () => {
         try {
             setLoading(true)
 
             const res = await fetch(
-                "/api/admin/operations/clients?page=1&limit=10"
+                `/api/admin/operations/clients?page=${page}&limit=${PAGE_SIZE}`
             )
 
             const json: ApiResponse = await res.json()
 
             if (json.success) {
                 setClients(json.data)
+                setTotalPages(json.pagination?.pages ?? 1)
             }
         } catch (error) {
-            console.error("Failed to fetch leads", error)
+            console.error("Failed to fetch clients", error)
         } finally {
             setLoading(false)
         }
-    }
+    }, [page])
 
     useEffect(() => {
         fetchClients()
-    }, [])
+    }, [fetchClients])
 
     return (
-                <div className="">
+                <div className="space-y-4">
 
                     {/* Loading Skeleton */}
                     {loading && (
@@ -78,6 +84,16 @@ export default function Page() {
                                 createdBy={client.createdBy}
                             />
                         ))}
+
+                    {/* Pagination */}
+                    {!loading && (
+                        <Pagination
+                            page={page}
+                            totalPages={totalPages}
+                            disabled={loading}
+                            onChange={setPage}
+                        />
+                    )}
                 </div>
     )
 }

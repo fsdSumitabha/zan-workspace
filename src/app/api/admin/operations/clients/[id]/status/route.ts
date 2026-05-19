@@ -10,7 +10,7 @@ import { CLIENT_STATUS, CLIENT_STATUS_META, type ClientStatus } from "@/constant
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
-import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
+import { auditedCreate, auditedFindByIdAndUpdate } from "@/lib/activity-log"
 
 export async function PATCH(
     req: NextRequest,
@@ -108,20 +108,23 @@ export async function PATCH(
             )
         }
 
-        const interaction = await Interaction.create({
-            entityType: 1,
-            entityId: updatedClient._id,
-            type: INTERACTION_TYPE.STATUS_CHANGED,
-
-            title: JSON.stringify({
-                action: "STATUS_CHANGE",
-                from: oldStatus,
-                to: status
-            }),
-
-            description: remarks,
-            createdBy: authUser.id
-        })
+        const interaction = await auditedCreate(
+            Interaction,
+            "INTERACTION",
+            {
+                entityType: 1,
+                entityId: updatedClient._id,
+                type: INTERACTION_TYPE.STATUS_CHANGED,
+                title: JSON.stringify({
+                    action: "STATUS_CHANGE",
+                    from: oldStatus,
+                    to: status
+                }),
+                description: remarks,
+                createdBy: authUser.id
+            },
+            authUser.id
+        )
 
         await auditedFindByIdAndUpdate(
             Client,

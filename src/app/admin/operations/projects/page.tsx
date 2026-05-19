@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import ProjectCard from "@/components/admin/operations/ProjectCard"
 import ProjectCardSkeleton from "@/components/admin/operations/skeletons/ProjectCardSkeleton"
 import { Project } from "@/types/projects"
+import Pagination from "@/components/admin/operations/Pagination"
 
 interface ApiResponse {
     success: boolean
@@ -16,36 +17,41 @@ interface ApiResponse {
     }
 }
 
+const PAGE_SIZE = 10
+
 export default function Page() {
     const [projects, setProjects] = useState<Project[]>([])
     const [loading, setLoading] = useState(true)
+    const [page, setPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(1)
 
-    const fetchProjects = async () => {
+    const fetchProjects = useCallback(async () => {
         try {
             setLoading(true)
 
             const res = await fetch(
-                "/api/admin/operations/projects?page=1&limit=10"
+                `/api/admin/operations/projects?page=${page}&limit=${PAGE_SIZE}`
             )
 
             const json: ApiResponse = await res.json()
 
             if (json.success) {
                 setProjects(json.data)
+                setTotalPages(json.pagination?.pages ?? 1)
             }
         } catch (error) {
             console.error("Failed to fetch projects", error)
         } finally {
             setLoading(false)
         }
-    }
+    }, [page])
 
     useEffect(() => {
         fetchProjects()
-    }, [])
+    }, [fetchProjects])
 
     return (
-                <div className="">
+                <div className="space-y-4">
 
                     {/* Loading */}
                     {loading && (
@@ -83,6 +89,16 @@ export default function Page() {
                                 createdBy={project.createdBy}
                             />
                         ))}
+
+                    {/* Pagination */}
+                    {!loading && (
+                        <Pagination
+                            page={page}
+                            totalPages={totalPages}
+                            disabled={loading}
+                            onChange={setPage}
+                        />
+                    )}
                 </div>
     )
 }

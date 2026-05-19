@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Interaction from "@/models/Interaction"
+import { auditedCreate } from "@/lib/activity-log"
 
 export async function GET(req: NextRequest) {
     try {
@@ -56,14 +57,19 @@ export async function POST(req: NextRequest) {
             createdBy
         } = body
 
-        const interaction = await Interaction.create({
-            entityType,
-            entityId,
-            type,
-            title,
-            description,
+        const interaction = await auditedCreate(
+            Interaction,
+            "INTERACTION",
+            {
+                entityType,
+                entityId,
+                type,
+                title,
+                description,
+                createdBy
+            },
             createdBy
-        })
+        )
 
         return NextResponse.json({
             success: true,

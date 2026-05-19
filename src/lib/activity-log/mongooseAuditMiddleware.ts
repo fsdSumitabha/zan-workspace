@@ -12,6 +12,7 @@ export interface AuditPluginOptions {
 }
 
 const AUDIT_BEFORE_KEY = "_auditBeforeSnapshot"
+const AUDIT_USER_KEY = "_auditUserId"
 
 async function safeLog(
     label: string,
@@ -27,6 +28,14 @@ async function safeLog(
 /**
  * Mongoose middleware for .save() / .create().
  * For findByIdAndUpdate in API routes use auditedFindByIdAndUpdate() instead.
+ *
+ * Actor capture strategy:
+ *   pre("save") snapshots the audit-context userId onto the document's
+ *   $locals. post("save") prefers that snapshot over a fresh ctx read.
+ *   This is defensive — across Mongoose's internal middleware hops and
+ *   Promise boundaries the AsyncLocalStorage context can occasionally
+ *   appear empty in post hooks even though it was set on the request
+ *   handler. Capturing in pre keeps the actor on the doc itself.
  */
 export function auditPlugin(
     schema: Schema,
@@ -35,6 +44,11 @@ export function auditPlugin(
     const { entityType } = options
 
     schema.pre("save", async function () {
+        const ctx = getAuditContext()
+        if (ctx?.userId) {
+            this.$locals[AUDIT_USER_KEY] = ctx.userId
+        }
+
         if (this.isNew) {
             this.$locals._auditIsCreate = true
             return
@@ -56,11 +70,16 @@ export function auditPlugin(
                   | Record<string, unknown>
                   | undefined)
 
+        const userIdFromLocals = subject.$locals[AUDIT_USER_KEY] as
+            | string
+            | undefined
+        const userId = userIdFromLocals ?? ctx?.userId ?? null
+
         await safeLog(`save ${entityType}`, () =>
             logEntityChanges({
                 entityType,
                 entityId: String(subject._id),
-                userId: ctx?.userId ?? null,
+                userId,
                 before: beforeRaw ? toAuditPlain(beforeRaw) : null,
                 after: toAuditPlain(subject),
                 fields: resolveTrackedFields(schema, entityType),
