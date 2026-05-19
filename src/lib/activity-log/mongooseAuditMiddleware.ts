@@ -3,7 +3,7 @@ import mongoose from "mongoose"
 
 import { getAuditContext } from "./auditContext"
 import { logEntityChanges } from "./logEntityChanges"
-import { ENTITY_AUDIT_CONFIG } from "./registry"
+import { resolveTrackedFields } from "./fieldResolution"
 import { toAuditPlain } from "./normalize"
 import type { EntityType } from "./types"
 
@@ -33,7 +33,6 @@ export function auditPlugin(
     options: AuditPluginOptions
 ): void {
     const { entityType } = options
-    const config = ENTITY_AUDIT_CONFIG[entityType]
 
     schema.pre("save", async function () {
         if (this.isNew) {
@@ -64,8 +63,7 @@ export function auditPlugin(
                 userId: ctx?.userId ?? null,
                 before: beforeRaw ? toAuditPlain(beforeRaw) : null,
                 after: toAuditPlain(subject),
-                fields: config.trackedFields,
-                skipFields: config.skipFields,
+                fields: resolveTrackedFields(schema, entityType),
             })
         )
     })

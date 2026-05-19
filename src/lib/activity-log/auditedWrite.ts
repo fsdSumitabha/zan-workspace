@@ -1,9 +1,9 @@
-import type { Document, Model, QueryOptions, Types, UpdateQuery } from "mongoose"
+import type { Document, Model, QueryOptions, Schema, Types, UpdateQuery } from "mongoose"
 
 import { getAuditContext } from "./auditContext"
 import { logEntityChanges } from "./logEntityChanges"
+import { resolveTrackedFields } from "./fieldResolution"
 import { toAuditPlain } from "./normalize"
-import { ENTITY_AUDIT_CONFIG } from "./registry"
 import type { EntityType } from "./types"
 import { NUMERIC_ENTITY_TO_AUDIT } from "./entityTypeMap"
 import Lead from "@/models/Lead"
@@ -19,6 +19,7 @@ const MODEL_BY_AUDIT_TYPE = {
 } as const
 
 async function writeAuditLog(
+    schema: Schema,
     entityType: EntityType,
     entityId: string,
     userId: string | null,
@@ -28,15 +29,13 @@ async function writeAuditLog(
     const ctx = getAuditContext()
     if (ctx?.disabled || !after) return
 
-    const config = ENTITY_AUDIT_CONFIG[entityType]
     await logEntityChanges({
         entityType,
         entityId,
         userId,
         before,
         after,
-        fields: config.trackedFields,
-        skipFields: config.skipFields,
+        fields: resolveTrackedFields(schema, entityType),
     })
 }
 
@@ -63,6 +62,7 @@ export async function auditedFindByIdAndUpdate<T extends Document>(
 
     if (after) {
         await writeAuditLog(
+            model.schema,
             entityType,
             String(after._id),
             userId,
@@ -74,24 +74,20 @@ export async function auditedFindByIdAndUpdate<T extends Document>(
     return after
 }
 
+/**
+ * Thin wrapper over `model.create`. The audit log for the create is written
+ * by the Mongoose `post("save")` plugin — adding a manual log here would
+ * duplicate every row. `entityType` and `actorId` are kept for call-site
+ * symmetry with `auditedFindByIdAndUpdate` but are no-ops; the plugin reads
+ * the actor from the audit context set by `requireAuth`.
+ */
 export async function auditedCreate<T extends Document>(
     model: Model<T>,
-    entityType: EntityType,
+    _entityType: EntityType,
     data: UpdateQuery<T>,
-    actorId?: string | null
+    _actorId?: string | null
 ): Promise<T> {
-    const created = await model.create(data)
-    const userId = actorId ?? getAuditContext()?.userId ?? null
-
-    await writeAuditLog(
-        entityType,
-        String(created._id),
-        userId,
-        null,
-        toAuditPlain(created)
-    )
-
-    return created
+    return model.create(data)
 }
 
 /** Audit update on lead/client/project from numeric entityType (0/1/2). */

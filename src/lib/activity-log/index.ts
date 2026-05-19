@@ -1,6 +1,11 @@
 export type { EntityType, AuditContextStore, LogEntityChangesInput } from "./types"
 export { ENTITY_TYPES } from "./types"
 export { ENTITY_AUDIT_CONFIG } from "./registry"
+export {
+    resolveTrackedFields,
+    GLOBAL_SKIP_FIELDS,
+    SENSITIVE_FIELD_PATTERN,
+} from "./fieldResolution"
 export { auditPlugin } from "./mongooseAuditMiddleware"
 export type { AuditPluginOptions } from "./mongooseAuditMiddleware"
 export { ensureAuditPlugin } from "./ensureAuditPlugin"
