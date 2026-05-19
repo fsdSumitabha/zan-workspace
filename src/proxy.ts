@@ -14,9 +14,9 @@ const OBJECT_ID = String.raw`[a-f0-9]{24}`
 // Centralized RBAC config — add new protected paths here
 const routePermissions: Array<{ pattern: RegExp; roles: number[] }> = [
     { pattern: /^\/admin\/operations\/users(\/|$)/, roles: [10, 20] },
-    { pattern: /^\/admin\/operations\/leads\/create(\/|$)/, roles: [10, 60] },
-    { pattern: new RegExp(`^/admin/operations/leads/${OBJECT_ID}/convert(/|$)`), roles: [10, 60], },
-    { pattern: new RegExp(`^/admin/operations/clients/${OBJECT_ID}/projects/create(/|$)`), roles: [10, 60], },
+    { pattern: /^\/admin\/operations\/leads\/create(\/|$)/, roles: [10, 60, 70] },
+    { pattern: new RegExp(`^/admin/operations/leads/${OBJECT_ID}/convert(/|$)`), roles: [10, 60, 70], },
+    { pattern: new RegExp(`^/admin/operations/clients/${OBJECT_ID}/projects/create(/|$)`), roles: [10, 60, 70], },
 ]
 
 function getRequiredRoles(pathname: string): number[] | null {
