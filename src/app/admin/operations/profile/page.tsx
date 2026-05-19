@@ -3,18 +3,26 @@
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { User, Mail, Shield, Calendar, Clock, UserCircle, RefreshCw, Pencil } from "lucide-react"
+import { Activity, User, Mail, Shield, Calendar, Clock, UserCircle, RefreshCw, Pencil } from "lucide-react"
 import { toast } from "sonner"
 
 import { USER_ROLE_META } from "@/constants/userRoles"
 import type { AuthProfileUser } from "@/types/authProfile"
 import { Image } from "@imagekit/next"
+import ActivityLogFilters from "@/components/admin/operations/activityLog/ActivityLogFilters"
+import ActivityLogList from "@/components/admin/operations/activityLog/ActivityLogList"
+import {
+    EMPTY_FILTERS,
+    type ActivityLogFilterState,
+} from "@/components/admin/operations/activityLog/types"
 
 export default function ProfilePage() {
     const router = useRouter()
     const [loading, setLoading] = useState(true)
     const [profile, setProfile] = useState<AuthProfileUser | null>(null)
     const [avatarBroken, setAvatarBroken] = useState(false)
+    const [activityFilters, setActivityFilters] =
+        useState<ActivityLogFilterState>({ ...EMPTY_FILTERS })
 
     const loadProfile = useCallback(async () => {
         const res = await fetch("/api/auth/profile", {
@@ -202,6 +210,29 @@ export default function ProfilePage() {
                     </div>
                 )}
             </div>
+
+            <section className="space-y-4">
+                <div>
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-emerald-500" />
+                        My activity
+                    </h2>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+                        Everything you&rsquo;ve done across the system.
+                    </p>
+                </div>
+
+                <ActivityLogFilters
+                    value={activityFilters}
+                    onChange={setActivityFilters}
+                    isAdmin={false}
+                />
+
+                <ActivityLogList
+                    filters={activityFilters}
+                    forceUserId={profile.id}
+                />
+            </section>
         </div>
     )
 }
