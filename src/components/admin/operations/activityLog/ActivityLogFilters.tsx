@@ -18,6 +18,12 @@ interface UsersApiResponse {
     message?: string
 }
 
+interface MetaApiResponse {
+    success: boolean
+    data?: { entityTypes?: string[] }
+    message?: string
+}
+
 interface Props {
     value: ActivityLogFilterState
     onChange: (next: ActivityLogFilterState) => void
@@ -36,6 +42,13 @@ export default function ActivityLogFilters({
 }: Props) {
     const [users, setUsers] = useState<UserOption[]>([])
     const [usersLoading, setUsersLoading] = useState(false)
+    const [entityTypes, setEntityTypes] = useState<string[]>([
+        ...ENTITY_TYPES,
+    ])
+
+    const capitalize = (str: string) =>
+    str.charAt(0) + str.slice(1).toLowerCase();
+
 
     useEffect(() => {
         if (!isAdmin) return
@@ -64,6 +77,39 @@ export default function ActivityLogFilters({
             cancelled = true
         }
     }, [isAdmin])
+
+    // Discover entity types from real audit data. Falls back to the
+    // ENTITY_TYPES constant (set as initial state) if the request fails
+    // or returns nothing, so the dropdown is never empty.
+    useEffect(() => {
+        let cancelled = false
+
+        const loadMeta = async () => {
+            try {
+                const res = await fetch(
+                    "/api/admin/operations/activity-logs/meta",
+                    { credentials: "include", cache: "no-store" }
+                )
+                const json: MetaApiResponse = await res.json()
+                if (cancelled) return
+                if (
+                    res.ok &&
+                    json.success &&
+                    json.data?.entityTypes &&
+                    json.data.entityTypes.length > 0
+                ) {
+                    setEntityTypes(json.data.entityTypes)
+                }
+            } catch {
+                // keep ENTITY_TYPES fallback
+            }
+        }
+
+        loadMeta()
+        return () => {
+            cancelled = true
+        }
+    }, [])
 
     const hasActive = useMemo(() => {
         return (
@@ -99,11 +145,11 @@ export default function ActivityLogFilters({
                         }
                     >
                         <option value="">All entities</option>
-                        {ENTITY_TYPES.map((t) => (
-                            <option key={t} value={t}>
-                                {t}
-                            </option>
-                        ))}
+                        {entityTypes.map((t) => (
+    <option key={t} value={t}>
+        {capitalize(t)}
+    </option>
+))}
                     </select>
                 </div>
 

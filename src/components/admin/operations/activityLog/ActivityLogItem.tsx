@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Image } from "@imagekit/next"
-import { User, ArrowRight } from "lucide-react"
+import { User, ArrowRight, Plus, Trash2 } from "lucide-react"
 
 import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import {
@@ -23,24 +23,32 @@ const ENTITY_BADGE: Record<string, string> = {
     QUOTATION: "bg-orange-500/10 text-orange-600 dark:text-orange-300 border-orange-500/30",
 }
 
+/**
+ * Lifecycle marker actions written by the backend. See
+ * `src/lib/activity-log/logEntityChanges.ts`.
+ */
+const ACTION_CREATE = "CREATE"
+const ACTION_DELETE = "DELETE"
+
 export default function ActivityLogItem({ log }: { log: ActivityLogRow }) {
     const [avatarBroken, setAvatarBroken] = useState(false)
     const avatar = log.user?.avatar?.trim() || ""
     const showAvatar = Boolean(avatar) && !avatarBroken
 
-    const isCreate = log.oldData === null && log.newData !== null
-    const isDelete = log.oldData !== null && log.newData === null
+    // Prefer explicit markers; fall back to nullness for legacy rows written
+    // before the marker convention existed.
+    const isCreate =
+        log.action === ACTION_CREATE ||
+        (log.oldData === null && log.newData !== null && log.action !== ACTION_DELETE)
+    const isDelete =
+        log.action === ACTION_DELETE ||
+        (log.oldData !== null && log.newData === null && log.action !== ACTION_CREATE)
+    const isFieldChange = !isCreate && !isDelete
 
-    const oldStr = formatActivityValue(log.oldData, log.action, log.entityType)
-    const newStr = formatActivityValue(log.newData, log.action, log.entityType)
-
-    const fieldLabel = humanizeFieldName(log.action)
     const entityClass = log.entityType
         ? ENTITY_BADGE[log.entityType] ??
           "bg-neutral-500/10 text-neutral-600 dark:text-neutral-300 border-neutral-500/30"
         : "bg-neutral-500/10 text-neutral-600 dark:text-neutral-300 border-neutral-500/30"
-
-    const verb = isCreate ? "Set" : isDelete ? "Cleared" : "Updated"
 
     return (
         <article className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3 sm:p-4">
@@ -71,11 +79,27 @@ export default function ActivityLogItem({ log }: { log: ActivityLogRow }) {
                         <TimeAgo date={log.createdAt} />
                     </div>
 
+                    {/* Action line */}
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
-                        <span>
-                            {verb}{" "}
-                            <span className="font-medium">{fieldLabel}</span>
-                        </span>
+                        {isCreate ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30">
+                                <Plus className="w-3 h-3" />
+                                Created
+                            </span>
+                        ) : isDelete ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30">
+                                <Trash2 className="w-3 h-3" />
+                                Deleted
+                            </span>
+                        ) : (
+                            <span>
+                                Updated{" "}
+                                <span className="font-medium">
+                                    {humanizeFieldName(log.action)}
+                                </span>
+                            </span>
+                        )}
+
                         {log.entityType && (
                             <span
                                 className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium border ${entityClass}`}
@@ -94,30 +118,53 @@ export default function ActivityLogItem({ log }: { log: ActivityLogRow }) {
                         ) : null}
                     </div>
 
-                    {/* Diff */}
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-                        {!isCreate && (
-                            <span
-                                className="inline-flex items-center px-2 py-1 rounded-md bg-red-500/10 text-red-700 dark:text-red-300 border border-red-500/20 max-w-full truncate"
-                                title={oldStr}
-                            >
-                                {oldStr}
-                            </span>
-                        )}
-                        {!isCreate && !isDelete && (
+                    {/* Diff (field-change only) */}
+                    {isFieldChange && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                            <DiffPill
+                                tone="old"
+                                value={log.oldData}
+                                action={log.action}
+                                entityType={log.entityType}
+                            />
                             <ArrowRight className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                        )}
-                        {!isDelete && (
-                            <span
-                                className="inline-flex items-center px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 max-w-full truncate"
-                                title={newStr}
-                            >
-                                {newStr}
-                            </span>
-                        )}
-                    </div>
+                            <DiffPill
+                                tone="new"
+                                value={log.newData}
+                                action={log.action}
+                                entityType={log.entityType}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         </article>
+    )
+}
+
+function DiffPill({
+    tone,
+    value,
+    action,
+    entityType,
+}: {
+    tone: "old" | "new"
+    value: unknown
+    action: string | null
+    entityType: ActivityLogRow["entityType"]
+}) {
+    const text = formatActivityValue(value, action, entityType)
+    const cls =
+        tone === "old"
+            ? "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20"
+            : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
+
+    return (
+        <span
+            className={`inline-flex items-center px-2 py-1 rounded-md border max-w-full truncate ${cls}`}
+            title={text}
+        >
+            {text}
+        </span>
     )
 }
