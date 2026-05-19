@@ -75,19 +75,40 @@ export async function auditedFindByIdAndUpdate<T extends Document>(
 }
 
 /**
- * Thin wrapper over `model.create`. The audit log for the create is written
- * by the Mongoose `post("save")` plugin — adding a manual log here would
- * duplicate every row. `entityType` and `actorId` are kept for call-site
- * symmetry with `auditedFindByIdAndUpdate` but are no-ops; the plugin reads
- * the actor from the audit context set by `requireAuth`.
+ * Audit-aware create. Equivalent to `new model(data).save()` but stamps
+ * the actor onto `doc.$locals._auditUserId` BEFORE save runs, so the
+ * Mongoose plugin's `post("save")` can attach the correct userId to the
+ * activity log row.
+ *
+ * Why we don't rely on AsyncLocalStorage alone: ALS context set in the
+ * route handler (via `enterAuditContext` inside `requireAuth`) does not
+ * reliably propagate into Mongoose's save middleware in this stack
+ * (observed: `getAuditContext()` returns undefined in pre/post save even
+ * after the handler awaited an ALS-setting call). Passing the actor
+ * explicitly is deterministic.
+ *
+ * `entityType` is retained for call-site symmetry with
+ * `auditedFindByIdAndUpdate` and may be used for typing/logging hooks
+ * later. It's not consulted today.
  */
 export async function auditedCreate<T extends Document>(
     model: Model<T>,
     _entityType: EntityType,
     data: UpdateQuery<T>,
-    _actorId?: string | null
+    actorId?: string | null
 ): Promise<T> {
-    return model.create(data)
+    const userId = actorId ?? getAuditContext()?.userId ?? null
+
+    // `new model(data)` is correctly typed via Mongoose's Model interface.
+    // The cast is required because Mongoose's constructor type doesn't
+    // expose the per-call generic.
+    const doc = new model(data as unknown as Partial<T>) as T
+
+    if (userId) {
+        doc.$locals._auditUserId = userId
+    }
+
+    return doc.save() as Promise<T>
 }
 
 /** Audit update on lead/client/project from numeric entityType (0/1/2). */

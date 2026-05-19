@@ -8,7 +8,7 @@ import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
-import { auditedUpdateByNumericEntityType } from "@/lib/activity-log"
+import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-log"
 
 
 export async function POST(req: NextRequest) {
@@ -35,14 +35,19 @@ export async function POST(req: NextRequest) {
         }
 
         // 1. Create Interaction (timeline entry)
-        const note = await Interaction.create({
-            entityType,
-            entityId,
-            type: INTERACTION_TYPE.NOTE_ADDED,
-            title,
-            description,
-            createdBy: authUser.id
-        })
+        const note = await auditedCreate(
+            Interaction,
+            "INTERACTION",
+            {
+                entityType,
+                entityId,
+                type: INTERACTION_TYPE.NOTE_ADDED,
+                title,
+                description,
+                createdBy: authUser.id
+            },
+            authUser.id
+        )
 
         // 2. Prepare update payload
         const updatePayload = {

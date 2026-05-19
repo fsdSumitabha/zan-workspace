@@ -11,7 +11,7 @@ import Client from "@/models/Client"
 import Project from "@/models/Project"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
-import { auditedUpdateByNumericEntityType } from "@/lib/activity-log"
+import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-log"
 
 export async function POST(req: NextRequest) {
     try {
@@ -61,28 +61,38 @@ export async function POST(req: NextRequest) {
         }
 
         // 2. Create quotation
-        const quotation = await Quotation.create({
-            entityType,
-            entityId,
-            title,
-            amount,
-            gst_percentage,
-            url: fileUrl,
-            status,
-            createdBy: authUser.id
-        })
+        const quotation = await auditedCreate(
+            Quotation,
+            "QUOTATION",
+            {
+                entityType,
+                entityId,
+                title,
+                amount,
+                gst_percentage,
+                url: fileUrl,
+                status,
+                createdBy: authUser.id
+            },
+            authUser.id
+        )
 
         // 3. Create interaction
-        const interaction = await Interaction.create({
-            entityType,
-            entityId,
-            type: INTERACTION_TYPE.QUOTATION_SENT,
-            title,
-            description,
-            status,
-            createdBy: authUser.id,
-            refId: quotation._id
-        })
+        const interaction = await auditedCreate(
+            Interaction,
+            "INTERACTION",
+            {
+                entityType,
+                entityId,
+                type: INTERACTION_TYPE.QUOTATION_SENT,
+                title,
+                description,
+                status,
+                createdBy: authUser.id,
+                refId: quotation._id
+            },
+            authUser.id
+        )
 
         // 4. Prepare update payload
         const updatePayload = {

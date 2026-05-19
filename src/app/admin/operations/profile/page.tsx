@@ -9,6 +9,7 @@ import { toast } from "sonner"
 import { USER_ROLE_META } from "@/constants/userRoles"
 import type { AuthProfileUser } from "@/types/authProfile"
 import { Image } from "@imagekit/next"
+import ActivityHeatmap from "@/components/admin/operations/activityLog/ActivityHeatmap"
 import ActivityLogFilters from "@/components/admin/operations/activityLog/ActivityLogFilters"
 import ActivityLogList from "@/components/admin/operations/activityLog/ActivityLogList"
 import {
@@ -221,6 +222,8 @@ export default function ProfilePage() {
                         Everything you&rsquo;ve done across the system.
                     </p>
                 </div>
+
+                <ActivityHeatmap forceUserId={profile.id} />
 
                 <ActivityLogFilters
                     value={activityFilters}

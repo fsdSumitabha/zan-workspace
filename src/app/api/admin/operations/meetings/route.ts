@@ -10,7 +10,7 @@ import Project from "@/models/Project"
 import { Meeting as IMeeting } from "@/types/meeting"
 import { AuthError, requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
-import { auditedUpdateByNumericEntityType } from "@/lib/activity-log"
+import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-log"
 
 export async function GET(req: NextRequest) {
     try {
@@ -178,29 +178,39 @@ export async function POST(req: NextRequest) {
         }
 
         // 1. Create Meeting
-        const meeting = await Meeting.create({
-            entityType,
-            entityId,
-            title,
-            agenda,
-            description,
-            meetingType,
-            meetingLink,
-            scheduledAt,
-            status,
-            createdBy: authUser.id
-        })
+        const meeting = await auditedCreate(
+            Meeting,
+            "MEETING",
+            {
+                entityType,
+                entityId,
+                title,
+                agenda,
+                description,
+                meetingType,
+                meetingLink,
+                scheduledAt,
+                status,
+                createdBy: authUser.id
+            },
+            authUser.id
+        )
 
         // 2. Create Interaction (timeline entry)
-        const interaction = await Interaction.create({
-            entityType,
-            entityId,
-            type: INTERACTION_TYPE.MEETING_SCHEDULED,
-            title: title,
-            description: agenda,
-            createdBy: authUser.id,
-            refId: meeting._id
-        })
+        const interaction = await auditedCreate(
+            Interaction,
+            "INTERACTION",
+            {
+                entityType,
+                entityId,
+                type: INTERACTION_TYPE.MEETING_SCHEDULED,
+                title: title,
+                description: agenda,
+                createdBy: authUser.id,
+                refId: meeting._id
+            },
+            authUser.id
+        )
 
         // 2. Prepare update payload
         const updatePayload = {

@@ -12,7 +12,7 @@ import path from "path"
 import { writeFile, mkdir } from "fs/promises"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
-import { auditedUpdateByNumericEntityType } from "@/lib/activity-log"
+import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-log"
 
 
 export async function POST(req: NextRequest) {
@@ -67,30 +67,40 @@ export async function POST(req: NextRequest) {
         }
 
         // 2. Create Call document
-        const call = await Call.create({
-            entityType,
-            entityId,
-            contactPersonName,
-            contactPersonPhone,
-            callTime,
-            duration,
-            direction,
-            status,
-            notes,
-            recordingUrl,
-            createdBy: authUser.id
-        })
+        const call = await auditedCreate(
+            Call,
+            "CALL",
+            {
+                entityType,
+                entityId,
+                contactPersonName,
+                contactPersonPhone,
+                callTime,
+                duration,
+                direction,
+                status,
+                notes,
+                recordingUrl,
+                createdBy: authUser.id
+            },
+            authUser.id
+        )
 
         // 3. Create Interaction (timeline entry)
-        const interaction = await Interaction.create({
-            entityType,
-            entityId,
-            type: INTERACTION_TYPE.CALL_MADE,
-            title: title || `Call with ${contactPersonName}`,
-            notes,
-            createdBy: authUser.id,
-            refId: call._id
-        })
+        const interaction = await auditedCreate(
+            Interaction,
+            "INTERACTION",
+            {
+                entityType,
+                entityId,
+                type: INTERACTION_TYPE.CALL_MADE,
+                title: title || `Call with ${contactPersonName}`,
+                notes,
+                createdBy: authUser.id,
+                refId: call._id
+            },
+            authUser.id
+        )
 
         // 2. Prepare update payload
         const updatePayload = {
