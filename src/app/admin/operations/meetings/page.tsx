@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import MeetingCard from "@/components/admin/operations/MeetingCard"
 import { Meeting } from "@/types/meeting"
 import Pagination from "@/components/admin/operations/Pagination"
+import { usePagination } from "@/hooks/usePagination"
 
 interface ApiResponse {
     success: boolean
@@ -23,8 +24,8 @@ const PAGE_SIZE = 10
 export default function Page() {
     const [meetings, setMeetings] = useState<Meeting[]>([])
     const [loading, setLoading] = useState(true)
-    const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
+    const { page, setPage } = usePagination()
 
     const fetchMeetings = useCallback(async () => {
         try {

@@ -5,6 +5,7 @@ import { Client } from "@/types/clients"
 import ClientCard from "@/components/admin/operations/ClientCard"
 import ClientCardSkeleton from "@/components/admin/operations/skeletons/ClientCardSkeleton"
 import Pagination from "@/components/admin/operations/Pagination"
+import { usePagination } from "@/hooks/usePagination"
 
 interface ApiResponse {
     success: boolean
@@ -22,8 +23,8 @@ const PAGE_SIZE = 10
 export default function Page() {
     const [clients, setClients] = useState<Client[]>([])
     const [loading, setLoading] = useState(true)
-    const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
+    const { page, setPage } = usePagination()
 
     const fetchClients = useCallback(async () => {
         try {

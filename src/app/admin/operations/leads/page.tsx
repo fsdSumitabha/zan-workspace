@@ -8,6 +8,7 @@ import LeadCard from "@/components/admin/operations/LeadCard"
 import LeadCardSkeleton from "@/components/admin/operations/skeletons/LeadCardSkeleton"
 import CreateActionButton from "@/components/admin/operations/CreateActionButton"
 import Pagination from "@/components/admin/operations/Pagination"
+import { usePagination } from "@/hooks/usePagination"
 
 interface ApiResponse {
     success: boolean
@@ -25,8 +26,8 @@ const PAGE_SIZE = 10
 export default function Page() {
     const [leads, setLeads] = useState<Lead[]>([])
     const [loading, setLoading] = useState(true)
-    const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
+    const { page, setPage } = usePagination()
 
     const fetchLeads = useCallback(async () => {
         try {
