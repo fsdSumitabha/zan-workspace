@@ -77,7 +77,7 @@ export async function PATCH(
         }
 
         await dbConnect()
-        const user = await requireRole(req, [10, 60])
+        const user = await requireRole(req, [10, 60, 70])
 
         const { clientId, title, description, serviceType, status, companyName, budget } =
             body
@@ -141,7 +141,7 @@ export async function DELETE(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireRole(req, [10, 60])
+        await requireRole(req, [10, 60, 70])
 
         const { id } = await context.params
 

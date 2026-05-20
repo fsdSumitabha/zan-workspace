@@ -60,7 +60,7 @@ export async function PATCH(
         }
 
         await dbConnect()
-        const user = await requireRole(req, [10, 60])
+        const user = await requireRole(req, [10, 60, 70])
 
         const existing = await Lead.findOne({
             phone: body.phone,
