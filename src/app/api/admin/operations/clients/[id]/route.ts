@@ -83,7 +83,7 @@ export async function PATCH(
 
         await dbConnect()
 
-        const user = await requireRole(req, [10, 60])
+        const user = await requireRole(req, [10, 60, 70])
 
         const existing = await Client.findOne({
             phone: body.phone,
@@ -154,7 +154,7 @@ export async function DELETE(
 
         await dbConnect()
 
-        await requireRole(req, [10, 60])
+        await requireRole(req, [10, 60, 70])
 
         // 2. Delete lead
         const lead = await Client.findByIdAndDelete(id)
