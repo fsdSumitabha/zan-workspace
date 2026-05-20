@@ -49,12 +49,12 @@ const navItems: Array<{
         roles: [10, 20],
         icon: UserRoundCog,
     },
-    {
-        name: "Activity",
-        href: "/admin/operations/activity-logs",
-        roles: [10, 20],
-        icon: Activity,
-    },
+    // {
+    //     name: "Activity",
+    //     href: "/admin/operations/activity-logs",
+    //     roles: [10, 20],
+    //     icon: Activity,
+    // },
 ];
 
 export default function OperationsMobileNav() {
