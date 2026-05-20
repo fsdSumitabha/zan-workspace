@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useRef } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 interface Options {
@@ -26,8 +26,10 @@ interface Result {
  *   - links are shareable (`?page=3`)
  *   - browser back/forward steps through pagination history
  *
- * Used by every list page (leads / clients / projects / meetings / users)
- * so behavior stays consistent.
+ * `setPage` is referentially stable across renders — it pulls the latest
+ * searchParams / pathname through a ref. This matters when callers put
+ * `setPage` in a `useEffect` dependency array (otherwise re-firing the
+ * effect after each push would cause an infinite loop).
  */
 export function usePagination(options: Options = {}): Result {
     const { paramName = "page", defaultPage = 1 } = options
@@ -39,20 +41,29 @@ export function usePagination(options: Options = {}): Result {
     const raw = Number.parseInt(searchParams.get(paramName) || "", 10)
     const page = Number.isFinite(raw) && raw >= 1 ? raw : defaultPage
 
+    // Keep latest values reachable from a stable setPage closure.
+    const latest = useRef({ searchParams, pathname, paramName, defaultPage })
+    latest.current = { searchParams, pathname, paramName, defaultPage }
+
     const setPage = useCallback(
         (next: number) => {
-            const params = new URLSearchParams(searchParams.toString())
-            if (next === defaultPage) {
-                params.delete(paramName)
+            const {
+                searchParams: sp,
+                pathname: pn,
+                paramName: name,
+                defaultPage: def,
+            } = latest.current
+
+            const params = new URLSearchParams(sp.toString())
+            if (next === def) {
+                params.delete(name)
             } else {
-                params.set(paramName, String(next))
+                params.set(name, String(next))
             }
             const qs = params.toString()
-            router.push(qs ? `${pathname}?${qs}` : pathname, {
-                scroll: false,
-            })
+            router.push(qs ? `${pn}?${qs}` : pn, { scroll: false })
         },
-        [router, pathname, searchParams, paramName, defaultPage]
+        [router]
     )
 
     return { page, setPage }

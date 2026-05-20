@@ -1,9 +1,11 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ChevronLeft, ChevronRight, Inbox, Loader2 } from "lucide-react"
+import { Inbox, Loader2 } from "lucide-react"
 
 import ActivityLogItem from "./ActivityLogItem"
+import Pagination from "@/components/admin/operations/Pagination"
+import { usePagination } from "@/hooks/usePagination"
 import type {
     ActivityLogFilterState,
     ActivityLogPagination,
@@ -60,7 +62,7 @@ export default function ActivityLogList({
     forceUserId,
     limit = DEFAULT_LIMIT,
 }: Props) {
-    const [page, setPage] = useState(1)
+    const { page, setPage } = usePagination()
     const [logs, setLogs] = useState<ActivityLogRow[]>([])
     const [pagination, setPagination] =
         useState<ActivityLogPagination | null>(null)
@@ -68,12 +70,19 @@ export default function ActivityLogList({
     const [error, setError] = useState<string | null>(null)
 
     const reqIdRef = useRef(0)
+    const isInitialMount = useRef(true)
 
-    // Reset to page 1 whenever filters change (debounced for `q`).
+    // Reset to page 1 whenever filters change. Skip the very first render
+    // so a shared link like `?page=3` actually opens on page 3 instead of
+    // being reset by the initial filtersKey "change".
     const filtersKey = JSON.stringify(filters)
     useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false
+            return
+        }
         setPage(1)
-    }, [filtersKey])
+    }, [filtersKey, setPage])
 
     const fetchLogs = useCallback(async () => {
         const id = ++reqIdRef.current
@@ -121,9 +130,7 @@ export default function ActivityLogList({
         return () => clearTimeout(handle)
     }, [fetchLogs, filters.q])
 
-    const totalPages = pagination?.pages ?? 0
-    const canPrev = page > 1
-    const canNext = page < totalPages
+    const totalPages = pagination?.pages ?? 1
 
     return (
         <div className="space-y-3">
@@ -179,33 +186,12 @@ export default function ActivityLogList({
             )}
 
             {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 pt-2">
-                    <button
-                        type="button"
-                        disabled={!canPrev || loading}
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 dark:hover:bg-neutral-800 transition"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                        Prev
-                    </button>
-                    <span className="text-sm text-neutral-600 dark:text-neutral-400 px-2">
-                        {page} / {totalPages}
-                    </span>
-                    <button
-                        type="button"
-                        disabled={!canNext || loading}
-                        onClick={() =>
-                            setPage((p) => Math.min(totalPages, p + 1))
-                        }
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 dark:hover:bg-neutral-800 transition"
-                    >
-                        Next
-                        <ChevronRight className="w-4 h-4" />
-                    </button>
-                </div>
-            )}
+            <Pagination
+                page={page}
+                totalPages={totalPages}
+                disabled={loading}
+                onChange={setPage}
+            />
         </div>
     )
 }
