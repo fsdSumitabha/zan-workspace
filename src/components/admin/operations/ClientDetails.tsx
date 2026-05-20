@@ -12,7 +12,9 @@ import type { Client } from "@/types/clients"
 import WhatsAppLink from "./button/WhatsAppLink"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
-import { canEdit } from "@/lib/auth/editPermissions"
+
+/** Roles allowed to edit a Client. Mirrors the backend PATCH role list. */
+const CLIENT_EDIT_ROLES = [10, 60, 70]
 
 interface Props {
     client: Client
@@ -22,7 +24,7 @@ interface Props {
 
 export default function ClientDetails({ client, onStatusChange }: Props) {
     const { user } = useAuth()
-    const showEdit = canEdit("CLIENT", user?.role)
+    const showEdit = !!user && CLIENT_EDIT_ROLES.includes(user.role)
 
     const [pendingStatus, setPendingStatus] = useState<ClientStatus | null>(null)
     const [remarks, setRemarks] = useState("")

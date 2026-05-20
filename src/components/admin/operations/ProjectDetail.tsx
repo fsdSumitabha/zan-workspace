@@ -12,7 +12,9 @@ import ProjectStatusDropdown from "./statusDropdowns/ProjectStatusDropdown"
 import WhatsAppLink from "./button/WhatsAppLink"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
-import { canEdit } from "@/lib/auth/editPermissions"
+
+/** Roles allowed to edit a Project. Mirrors the backend PATCH role list. */
+const PROJECT_EDIT_ROLES = [10, 60, 70]
 
 
 type Props = {
@@ -22,7 +24,7 @@ type Props = {
 
 export default function ProjectDetail({ project, onStatusChange }: Props) {
     const { user } = useAuth()
-    const showEdit = canEdit("PROJECT", user?.role)
+    const showEdit = !!user && PROJECT_EDIT_ROLES.includes(user.role)
 
     const [pendingStatus, setPendingStatus] = useState<ProjectStatus | null>(null)
     const [remarks, setRemarks] = useState("")

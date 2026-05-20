@@ -7,7 +7,9 @@ import ConvertButton from "./ConvertClientButton"
 import WhatsAppLink from "./button/WhatsAppLink"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
-import { canEdit } from "@/lib/auth/editPermissions"
+
+/** Roles allowed to edit a Lead. Mirrors the backend PATCH role list. */
+const LEAD_EDIT_ROLES = [10, 60, 70]
 
 type Props = {
     lead: Lead
@@ -17,7 +19,7 @@ type Props = {
 export default function LeadDetails({ lead, onStatusChange }: Props) {
     const leadId = lead._id
     const { user } = useAuth()
-    const showEdit = canEdit("LEAD", user?.role)
+    const showEdit = !!user && LEAD_EDIT_ROLES.includes(user.role)
 
     const [pendingStatus, setPendingStatus] = useState<LeadStatus  | null>(null)
     const [remarks, setRemarks] = useState("")

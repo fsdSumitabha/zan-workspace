@@ -2,8 +2,6 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { jwtVerify, type JWTPayload } from "jose"
 
-import { EDIT_ROLES } from "@/lib/auth/editPermissions"
-
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 
 interface AuthPayload extends JWTPayload {
@@ -14,19 +12,19 @@ interface AuthPayload extends JWTPayload {
 const OBJECT_ID = String.raw`[a-f0-9]{24}`
 
 // Centralized RBAC config — add new protected paths here.
-// Edit-route role lists come from EDIT_ROLES so the proxy stays in sync
-// with the backend PATCH handlers and the UI Edit-button gates.
-const routePermissions: Array<{ pattern: RegExp; roles: readonly number[] }> = [
+// Keep role lists in sync with each entity's backend PATCH handler and
+// the UI Edit-button gates in the corresponding *Details component.
+const routePermissions: Array<{ pattern: RegExp; roles: number[] }> = [
     { pattern: /^\/admin\/operations\/users(\/|$)/, roles: [10, 20] },
     { pattern: /^\/admin\/operations\/leads\/create(\/|$)/, roles: [10, 60, 70] },
     { pattern: new RegExp(`^/admin/operations/leads/${OBJECT_ID}/convert(/|$)`), roles: [10, 60, 70], },
     { pattern: new RegExp(`^/admin/operations/clients/${OBJECT_ID}/projects/create(/|$)`), roles: [10, 60, 70], },
-    { pattern: new RegExp(`^/admin/operations/leads/${OBJECT_ID}/edit(/|$)`), roles: EDIT_ROLES.LEAD },
-    { pattern: new RegExp(`^/admin/operations/clients/${OBJECT_ID}/edit(/|$)`), roles: EDIT_ROLES.CLIENT },
-    { pattern: new RegExp(`^/admin/operations/projects/${OBJECT_ID}/edit(/|$)`), roles: EDIT_ROLES.PROJECT },
+    { pattern: new RegExp(`^/admin/operations/leads/${OBJECT_ID}/edit(/|$)`), roles: [10, 60, 70] },
+    { pattern: new RegExp(`^/admin/operations/clients/${OBJECT_ID}/edit(/|$)`), roles: [10, 60, 70] },
+    { pattern: new RegExp(`^/admin/operations/projects/${OBJECT_ID}/edit(/|$)`), roles: [10, 60, 70] },
 ]
 
-function getRequiredRoles(pathname: string): readonly number[] | null {
+function getRequiredRoles(pathname: string): number[] | null {
     const match = routePermissions.find((rp) => rp.pattern.test(pathname))
     return match ? match.roles : null
 }
