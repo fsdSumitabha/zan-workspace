@@ -11,6 +11,10 @@ import { Project } from "@/types/projects"
 import ProjectStatusDropdown from "./statusDropdowns/ProjectStatusDropdown"
 import WhatsAppLink from "./button/WhatsAppLink"
 import Link from "next/link"
+import { useAuth } from "@/contexts/AuthContext"
+
+/** Roles allowed to edit a Project. Mirrors the backend PATCH role list. */
+const PROJECT_EDIT_ROLES = [10, 60, 70]
 
 
 type Props = {
@@ -19,6 +23,9 @@ type Props = {
 }
 
 export default function ProjectDetail({ project, onStatusChange }: Props) {
+    const { user } = useAuth()
+    const showEdit = !!user && PROJECT_EDIT_ROLES.includes(user.role)
+
     const [pendingStatus, setPendingStatus] = useState<ProjectStatus | null>(null)
     const [remarks, setRemarks] = useState("")
     const [saving, setSaving] = useState(false)
@@ -69,12 +76,14 @@ export default function ProjectDetail({ project, onStatusChange }: Props) {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                    <Link
-                        href={`/admin/operations/projects/${project._id}/edit`}
-                        className="text-xs px-3 py-1.5 rounded border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition"
-                    >
-                        Edit
-                    </Link>
+                    {showEdit && (
+                        <Link
+                            href={`/admin/operations/projects/${project._id}/edit`}
+                            className="text-xs px-3 py-1.5 rounded border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition"
+                        >
+                            Edit
+                        </Link>
+                    )}
                     {onStatusChange ? (
                         <ProjectStatusDropdown
                             currentStatus={project.status}

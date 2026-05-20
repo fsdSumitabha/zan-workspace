@@ -11,12 +11,17 @@ interface AuthPayload extends JWTPayload {
 
 const OBJECT_ID = String.raw`[a-f0-9]{24}`
 
-// Centralized RBAC config — add new protected paths here
+// Centralized RBAC config — add new protected paths here.
+// Keep role lists in sync with each entity's backend PATCH handler and
+// the UI Edit-button gates in the corresponding *Details component.
 const routePermissions: Array<{ pattern: RegExp; roles: number[] }> = [
     { pattern: /^\/admin\/operations\/users(\/|$)/, roles: [10, 20] },
     { pattern: /^\/admin\/operations\/leads\/create(\/|$)/, roles: [10, 60, 70] },
     { pattern: new RegExp(`^/admin/operations/leads/${OBJECT_ID}/convert(/|$)`), roles: [10, 60, 70], },
     { pattern: new RegExp(`^/admin/operations/clients/${OBJECT_ID}/projects/create(/|$)`), roles: [10, 60, 70], },
+    { pattern: new RegExp(`^/admin/operations/leads/${OBJECT_ID}/edit(/|$)`), roles: [10, 60, 70] },
+    { pattern: new RegExp(`^/admin/operations/clients/${OBJECT_ID}/edit(/|$)`), roles: [10, 60, 70] },
+    { pattern: new RegExp(`^/admin/operations/projects/${OBJECT_ID}/edit(/|$)`), roles: [10, 60, 70] },
 ]
 
 function getRequiredRoles(pathname: string): number[] | null {

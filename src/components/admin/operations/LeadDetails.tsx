@@ -6,6 +6,10 @@ import LeadStatusDropdown from "./statusDropdowns/LeadStatusDropdown"
 import ConvertButton from "./ConvertClientButton"
 import WhatsAppLink from "./button/WhatsAppLink"
 import Link from "next/link"
+import { useAuth } from "@/contexts/AuthContext"
+
+/** Roles allowed to edit a Lead. Mirrors the backend PATCH role list. */
+const LEAD_EDIT_ROLES = [10, 60, 70]
 
 type Props = {
     lead: Lead
@@ -14,6 +18,8 @@ type Props = {
 
 export default function LeadDetails({ lead, onStatusChange }: Props) {
     const leadId = lead._id
+    const { user } = useAuth()
+    const showEdit = !!user && LEAD_EDIT_ROLES.includes(user.role)
 
     const [pendingStatus, setPendingStatus] = useState<LeadStatus  | null>(null)
     const [remarks, setRemarks] = useState("")
@@ -60,12 +66,14 @@ export default function LeadDetails({ lead, onStatusChange }: Props) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <Link
-                        href={`/admin/operations/leads/${leadId}/edit`}
-                        className="text-xs px-3 py-1.5 rounded border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition"
-                    >
-                        Edit
-                    </Link>
+                    {showEdit && (
+                        <Link
+                            href={`/admin/operations/leads/${leadId}/edit`}
+                            className="text-xs px-3 py-1.5 rounded border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition"
+                        >
+                            Edit
+                        </Link>
+                    )}
                     <LeadStatusDropdown currentStatus={lead.status} onChange={handleStatusSelect} />
                 </div>
             </div>

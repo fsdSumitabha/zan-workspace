@@ -11,6 +11,10 @@ import { Mail, Building2, Clock, RefreshCw } from "lucide-react"
 import type { Client } from "@/types/clients"
 import WhatsAppLink from "./button/WhatsAppLink"
 import Link from "next/link"
+import { useAuth } from "@/contexts/AuthContext"
+
+/** Roles allowed to edit a Client. Mirrors the backend PATCH role list. */
+const CLIENT_EDIT_ROLES = [10, 60, 70]
 
 interface Props {
     client: Client
@@ -19,6 +23,9 @@ interface Props {
 }
 
 export default function ClientDetails({ client, onStatusChange }: Props) {
+    const { user } = useAuth()
+    const showEdit = !!user && CLIENT_EDIT_ROLES.includes(user.role)
+
     const [pendingStatus, setPendingStatus] = useState<ClientStatus | null>(null)
     const [remarks, setRemarks] = useState("")
     const [saving, setSaving] = useState(false)
@@ -68,12 +75,14 @@ export default function ClientDetails({ client, onStatusChange }: Props) {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                    <Link
-                        href={`/admin/operations/clients/${client._id}/edit`}
-                        className="text-xs px-3 py-1.5 rounded border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition"
-                    >
-                        Edit
-                    </Link>
+                    {showEdit && (
+                        <Link
+                            href={`/admin/operations/clients/${client._id}/edit`}
+                            className="text-xs px-3 py-1.5 rounded border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 transition"
+                        >
+                            Edit
+                        </Link>
+                    )}
                     {onStatusChange ? (
                         <ClientStatusDropdown
                             currentStatus={client.status}

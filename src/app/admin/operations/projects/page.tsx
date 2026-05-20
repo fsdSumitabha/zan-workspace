@@ -5,6 +5,7 @@ import ProjectCard from "@/components/admin/operations/ProjectCard"
 import ProjectCardSkeleton from "@/components/admin/operations/skeletons/ProjectCardSkeleton"
 import { Project } from "@/types/projects"
 import Pagination from "@/components/admin/operations/Pagination"
+import { usePagination } from "@/hooks/usePagination"
 
 interface ApiResponse {
     success: boolean
@@ -22,8 +23,8 @@ const PAGE_SIZE = 10
 export default function Page() {
     const [projects, setProjects] = useState<Project[]>([])
     const [loading, setLoading] = useState(true)
-    const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
+    const { page, setPage } = usePagination()
 
     const fetchProjects = useCallback(async () => {
         try {
