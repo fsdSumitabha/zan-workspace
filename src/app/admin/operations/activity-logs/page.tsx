@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { Activity, ShieldAlert } from "lucide-react"
 
 import { useAuth } from "@/contexts/AuthContext"
-import ActivityHeatmap from "@/components/admin/operations/activityLog/ActivityHeatmap"
 import ActivityLogFilters from "@/components/admin/operations/activityLog/ActivityLogFilters"
 import ActivityLogList from "@/components/admin/operations/activityLog/ActivityLogList"
 import {
@@ -77,7 +76,6 @@ export default function ActivityLogsPage() {
                 </p>
             </header>
 
-            <ActivityHeatmap selectedUserId={filters.userId || undefined} />
 
             <ActivityLogFilters
                 value={filters}

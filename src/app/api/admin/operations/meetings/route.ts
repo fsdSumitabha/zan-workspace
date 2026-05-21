@@ -11,6 +11,7 @@ import { Meeting as IMeeting } from "@/types/meeting"
 import { AuthError, requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
 import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-log"
+import { escapeRegex } from "@/lib/search/escapeRegex"
 
 export async function GET(req: NextRequest) {
     try {
@@ -29,10 +30,20 @@ export async function GET(req: NextRequest) {
         const entityType = searchParams.get("entityType")
         const entityId = searchParams.get("entityId")
         const status = searchParams.get("status")
+        const search = searchParams.get("search")
 
         if (entityType !== null) query.entityType = Number(entityType)
         if (entityId) query.entityId = entityId
         if (status !== null) query.status = Number(status)
+
+        if (search) {
+            const re = { $regex: escapeRegex(search), $options: "i" }
+            query.$or = [
+                { title: re },
+                { agenda: re },
+                { description: re },
+            ]
+        }
 
         const [meetings, total] = await Promise.all([
             Meeting.find(query)

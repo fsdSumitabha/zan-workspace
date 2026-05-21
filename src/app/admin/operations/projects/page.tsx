@@ -6,6 +6,7 @@ import ProjectCardSkeleton from "@/components/admin/operations/skeletons/Project
 import { Project } from "@/types/projects"
 import Pagination from "@/components/admin/operations/Pagination"
 import { usePagination } from "@/hooks/usePagination"
+import { useSearch } from "@/hooks/useSearch"
 
 interface ApiResponse {
     success: boolean
@@ -25,13 +26,20 @@ export default function Page() {
     const [loading, setLoading] = useState(true)
     const [totalPages, setTotalPages] = useState(1)
     const { page, setPage } = usePagination()
+    const search = useSearch()
 
     const fetchProjects = useCallback(async () => {
         try {
             setLoading(true)
 
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(PAGE_SIZE),
+            })
+            if (search) params.set("search", search)
+
             const res = await fetch(
-                `/api/admin/operations/projects?page=${page}&limit=${PAGE_SIZE}`
+                `/api/admin/operations/projects?${params.toString()}`
             )
 
             const json: ApiResponse = await res.json()
@@ -45,7 +53,7 @@ export default function Page() {
         } finally {
             setLoading(false)
         }
-    }, [page])
+    }, [page, search])
 
     useEffect(() => {
         fetchProjects()

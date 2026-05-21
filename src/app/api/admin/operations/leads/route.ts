@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
 import { auditedCreate } from "@/lib/activity-log"
 import { AuthError } from "@/lib/auth/requireAuth"
+import { escapeRegex } from "@/lib/search/escapeRegex"
 
 export async function GET(req: NextRequest) {
     try {
@@ -28,7 +29,12 @@ export async function GET(req: NextRequest) {
         }
 
         if (search) {
-            query.name = { $regex: search, $options: "i" }
+            const re = { $regex: escapeRegex(search), $options: "i" }
+            query.$or = [
+                { name: re },
+                { email: re },
+                { phone: re },
+            ]
         }
 
         const skip = (page - 1) * limit
