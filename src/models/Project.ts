@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose"
 import { PROJECT_STATUS } from "@/constants/projectStatus"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
+import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
 
 export interface IProject extends Document {
     clientId: mongoose.Types.ObjectId
@@ -52,11 +53,13 @@ const ProjectSchema = new Schema<IProject>(
 )
 
 ensureAuditPlugin(ProjectSchema, "PROJECT")
+statsInvalidatePlugin(ProjectSchema)
 
 const Project =
     mongoose.models.Project ||
     mongoose.model<IProject>("Project", ProjectSchema)
 
 ensureAuditPlugin(Project.schema, "PROJECT")
+statsInvalidatePlugin(Project.schema)
 
 export default Project

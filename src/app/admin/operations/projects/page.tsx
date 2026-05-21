@@ -85,9 +85,12 @@ export default function Page() {
                                 key={project._id}
                                 id={project._id}
                                 client={{
-                                    id: project.clientId._id,
-                                    name: project.clientId.name,
-                                    company: project.clientId.company
+                                    // Populate returns null when the referenced
+                                    // client has been soft-deleted — fall back to
+                                    // safe placeholders so the row still renders.
+                                    id: project.clientId?._id ?? "",
+                                    name: project.clientId?.name ?? "Deleted client",
+                                    company: project.clientId?.company ?? "—",
                                 }}
                                 title={project.title}
                                 description={project.description}
