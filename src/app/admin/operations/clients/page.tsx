@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { Suspense, useCallback, useEffect, useState } from "react"
 import { Client } from "@/types/clients"
 import ClientCard from "@/components/admin/operations/ClientCard"
 import ClientCardSkeleton from "@/components/admin/operations/skeletons/ClientCardSkeleton"
@@ -52,6 +52,13 @@ export default function Page() {
     }, [fetchClients])
 
     return (
+            <Suspense fallback={
+                <div className="space-y-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <ClientCardSkeleton key={i} />
+                    ))}
+                </div>
+            }>
                 <div className="space-y-4">
 
                     {/* Loading Skeleton */}
@@ -96,5 +103,6 @@ export default function Page() {
                         />
                     )}
                 </div>
+            </Suspense>
     )
 }
