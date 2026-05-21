@@ -5,7 +5,6 @@ import Lead from "@/models/Lead"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
 import Meeting from "@/models/Meeting"
-import User from "@/models/User"
 
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { escapeRegex } from "@/lib/search/escapeRegex"
@@ -24,7 +23,7 @@ const MAX_QUERY_LEN = 100
 const DEFAULT_LIMIT = 5
 const MAX_LIMIT = 20
 
-type EntityType = "LEAD" | "CLIENT" | "PROJECT" | "MEETING" | "USER"
+type EntityType = "LEAD" | "CLIENT" | "PROJECT" | "MEETING" 
 
 interface SearchHit {
     id: string
@@ -39,7 +38,6 @@ interface EmptyResult {
     clients: SearchHit[]
     projects: SearchHit[]
     meetings: SearchHit[]
-    users: SearchHit[]
     total: 0
 }
 
@@ -49,7 +47,6 @@ function emptyResult(): EmptyResult {
         clients: [],
         projects: [],
         meetings: [],
-        users: [],
         total: 0,
     }
 }
@@ -100,7 +97,7 @@ export async function GET(req: NextRequest) {
         ]
         if (phoneRe) clientOr.push({ phone: phoneRe })
 
-        const [leads, clients, projects, meetings, users] = await Promise.all([
+        const [leads, clients, projects, meetings] = await Promise.all([
             Lead.find({ $or: leadOr })
                 .sort({ createdAt: -1 })
                 .limit(limit)
@@ -128,11 +125,6 @@ export async function GET(req: NextRequest) {
                 .sort({ scheduledAt: -1 })
                 .limit(limit)
                 .select("_id title agenda scheduledAt status")
-                .lean(),
-            User.find({ $or: [{ name: re }, { email: re }] })
-                .sort({ createdAt: -1 })
-                .limit(limit)
-                .select("_id name email role isActive")
                 .lean(),
         ])
 
@@ -191,21 +183,6 @@ export async function GET(req: NextRequest) {
                     href: `/admin/operations/meetings`,
                 }
             }),
-            users: users.map((u): SearchHit => {
-                const doc = u as {
-                    _id: unknown
-                    name: string
-                    email: string
-                }
-                return {
-                    id: String(doc._id),
-                    type: "USER",
-                    title: doc.name,
-                    subtitle: doc.email,
-                    // No user detail page — link to the list.
-                    href: `/admin/operations/users`,
-                }
-            }),
             total: 0,
         }
 
@@ -213,8 +190,7 @@ export async function GET(req: NextRequest) {
             data.leads.length +
             data.clients.length +
             data.projects.length +
-            data.meetings.length +
-            data.users.length
+            data.meetings.length 
 
         return NextResponse.json({ success: true, data })
     } catch (error) {

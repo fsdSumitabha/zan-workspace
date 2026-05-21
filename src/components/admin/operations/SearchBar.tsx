@@ -19,10 +19,10 @@ const DEBOUNCE_MS = 300
 const MIN_DASHBOARD_QUERY = 2
 
 type Mode =
-    | { kind: "entity"; entity: "leads" | "clients" | "projects" | "meetings" | "users" }
+    | { kind: "entity"; entity: "leads" | "clients" | "projects" | "meetings" }
     | { kind: "dashboard" }
 
-const ENTITY_PATHS = ["leads", "clients", "projects", "meetings", "users"] as const
+const ENTITY_PATHS = ["leads", "clients", "projects", "meetings"] as const
 
 function resolveMode(pathname: string): Mode {
     for (const entity of ENTITY_PATHS) {
@@ -37,7 +37,7 @@ function placeholderFor(mode: Mode): string {
     if (mode.kind === "entity") {
         return `Search ${mode.entity}…`
     }
-    return "Search leads, clients, projects, meetings, users…"
+    return "Search leads, clients, projects, meetings…"
 }
 
 export default function SearchBar() {
@@ -148,8 +148,7 @@ export default function SearchBar() {
             ...results.clients,
             ...results.projects,
             ...results.meetings,
-            ...results.users,
-        ]
+            ]
     }, [results])
 
     const wrapperRef = useRef<HTMLDivElement | null>(null)

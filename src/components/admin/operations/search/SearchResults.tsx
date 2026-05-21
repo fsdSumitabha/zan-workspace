@@ -37,7 +37,7 @@ export default function SearchResults({
                   { label: "Clients", type: "CLIENT", hits: data.clients },
                   { label: "Projects", type: "PROJECT", hits: data.projects },
                   { label: "Meetings", type: "MEETING", hits: data.meetings },
-                  { label: "Users", type: "USER", hits: data.users },
+                //   { label: "Users", type: "USER", hits: data.users },
               ] as Section[]
           ).filter((s) => s.hits.length > 0)
         : []
