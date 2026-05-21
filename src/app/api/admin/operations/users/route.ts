@@ -9,6 +9,7 @@ import { requireRole } from "@/lib/auth/requireRole"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { USER_ROLE_META } from "@/constants/userRoles"
 import { auditedCreate } from "@/lib/activity-log"
+import { escapeRegex } from "@/lib/search/escapeRegex"
 
 import { imagekit } from "@/lib/imagekit/imagekit"
 
@@ -42,9 +43,10 @@ export async function GET(req: NextRequest) {
 
         // search (name + email)
         if (search) {
+            const re = { $regex: escapeRegex(search), $options: "i" }
             query.$or = [
-                { name: { $regex: search, $options: "i" } },
-                { email: { $regex: search, $options: "i" } }
+                { name: re },
+                { email: re },
             ]
         }
 

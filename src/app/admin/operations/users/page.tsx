@@ -9,6 +9,7 @@ import UserCardSkeleton from "@/components/admin/operations/UserCardSkeleton"
 import CreateActionButton from "@/components/admin/operations/CreateActionButton"
 import Pagination from "@/components/admin/operations/Pagination"
 import { usePagination } from "@/hooks/usePagination"
+import { useSearch } from "@/hooks/useSearch"
 
 interface ApiResponse {
     success: boolean
@@ -28,13 +29,20 @@ export default function Page() {
     const [loading, setLoading] = useState(true)
     const [totalPages, setTotalPages] = useState(1)
     const { page, setPage } = usePagination()
+    const search = useSearch()
 
     const fetchUsers = useCallback(async () => {
         try {
             setLoading(true)
 
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(PAGE_SIZE),
+            })
+            if (search) params.set("search", search)
+
             const res = await fetch(
-                `/api/admin/operations/users?page=${page}&limit=${PAGE_SIZE}`
+                `/api/admin/operations/users?${params.toString()}`
             )
 
             const json: ApiResponse = await res.json()
@@ -48,7 +56,7 @@ export default function Page() {
         } finally {
             setLoading(false)
         }
-    }, [page])
+    }, [page, search])
 
     useEffect(() => {
         fetchUsers()

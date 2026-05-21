@@ -6,6 +6,7 @@ import { SortOrder } from "mongoose"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
 import { auditedCreate } from "@/lib/activity-log"
+import { escapeRegex } from "@/lib/search/escapeRegex"
 
 export async function GET(req: NextRequest) {
     try {
@@ -33,9 +34,11 @@ export async function GET(req: NextRequest) {
         }
 
         if (search) {
+            const re = { $regex: escapeRegex(search), $options: "i" }
             query.$or = [
-                { title: { $regex: search, $options: "i" } },
-                { companyName: { $regex: search, $options: "i" } }
+                { title: re },
+                { companyName: re },
+                { description: re },
             ]
         }
 
