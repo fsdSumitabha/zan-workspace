@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Activity, ShieldAlert } from "lucide-react"
 
@@ -77,13 +77,20 @@ export default function ActivityLogsPage() {
             </header>
 
 
-            <ActivityLogFilters
-                value={filters}
-                onChange={setFilters}
-                isAdmin
-            />
-
-            <ActivityLogList filters={filters} />
+            <Suspense
+                fallback={
+                    <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6 text-neutral-500 dark:text-neutral-400">
+                        Loading activity…
+                    </div>
+                }
+            >
+                <ActivityLogFilters
+                    value={filters}
+                    onChange={setFilters}
+                    isAdmin
+                />
+                <ActivityLogList filters={filters} />
+            </Suspense>
         </div>
     )
 }
