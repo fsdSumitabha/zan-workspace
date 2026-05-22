@@ -8,12 +8,14 @@ import LeadCard from "@/components/admin/operations/LeadCard"
 import LeadCardSkeleton from "@/components/admin/operations/skeletons/LeadCardSkeleton"
 import CreateActionButton from "@/components/admin/operations/CreateActionButton"
 import Pagination from "@/components/admin/operations/Pagination"
+import AccessDenied from "@/components/admin/operations/AccessDenied"
 import { usePagination } from "@/hooks/usePagination"
 import { useSearch } from "@/hooks/useSearch"
 
 interface ApiResponse {
     success: boolean
     data: Lead[]
+    message?: string
     pagination: {
         page: number
         limit: number
@@ -28,12 +30,14 @@ export default function LeadsClient() {
     const [leads, setLeads] = useState<Lead[]>([])
     const [loading, setLoading] = useState(true)
     const [totalPages, setTotalPages] = useState(1)
+    const [accessError, setAccessError] = useState<string | null>(null)
     const { page, setPage } = usePagination()
     const search = useSearch()
 
     const fetchLeads = useCallback(async () => {
         try {
             setLoading(true)
+            setAccessError(null)
 
             const params = new URLSearchParams({
                 page: String(page),
@@ -46,6 +50,15 @@ export default function LeadsClient() {
             )
 
             const json: ApiResponse = await res.json()
+
+            if (res.status === 401 || res.status === 403) {
+                setAccessError(
+                    json?.message ||
+                        "You aren't authorized to perform this action."
+                )
+                setLeads([])
+                return
+            }
 
             if (json.success) {
                 setLeads(json.data)
@@ -61,6 +74,10 @@ export default function LeadsClient() {
     useEffect(() => {
         fetchLeads()
     }, [fetchLeads])
+
+    if (!loading && accessError) {
+        return <AccessDenied message={accessError} />
+    }
 
     return (
         <div className="space-y-4">

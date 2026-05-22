@@ -14,10 +14,12 @@ import InteractionModal from "@/components/admin/operations/InteractionModal/Int
 import InteractionTimeline from "@/components/admin/operations/interactions/InteractionTimeline";
 import { ProjectStatus } from "@/constants/projectStatus";
 import { InteractionType } from "@/constants/interactionTypes";
+import AccessDenied from "@/components/admin/operations/AccessDenied";
 
 interface ApiResponse {
     success: boolean;
     data: Project;
+    message?: string;
 }
 
 export default function Page() {
@@ -27,6 +29,7 @@ export default function Page() {
 
     const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
+    const [accessError, setAccessError] = useState<string | null>(null);
     const [activeType, setActiveType] = useState<InteractionType | null>(null);
     const [isOpen, setIsOpen] = useState(false);
 
@@ -48,12 +51,21 @@ export default function Page() {
     const fetchProject = async () => {
         try {
             setLoading(true);
+            setAccessError(null);
 
             const res = await fetch(
                 `/api/admin/operations/projects/${projectId}`,
             );
 
             const json: ApiResponse = await res.json();
+
+            if (res.status === 401 || res.status === 403) {
+                setAccessError(
+                    json?.message ||
+                        "You aren't authorized to perform this action.",
+                );
+                return;
+            }
 
             if (json.success) {
                 setProject(json.data);
@@ -160,6 +172,10 @@ export default function Page() {
 
         fetchInteractions();
     };
+
+    if (!loading && accessError) {
+        return <AccessDenied message={accessError} />;
+    }
 
     return (
         <div className=" space-y-4">

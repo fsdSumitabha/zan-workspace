@@ -16,6 +16,7 @@ import { InteractionItemSkeleton } from "@/components/admin/operations/skeletons
 import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/ActionTypeSkeleton"
 import { InteractionType } from "@/constants/interactionTypes"
 import { useAuth } from "@/contexts/AuthContext"
+import AccessDenied from "@/components/admin/operations/AccessDenied"
 
 export default function Page() {
     const params = useParams()
@@ -23,6 +24,7 @@ export default function Page() {
 
     const [lead, setLead] = useState<Lead | null>(null)
     const [loading, setLoading] = useState(true)
+    const [accessError, setAccessError] = useState<string | null>(null)
 
     const [interactions, setInteractions] = useState<Interaction[]>([])
     const [interactionLoading, setInteractionLoading] = useState(true)
@@ -33,9 +35,17 @@ export default function Page() {
         const fetchLead = async () => {
             try {
                 const res = await fetch(`/api/admin/operations/leads/${leadId}`)
-                const data = await res.json()
+                const data = await res.json().catch(() => null)
 
-                setLead(data.data)
+                if (res.status === 401 || res.status === 403) {
+                    setAccessError(
+                        data?.message ||
+                            "You aren't authorized to perform this action."
+                    )
+                    return
+                }
+
+                setLead(data?.data ?? null)
             } catch (err) {
                 console.error("Failed to fetch lead", err)
             } finally {
@@ -145,6 +155,10 @@ export default function Page() {
                 onClick: () => {}
             }
         })
+    }
+
+    if (!loading && accessError) {
+        return <AccessDenied message={accessError} />
     }
 
     return (

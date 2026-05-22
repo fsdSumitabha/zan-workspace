@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import EntityCard from "@/components/admin/operations/EntityCard"
+import AccessDenied from "@/components/admin/operations/AccessDenied"
 
 import { toast } from "sonner"
 
@@ -15,6 +16,7 @@ export default function Page() {
     const [data, setData] = useState<Entity[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [accessError, setAccessError] = useState<string | null>(null)
 
     useEffect(() => {
         let isMounted = true
@@ -23,17 +25,28 @@ export default function Page() {
             try {
                 setLoading(true)
                 setError(null)
+                setAccessError(null)
 
                 const res = await fetch("/api/admin/operations", {
                     method: "GET",
                     cache: "no-store"
                 })
 
+                const json = await res.json().catch(() => null)
+
+                if (res.status === 401 || res.status === 403) {
+                    if (isMounted) {
+                        setAccessError(
+                            json?.message ||
+                                "You aren't authorized to perform this action."
+                        )
+                    }
+                    return
+                }
+
                 if (!res.ok) {
                     throw new Error(`Request failed: ${res.status}`)
                 }
-
-                const json = await res.json()
 
                 // Defensive parsing
                 if (!json || !Array.isArray(json.data)) {
@@ -63,6 +76,10 @@ export default function Page() {
             isMounted = false
         }
     }, [])
+
+    if (!loading && accessError) {
+        return <AccessDenied message={accessError} hideAction />
+    }
 
     return (
                 <div className="w-full">
