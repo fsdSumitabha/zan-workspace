@@ -132,11 +132,13 @@ export default function UserForm({
                             onChange={handleChange}
                             className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
                         >
-                            {Object.entries(USER_ROLE_META).map(([key, meta]) => (
-                                <option key={key} value={key}>
-                                    {meta.label}
-                                </option>
-                            ))}
+                            {Object.entries(USER_ROLE_META)
+                                .filter(([key]) => key !== "10")
+                                .map(([key, meta]) => (
+                                    <option key={key} value={key}>
+                                        {meta.label}
+                                    </option>
+                                ))}
                         </select>
 
                         {/* Role description */}
