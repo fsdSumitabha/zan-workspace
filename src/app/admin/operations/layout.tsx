@@ -1,5 +1,6 @@
 // app/admin/operations/layout.tsx
 
+import { Suspense } from "react";
 import Sidebar from "@/components/admin/operations/SideBar";
 import SearchBar from "@/components/admin/operations/SearchBar";
 import StatsPanel from "@/components/admin/operations/StatsPanel";
@@ -29,7 +30,9 @@ export default function OperationsLayout({
                 <div className="border-b border-neutral-200 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-950">
                     <div className="h-14 md:h-14 grid grid-cols-12 px-3 md:px-4 items-center">
                         <div className="col-span-12 md:col-span-8 flex items-center">
-                            <SearchBar />
+                            <Suspense fallback={<div className="h-10 w-full" />}>
+                                <SearchBar />
+                            </Suspense>
                         </div>
                         <div className="hidden md:col-span-4" />
                     </div>

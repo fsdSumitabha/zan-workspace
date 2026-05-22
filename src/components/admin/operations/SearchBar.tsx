@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
     usePathname,
     useRouter,
@@ -40,22 +40,17 @@ function placeholderFor(mode: Mode): string {
     return "Search leads, clients, projects, meetings…"
 }
 
-export default function SearchBar() {
+function SearchBarInner() {
     const pathname = usePathname()
     const router = useRouter()
     const searchParams = useSearchParams()
 
     const mode = useMemo(() => resolveMode(pathname), [pathname])
 
-    // Local input value — debounced into either the URL (entity mode) or
-    // an API call (dashboard mode). Initialized from the URL so reloads
-    // restore the term on entity pages.
     const initial =
         mode.kind === "entity" ? searchParams.get("search") || "" : ""
     const [value, setValue] = useState(initial)
 
-    // Re-sync on navigation. We only watch pathname (not searchParams) so
-    // typing doesn't bounce off our own URL writes.
     useEffect(() => {
         if (mode.kind === "entity") {
             setValue(searchParams.get("search") || "")
@@ -67,7 +62,6 @@ export default function SearchBar() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pathname])
 
-    // ── Entity mode: debounce term into URL ────────────────────────────
     useEffect(() => {
         if (mode.kind !== "entity") return
 
@@ -78,7 +72,6 @@ export default function SearchBar() {
             } else {
                 params.delete("search")
             }
-            // Any search change resets pagination.
             params.delete("page")
             const qs = params.toString()
             router.replace(qs ? `${pathname}?${qs}` : pathname, {
@@ -90,7 +83,6 @@ export default function SearchBar() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [value, mode, pathname])
 
-    // ── Dashboard mode: debounce fetch ─────────────────────────────────
     const [results, setResults] = useState<SearchData | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -140,7 +132,6 @@ export default function SearchBar() {
         return () => clearTimeout(handle)
     }, [value, mode])
 
-    // Flat list of all current hits — used for keyboard nav.
     const flatHits: SearchHit[] = useMemo(() => {
         if (!results) return []
         return [
@@ -148,12 +139,11 @@ export default function SearchBar() {
             ...results.clients,
             ...results.projects,
             ...results.meetings,
-            ]
+        ]
     }, [results])
 
     const wrapperRef = useRef<HTMLDivElement | null>(null)
 
-    // Click outside closes the dropdown.
     useEffect(() => {
         if (!open) return
         const onDown = (e: MouseEvent) => {
@@ -205,8 +195,6 @@ export default function SearchBar() {
         setValue("")
         setResults(null)
         setError(null)
-        // Refocus stays implicit — clearing typically follows a click
-        // inside the input area, so blur won't fire.
     }
 
     const showDropdown =
@@ -214,12 +202,6 @@ export default function SearchBar() {
 
     return (
         <div ref={wrapperRef} className="relative w-full">
-            {/*
-              * Backdrop dims + blurs the page behind the dropdown so the
-              * user can focus on results. Dashboard mode only — entity
-              * mode filters the list in place, so blurring it would
-              * obscure the very content the user is trying to read.
-              */}
             {showDropdown && (
                 <div
                     className="fixed inset-0 z-40 bg-black/20 dark:bg-black/40 backdrop-blur-sm"
@@ -248,7 +230,6 @@ export default function SearchBar() {
                     className="w-full pl-9 pr-9 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
                 />
 
-                {/* Right-side adornment: spinner or clear button */}
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
                     {loading ? (
                         <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
@@ -277,5 +258,17 @@ export default function SearchBar() {
                 />
             )}
         </div>
+    )
+}
+
+export default function SearchBar() {
+    return (
+        <Suspense
+            fallback={
+                <div className="w-full h-10 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800" />
+            }
+        >
+            <SearchBarInner />
+        </Suspense>
     )
 }
