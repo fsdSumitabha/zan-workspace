@@ -51,9 +51,10 @@ export default function ClientCard({
         <Link
             href={`/admin/operations/clients/${id}`}
             className="
-                block my-4 p-4 rounded-xl
+                block my-4 p-4 rounded-lg dark:rounded-xl
                 bg-white dark:bg-neutral-900
-                border border-neutral-200 dark:border-neutral-800
+                border border-slate-200 dark:border-neutral-800
+                shadow hover:shadow-md
                 hover:border-blue-500/40
                 transition cursor-pointer
             "

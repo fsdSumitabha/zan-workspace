@@ -2,19 +2,29 @@
 
 import Link from "next/link"
 import { Image } from "@imagekit/next"
-import { User, LogOut } from "lucide-react"
+import {
+    User,
+    LogOut,
+    Home,
+    Target,
+    Handshake,
+    FolderKanban,
+    CalendarClock,
+    UserRoundCog,
+    Activity,
+} from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 
 const navItems = [
-    { name: "Dashboard", href: "/admin/operations", roles: [10, 20, 30, 40, 50, 60, 70, 80] },
-    { name: "Leads", href: "/admin/operations/leads", roles: [10, 20, 30, 40, 50, 60, 70, 80] },
-    { name: "Clients", href: "/admin/operations/clients", roles: [10, 20, 30, 40, 50, 60, 70, 80] },
-    { name: "Projects", href: "/admin/operations/projects", roles: [10, 20, 30, 40, 50, 60, 70, 80] },
-    { name: "Meetings", href: "/admin/operations/meetings", roles: [10, 20, 30, 40, 50, 60, 70, 80] },
-    { name: "Users", href: "/admin/operations/users", roles: [10, 20,] },
-    { name: "Activity Log", href: "/admin/operations/activity-logs", roles: [10, 20] },
+    { name: "Dashboard", href: "/admin/operations", icon: Home, roles: [10, 20, 30, 40, 50, 60, 70, 80] },
+    { name: "Leads", href: "/admin/operations/leads", icon: Target, roles: [10, 20, 30, 40, 50, 60, 70, 80] },
+    { name: "Clients", href: "/admin/operations/clients", icon: Handshake, roles: [10, 20, 30, 40, 50, 60, 70, 80] },
+    { name: "Projects", href: "/admin/operations/projects", icon: FolderKanban, roles: [10, 20, 30, 40, 50, 60, 70, 80] },
+    { name: "Meetings", href: "/admin/operations/meetings", icon: CalendarClock, roles: [10, 20, 30, 40, 50, 60, 70, 80] },
+    { name: "Users", href: "/admin/operations/users", icon: UserRoundCog, roles: [10, 20] },
+    { name: "Activity Log", href: "/admin/operations/activity-logs", icon: Activity, roles: [10, 20] },
 ]
 
 export default function Sidebar() {
@@ -67,6 +77,7 @@ export default function Sidebar() {
             {/* Nav */}
             <nav className="flex-1 p-2 space-y-1">
                 {filteredNavItems.map((item) => {
+                    const Icon = item.icon
                     const isActive =
                         item.href === "/admin/operations"
                             ? pathname === item.href
@@ -76,13 +87,20 @@ export default function Sidebar() {
                         <Link
                             key={item.name}
                             href={item.href}
-                            className={`block px-3 py-2 rounded-lg text-sm transition-all duration-200 border-l-2
+                            className={`group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 border-l-2
                                 ${isActive
                                     ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium"
                                     : "border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-800 hover:text-gray-900 dark:hover:text-white"
                                 }`}
                         >
-                            {item.name}
+                            <Icon
+                                size={18}
+                                className={`shrink-0 transition-colors ${isActive
+                                    ? "text-emerald-600 dark:text-emerald-400"
+                                    : "text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200"
+                                    }`}
+                            />
+                            <span className="truncate">{item.name}</span>
                         </Link>
                     )
                 })}

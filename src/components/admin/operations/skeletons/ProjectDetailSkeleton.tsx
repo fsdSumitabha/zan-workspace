@@ -26,15 +26,15 @@ export default function ProjectDetailSkeleton() {
             <div>
                 <div className="h-4 w-32 bg-gray-200 dark:bg-neutral-700 rounded mb-2"></div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+                    <div className="p-4 rounded-lg dark:rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
                         <div className="h-3 w-16 bg-gray-200 dark:bg-neutral-700 rounded mb-2"></div>
                         <div className="h-5 w-24 bg-gray-200 dark:bg-neutral-700 rounded"></div>
                     </div>
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+                    <div className="p-4 rounded-lg dark:rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
                         <div className="h-3 w-16 bg-gray-200 dark:bg-neutral-700 rounded mb-2"></div>
                         <div className="h-5 w-24 bg-gray-200 dark:bg-neutral-700 rounded"></div>
                     </div>
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+                    <div className="p-4 rounded-lg dark:rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
                         <div className="h-3 w-16 bg-gray-200 dark:bg-neutral-700 rounded mb-2"></div>
                         <div className="h-5 w-24 bg-gray-200 dark:bg-neutral-700 rounded"></div>
                     </div>
@@ -54,13 +54,13 @@ export default function ProjectDetailSkeleton() {
             <div className="border-t border-neutral-200 dark:border-neutral-800 pt-4 space-y-3">
                 <div className="h-4 w-40 bg-gray-200 dark:bg-neutral-700 rounded"></div>
                 <div className="grid sm:grid-cols-3 gap-4">
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-dashed border-neutral-300 dark:border-neutral-700">
+                    <div className="p-4 rounded-lg dark:rounded-xl bg-gray-50 dark:bg-neutral-800 border border-dashed border-neutral-300 dark:border-neutral-700">
                         <div className="h-4 w-20 bg-gray-200 dark:bg-neutral-700 rounded mx-auto"></div>
                     </div>
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-dashed border-neutral-300 dark:border-neutral-700">
+                    <div className="p-4 rounded-lg dark:rounded-xl bg-gray-50 dark:bg-neutral-800 border border-dashed border-neutral-300 dark:border-neutral-700">
                         <div className="h-4 w-24 bg-gray-200 dark:bg-neutral-700 rounded mx-auto"></div>
                     </div>
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-dashed border-neutral-300 dark:border-neutral-700">
+                    <div className="p-4 rounded-lg dark:rounded-xl bg-gray-50 dark:bg-neutral-800 border border-dashed border-neutral-300 dark:border-neutral-700">
                         <div className="h-4 w-28 bg-gray-200 dark:bg-neutral-700 rounded mx-auto"></div>
                     </div>
                 </div>

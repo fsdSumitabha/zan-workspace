@@ -1,6 +1,6 @@
 export default function LeadCardSkeleton() {
     return (
-        <div className="p-4 rounded-xl bg-slate-100 dark:bg-neutral-950 border border-neutral-600 animate-pulse">
+        <div className="p-4 rounded-lg dark:rounded-xl bg-slate-100 dark:bg-neutral-950 border border-neutral-600 animate-pulse">
 
             {/* Header */}
             <div className="flex items-center justify-between">

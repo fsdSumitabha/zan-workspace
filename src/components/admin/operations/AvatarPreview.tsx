@@ -51,7 +51,7 @@ export default function AvatarPreview({
     }
 
     return (
-        <div className="flex flex-col items-center gap-4 p-5 rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900">
+        <div className="flex flex-col items-center gap-4 p-5 rounded-lg dark:rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-900">
             {/* Circular avatar preview with overlay edit button */}
             <div className="relative w-24 h-24">
                 {previewUrl ? (

@@ -178,7 +178,7 @@ export default function ActivityHeatmap({
           : `${total} contribution${total === 1 ? "" : "s"} in ${year}`
 
     return (
-        <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3 sm:p-4">
+        <div className="rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
                 {/* Main column */}
                 <div className="flex-1 min-w-0">

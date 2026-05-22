@@ -159,11 +159,11 @@ export default function ActivityLogList({
                     Loading activity…
                 </div>
             ) : error ? (
-                <div className="rounded-xl border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 p-4 text-sm">
+                <div className="rounded-lg dark:rounded-xl border border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 p-4 text-sm">
                     {error}
                 </div>
             ) : logs.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 p-10 text-center">
+                <div className="rounded-lg dark:rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 p-10 text-center">
                     <Inbox className="w-8 h-8 mx-auto text-neutral-400 mb-2" />
                     <p className="text-sm text-neutral-600 dark:text-neutral-400">
                         No activity matches the current filters.

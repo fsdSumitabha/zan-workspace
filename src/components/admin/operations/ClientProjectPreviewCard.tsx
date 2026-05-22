@@ -8,7 +8,7 @@ import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 export default function ClientProjectPreviewCard({ project }: any) {
 
     return (
-        <div className="group p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-blue-500/50 dark:hover:border-blue-500/40 hover:shadow-sm transition-all duration-200 space-y-3">
+        <div className="group p-4 rounded-lg dark:rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-blue-500/50 dark:hover:border-blue-500/40 hover:shadow-sm transition-all duration-200 space-y-3">
 
             {/* Top row — title + status */}
             <div className="flex items-start justify-between gap-3">

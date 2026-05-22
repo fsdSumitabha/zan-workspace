@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import * as Icons from "lucide-react"
 import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
@@ -13,11 +14,21 @@ import TemporalBadge from "./TemporalBadge "
 
 export default function MeetingCard({ item }: { item: any }) {
 
+    const [expanded, setExpanded] = useState(false)
+
     const Icon =
         (Icons as any)[item.icon?.charAt(0).toUpperCase() + item.icon?.slice(1)] ||
         Icons.Calendar
 
     const meeting = item
+
+    const agenda: string = meeting.agenda || ""
+    const description: string = meeting.description || ""
+
+    // Show the toggle only when the combined detail text is long enough
+    // that it would otherwise make this card taller than its siblings.
+    const isLongText = agenda.length + description.length > 110
+    const clampClass = !expanded && isLongText ? "line-clamp-2" : ""
 
     const temporalStatus = getMeetingTemporalStatus(meeting.scheduledAt)
     const isCancelledOrMissed = meeting.status === MEETING_STATUS.CANCELLED || meeting.status === MEETING_STATUS.MISSED
@@ -32,7 +43,7 @@ export default function MeetingCard({ item }: { item: any }) {
     const entityHref = `/admin//operations/${meeting.entity?.label?.toLowerCase()}s/${meeting.entityId}`
 
     return (
-        <div className={`relative flex gap-3 p-4 rounded-xl bg-white dark:bg-neutral-900 transition break-words border hover:border-neutral-400 hover:shadow-sm ${isCancelledOrMissed ? "border-red-500 opacity-70" : isCompleted ? "border-green-500 opacity-80" : isToday ? "border-emerald-500" : isUpcoming ? "border-blue-500" : isScheduled ? "border-neutral-800" : "border-neutral-800"}`}>
+        <div className={`relative flex gap-3 p-4 rounded-lg dark:rounded-xl bg-white dark:bg-neutral-900 shadow transition break-words border hover:border-neutral-400 hover:shadow-md ${isCancelledOrMissed ? "border-red-500 opacity-70" : isCompleted ? "border-green-500 opacity-80" : isToday ? "border-emerald-500" : isUpcoming ? "border-blue-500" : "border-slate-200 dark:border-neutral-800"}`}>
             
             {dotColor && (
                 <span className="absolute flex h-2 w-2">
@@ -91,17 +102,28 @@ export default function MeetingCard({ item }: { item: any }) {
                 )}
 
                 {/* Agenda */}
-                {meeting.agenda && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Agenda: {meeting.agenda}
+                {agenda && (
+                    <p className={`text-sm text-gray-600 dark:text-gray-400 ${clampClass}`}>
+                        Agenda: {agenda}
                     </p>
                 )}
 
                 {/* Description */}
-                {meeting.description && (
-                    <p className="text-sm text-gray-500">
-                        {meeting.description}
+                {description && (
+                    <p className={`text-sm text-gray-500 ${clampClass}`}>
+                        {description}
                     </p>
+                )}
+
+                {/* Read more / less toggle */}
+                {isLongText && (
+                    <button
+                        type="button"
+                        onClick={() => setExpanded((v) => !v)}
+                        className="text-xs font-medium text-emerald-600 hover:underline"
+                    >
+                        {expanded ? "Read less" : "Read more…"}
+                    </button>
                 )}
 
                 {/* Meta */}

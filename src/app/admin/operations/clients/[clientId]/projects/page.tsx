@@ -61,13 +61,12 @@ export default function Page() {
     }, [clientId])
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
-            <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
+        <div className="min-auto bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white">
+            <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-2 gap-6">
 
                 {/* LEFT */}
                 <div className="lg:col-span-2 space-y-4">
 
-                    <SearchBar />
 
                     <CreateActionButton href={`projects/create`} label="Create New Project" />
                     
@@ -120,8 +119,7 @@ export default function Page() {
                     )}
                 </div>
 
-                {/* RIGHT */}
-                <StatsPanel />
+              
             </div>
         </div>
     )

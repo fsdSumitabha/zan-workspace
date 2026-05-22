@@ -39,12 +39,12 @@ export default function LeadCard({
     createdBy
 }: Props & { id: string }) {
     return (
-        <Link href={`/admin/operations/leads/${id}`} className="block my-4 p-4 rounded-xl bg-slate-100 dark:bg-neutral-950 border border-neutral-600 hover:border-blue-500/40 transition cursor-pointer">
+        <Link href={`/admin/operations/leads/${id}`} className="block my-4 p-4 rounded-lg dark:rounded-xl bg-white dark:bg-neutral-950 border border-slate-200 dark:border-neutral-600 shadow hover:shadow-md hover:border-blue-500/40 transition cursor-pointer">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="font-semibold">{name}</p>
-                    <p className="text-sm text-neutral-400">{company}</p>
+                    <p className="font-semibold text-neutral-900 dark:text-white">{name}</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">{company}</p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -53,7 +53,7 @@ export default function LeadCard({
             </div>
 
             {/* Contact Info */}
-            <div className="relative mt-3 text-sm text-neutral-300 space-y-1">
+            <div className="relative mt-3 text-sm text-neutral-600 dark:text-neutral-300 space-y-1">
                 <p>{phone}</p>
                 {email && <p>{email}</p>}
                 <p className="text-xs text-neutral-500 flex gap-1 items-center">

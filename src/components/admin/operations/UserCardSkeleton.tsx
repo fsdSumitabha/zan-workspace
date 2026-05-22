@@ -1,6 +1,6 @@
 export default function UserCardSkeleton() {
     return (
-        <div className="rounded-xl p-4 border bg-white border-gray-200 dark:bg-neutral-900 dark:border-neutral-800 animate-pulse " >
+        <div className="rounded-lg dark:rounded-xl p-4 border bg-white border-gray-200 dark:bg-neutral-900 dark:border-neutral-800 animate-pulse " >
             {/* Top Section */}
             <div className="flex items-center gap-3">
                 {/* Avatar */}

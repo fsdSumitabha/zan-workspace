@@ -59,7 +59,7 @@ export default function LeadStatusSlider({ currentStatus, onChange }: Props) {
     const progressIndex = pendingIndex ?? currentIndex
 
     return (
-        <div className="space-y-16 border px-4 py-6 rounded-xl bg-white dark:bg-neutral-900 dark:border-neutral-700">
+        <div className="space-y-16 border px-4 py-6 rounded-lg dark:rounded-xl bg-white dark:bg-neutral-900 dark:border-neutral-700">
             {/* Progress Bar */}
             <div className="relative">
                 {/* Base line */}
@@ -106,7 +106,7 @@ export default function LeadStatusSlider({ currentStatus, onChange }: Props) {
 
             {/* Inline Confirmation */}
             {pendingStatus !== null && (
-                <div className="flex items-center justify-between bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-2 my-4">
+                <div className="flex items-center justify-between bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg dark:rounded-xl px-4 py-2 my-4">
                     <p className="text-sm">
                         Move to{" "}
                         <span className="font-medium">

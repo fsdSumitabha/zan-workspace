@@ -53,7 +53,7 @@ export default function Page() {
     if (loading) {
         return (
             <div className="space-y-4">
-                <div className="p-5 rounded-xl border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-900">
+                <div className="p-5 rounded-lg dark:rounded-xl border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-900">
                     Loading client details...
                 </div>
             </div>
@@ -63,7 +63,7 @@ export default function Page() {
     if (!client) {
         return (
             <div className="space-y-4">
-                <div className="p-5 rounded-xl border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-red-500">
+                <div className="p-5 rounded-lg dark:rounded-xl border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-red-500">
                     Client not found
                 </div>
             </div>

@@ -60,7 +60,7 @@ export default function ProjectDetail({ project, onStatusChange }: Props) {
         setRemarks("")
     }
     return (
-        <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-6">
+        <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm space-y-6">
 
             {/* ================= HEADER ================= */}
             <div className="flex items-start justify-between gap-4">
@@ -163,7 +163,7 @@ export default function ProjectDetail({ project, onStatusChange }: Props) {
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
 
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+                    <div className="p-4 rounded-lg dark:rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
                         <p className="text-xs text-gray-500">Estimated</p>
                         <p className="text-lg font-semibold">
                             ₹{project.budget?.toLocaleString() || "—"}
@@ -171,14 +171,14 @@ export default function ProjectDetail({ project, onStatusChange }: Props) {
                     </div>
 
                     {/* Future ready blocks */}
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+                    <div className="p-4 rounded-lg dark:rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
                         <p className="text-xs text-gray-500">Paid</p>
                         <p className="text-lg font-semibold text-green-600">
                             ₹—
                         </p>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+                    <div className="p-4 rounded-lg dark:rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
                         <p className="text-xs text-gray-500">Due</p>
                         <p className="text-lg font-semibold text-red-500">
                             ₹—

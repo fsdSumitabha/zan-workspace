@@ -43,17 +43,17 @@ export default function ProjectCard({
     return (
         <Link
             href={`/admin/operations/projects/${id}`}
-            className="block my-4 p-4 rounded-xl bg-slate-100 dark:bg-neutral-950 border border-neutral-600 hover:border-blue-500/40 transition cursor-pointer"
+            className="block my-4 p-4 rounded-lg dark:rounded-xl bg-white dark:bg-neutral-950 border border-slate-200 dark:border-neutral-600 shadow hover:shadow-md hover:border-blue-500/40 transition cursor-pointer"
         >
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
                     {/* Client (Primary) */}
-                    <p className="font-semibold">{client.name}</p>
-                    <p className="text-sm text-neutral-400">{client.company}</p>
+                    <p className="font-semibold text-neutral-900 dark:text-white">{client.name}</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">{client.company}</p>
 
                     {/* Project Title */}
-                    <p className="text-sm mt-1 text-blue-400 font-medium">
+                    <p className="text-sm mt-1 text-blue-600 dark:text-blue-400 font-medium">
                         {title}
                     </p>
                 </div>
@@ -63,7 +63,7 @@ export default function ProjectCard({
 
             {/* Description */}
             {description && (
-                <p className="mt-3 text-sm text-neutral-400 line-clamp-1">
+                <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400 line-clamp-1">
                     {description}
                 </p>
             )}

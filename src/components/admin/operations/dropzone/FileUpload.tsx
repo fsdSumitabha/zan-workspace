@@ -37,7 +37,7 @@ export default function FileUpload({
     return (
         <div
             {...getRootProps()}
-            className="border-2 border-dashed dark:border-neutral-700 rounded-xl p-4 text-center cursor-pointer"
+            className="border-2 border-dashed dark:border-neutral-700 rounded-lg dark:rounded-xl p-4 text-center cursor-pointer"
         >
             <input {...getInputProps()} />
 
