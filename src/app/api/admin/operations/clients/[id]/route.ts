@@ -13,7 +13,7 @@ export async function GET(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireAuth(req)
+        await requireRole(req, [10, 60, 70, 45, 50])
 
         await dbConnect()
 
@@ -83,7 +83,7 @@ export async function PATCH(
 
         await dbConnect()
 
-        const user = await requireRole(req, [10, 60, 70])
+        const user = await requireRole(req, [10, 60, 70, 45])
 
         const existing = await Client.findOne({
             phone: body.phone,
@@ -154,7 +154,7 @@ export async function DELETE(
 
         await dbConnect()
 
-        await requireRole(req, [10, 60, 70])
+        await requireRole(req, [10, 45])
 
         // 2. Delete lead
         const lead = await Client.findByIdAndDelete(id)
