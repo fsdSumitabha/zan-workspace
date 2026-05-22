@@ -70,9 +70,11 @@ export default function ProjectDetail({ project, onStatusChange }: Props) {
                     </h2>
 
                     <p className="text-sm text-gray-500 mt-1">
-                        {project.clientId.company} • {project.clientId.name}
+                        {project.clientId?.company || "N/A"} • {project.clientId?.name ?? "Deleted client"}
                     </p>
-                    <WhatsAppLink phone={project.clientId.phone} />
+                    {project.clientId?.phone && (
+                        <WhatsAppLink phone={project.clientId.phone} />
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">

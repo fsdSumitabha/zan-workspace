@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { registerAuditPluginsOnModels } from "@/lib/activity-log/registerModels";
+import { registerStatsInvalidatorOnModels } from "@/lib/stats/registerStatsInvalidator";
 
 // Load models so registerAuditPluginsOnModels can attach hooks in Next.js
 import "@/models/User";
@@ -12,6 +13,7 @@ import "@/models/Meeting";
 import "@/models/Document";
 import "@/models/Quotation";
 import "@/models/ActivityLog";
+import "@/models/StatsSnapshot";
 
 const MONGODB_URI = process.env.MONGODB_URI as string;
 
@@ -39,6 +41,7 @@ global.mongooseCache = cached;
 export default async function dbConnect() {
     if (cached.conn) {
         registerAuditPluginsOnModels();
+        registerStatsInvalidatorOnModels();
         return cached.conn;
     }
 
@@ -50,5 +53,6 @@ export default async function dbConnect() {
 
     cached.conn = await cached.promise;
     registerAuditPluginsOnModels();
+    registerStatsInvalidatorOnModels();
     return cached.conn;
 }

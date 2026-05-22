@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose"
 import { CLIENT_STATUS } from "@/constants/clientStatus"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
+import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
 
 export interface IClient extends Document {
     name: string
@@ -43,11 +44,13 @@ const ClientSchema = new Schema<IClient>(
 )
 
 ensureAuditPlugin(ClientSchema, "CLIENT")
+statsInvalidatePlugin(ClientSchema)
 
 const Client =
     mongoose.models.Client ||
     mongoose.model<IClient>("Client", ClientSchema)
 
 ensureAuditPlugin(Client.schema, "CLIENT")
+statsInvalidatePlugin(Client.schema)
 
 export default Client
