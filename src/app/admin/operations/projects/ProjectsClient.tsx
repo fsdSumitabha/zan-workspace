@@ -5,12 +5,14 @@ import ProjectCard from "@/components/admin/operations/ProjectCard"
 import ProjectCardSkeleton from "@/components/admin/operations/skeletons/ProjectCardSkeleton"
 import { Project } from "@/types/projects"
 import Pagination from "@/components/admin/operations/Pagination"
+import AccessDenied from "@/components/admin/operations/AccessDenied"
 import { usePagination } from "@/hooks/usePagination"
 import { useSearch } from "@/hooks/useSearch"
 
 interface ApiResponse {
     success: boolean
     data: Project[]
+    message?: string
     pagination: {
         page: number
         limit: number
@@ -25,12 +27,14 @@ export default function ProjectsClient() {
     const [projects, setProjects] = useState<Project[]>([])
     const [loading, setLoading] = useState(true)
     const [totalPages, setTotalPages] = useState(1)
+    const [accessError, setAccessError] = useState<string | null>(null)
     const { page, setPage } = usePagination()
     const search = useSearch()
 
     const fetchProjects = useCallback(async () => {
         try {
             setLoading(true)
+            setAccessError(null)
 
             const params = new URLSearchParams({
                 page: String(page),
@@ -43,6 +47,15 @@ export default function ProjectsClient() {
             )
 
             const json: ApiResponse = await res.json()
+
+            if (res.status === 401 || res.status === 403) {
+                setAccessError(
+                    json?.message ||
+                        "You aren't authorized to perform this action."
+                )
+                setProjects([])
+                return
+            }
 
             if (json.success) {
                 setProjects(json.data)
@@ -58,6 +71,10 @@ export default function ProjectsClient() {
     useEffect(() => {
         fetchProjects()
     }, [fetchProjects])
+
+    if (!loading && accessError) {
+        return <AccessDenied message={accessError} />
+    }
 
     return (
         <div className="space-y-4">

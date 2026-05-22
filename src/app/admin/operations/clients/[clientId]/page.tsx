@@ -18,6 +18,7 @@ import InteractionTimeline from "@/components/admin/operations/interactions/Inte
 import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/ActionTypeSkeleton"
 import { InteractionItemSkeleton } from "@/components/admin/operations/skeletons/InteractionItemSkeleton"
 import CreateActionButton from "@/components/admin/operations/CreateActionButton"
+import AccessDenied from "@/components/admin/operations/AccessDenied"
 
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -32,6 +33,7 @@ export default function Page() {
     const [client, setClient] = useState<Client | null>(null)
     const [projects, setProjects] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [accessError, setAccessError] = useState<string | null>(null)
 
     const [interactions, setInteractions] = useState<Interaction[]>([])
     const [interactionLoading, setInteractionLoading] = useState(true)
@@ -46,10 +48,18 @@ export default function Page() {
         const fetchClient = async () => {
             try {
                 const res = await fetch(`/api/admin/operations/clients/${clientId}`)
-                const data = await res.json()
+                const data = await res.json().catch(() => null)
 
-                setClient(data.data.client)
-                setProjects(data.data.projects || [])
+                if (res.status === 401 || res.status === 403) {
+                    setAccessError(
+                        data?.message ||
+                            "You aren't authorized to perform this action."
+                    )
+                    return
+                }
+
+                setClient(data?.data?.client ?? null)
+                setProjects(data?.data?.projects || [])
             } catch (err) {
                 console.error("Failed to fetch client", err)
             } finally {
@@ -142,6 +152,10 @@ export default function Page() {
         const updated = await fetch(`/api/admin/operations/clients/${clientId}`)
         const data = await updated.json()
         setClient(data.data.client)
+    }
+
+    if (!loading && accessError) {
+        return <AccessDenied message={accessError} />
     }
 
     return (

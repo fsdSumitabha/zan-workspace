@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from "react"
 import MeetingCard from "@/components/admin/operations/MeetingCard"
 import { Meeting } from "@/types/meeting"
 import Pagination from "@/components/admin/operations/Pagination"
+import AccessDenied from "@/components/admin/operations/AccessDenied"
 import { usePagination } from "@/hooks/usePagination"
 import { useSearch } from "@/hooks/useSearch"
 
 interface ApiResponse {
     success: boolean
     data: Meeting[]
+    message?: string
     pagination: {
         page: number
         limit: number
@@ -26,12 +28,14 @@ export default function MeetingsClient() {
     const [meetings, setMeetings] = useState<Meeting[]>([])
     const [loading, setLoading] = useState(true)
     const [totalPages, setTotalPages] = useState(1)
+    const [accessError, setAccessError] = useState<string | null>(null)
     const { page, setPage } = usePagination()
     const search = useSearch()
 
     const fetchMeetings = useCallback(async () => {
         try {
             setLoading(true)
+            setAccessError(null)
 
             const params = new URLSearchParams({
                 page: String(page),
@@ -44,6 +48,15 @@ export default function MeetingsClient() {
             )
 
             const json: ApiResponse = await res.json()
+
+            if (res.status === 401 || res.status === 403) {
+                setAccessError(
+                    json?.message ||
+                        "You aren't authorized to perform this action."
+                )
+                setMeetings([])
+                return
+            }
 
             if (json.success) {
                 setMeetings(json.data)
@@ -63,6 +76,10 @@ export default function MeetingsClient() {
     useEffect(() => {
         fetchMeetings()
     }, [fetchMeetings])
+
+    if (!loading && accessError) {
+        return <AccessDenied message={accessError} />
+    }
 
     return (
         <div className="space-y-4">
