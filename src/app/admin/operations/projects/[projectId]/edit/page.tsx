@@ -71,7 +71,7 @@ export default function EditProjectPage() {
     if (loading) {
         return (
             <div className="space-y-4">
-                <div className="p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+                <div className="p-6 rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
                     Loading project...
                 </div>
             </div>
@@ -81,7 +81,7 @@ export default function EditProjectPage() {
     if (!initialValues) {
         return (
             <div className="space-y-4">
-                <div className="p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-red-500">
+                <div className="p-6 rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-red-500">
                     Project not found
                 </div>
             </div>

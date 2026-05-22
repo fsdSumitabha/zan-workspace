@@ -36,7 +36,7 @@ export default function ProjectStatusDropdown({
             </button>
 
             {open && (
-                <div className="absolute mt-2 w-52 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg z-50 overflow-hidden">
+                <div className="absolute mt-2 w-52 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg dark:rounded-xl shadow-lg z-50 overflow-hidden">
                     {Object.entries(PROJECT_STATUS_META).map(([key, meta]) => {
                         const status = Number(key) as ProjectStatus
                         const isActive = status === currentStatus

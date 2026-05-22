@@ -75,7 +75,7 @@ export default function Page() {
                 {/* ------------------- */}
                 {/* Card */}
                 {/* ------------------- */}
-                <div className="p-5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+                <div className="p-5 rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
 
                     {/* ------------------- */}
                     {/* Error State */}

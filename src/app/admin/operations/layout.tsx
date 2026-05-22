@@ -39,7 +39,7 @@ export default function OperationsLayout({
                 </div>
 
                 {/* Page Content */}
-                <div className="flex-1 overflow-y-auto max-w-7xl mx-auto px-3 md:px-4 py-5 md:py-6 grid lg:grid-cols-3 gap-6 w-full">
+                <div className="w-full overflow-y-auto max-w-7xl mx-auto px-3 md:px-4 py-5 md:py-6 grid lg:grid-cols-3 gap-6 w-full">
                     <div className="lg:col-span-2 space-y-4">{children}</div>
                     <StatsPanel />
                 </div>

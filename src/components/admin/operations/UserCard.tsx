@@ -28,7 +28,7 @@ export default function UserCard({ user }: UserCardProps) {
     return (
         <div
             className={`
-                rounded-xl p-4 border transition
+                rounded-lg dark:rounded-xl p-4 border transition
                 bg-white border-gray-200 shadow-sm hover:shadow-md
                 dark:bg-neutral-900 dark:border-neutral-800
 

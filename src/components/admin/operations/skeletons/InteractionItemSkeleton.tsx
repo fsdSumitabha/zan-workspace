@@ -1,6 +1,6 @@
 export const InteractionItemSkeleton = () => {
     return (
-        <div className="flex gap-3 p-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-neutral-900 animate-pulse">
+        <div className="flex gap-3 p-4 rounded-lg dark:rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-neutral-900 animate-pulse">
 
             <div className="mt-1">
                 <div className="w-8 h-8 rounded-lg bg-neutral-300 dark:bg-neutral-700" />

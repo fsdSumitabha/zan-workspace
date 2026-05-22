@@ -72,7 +72,7 @@ export default function CreateProjectPage() {
                 </div>
 
                 {/* Client Info */}
-                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-xl shadow-sm space-y-4">
+                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-lg dark:rounded-xl shadow-sm space-y-4">
                     <h2 className="text-lg font-semibold">Client Info</h2>
 
                     <input
@@ -94,7 +94,7 @@ export default function CreateProjectPage() {
                 </div>
 
                 {/* Project Info */}
-                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-xl shadow-sm space-y-4">
+                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-lg dark:rounded-xl shadow-sm space-y-4">
                     <h2 className="text-lg font-semibold">Project Info</h2>
 
                     <input
@@ -145,7 +145,7 @@ export default function CreateProjectPage() {
                 </div>
 
                 {/* Budget */}
-                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-xl shadow-sm space-y-4">
+                <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-lg dark:rounded-xl shadow-sm space-y-4">
                     <h2 className="text-lg font-semibold">Budget</h2>
 
                     <input

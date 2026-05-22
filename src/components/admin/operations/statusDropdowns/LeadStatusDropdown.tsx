@@ -60,7 +60,7 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
             </button>
 
             {open && !loading && (
-                <div className="absolute mt-2 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg z-50 overflow-hidden">
+                <div className="absolute mt-2 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg dark:rounded-xl shadow-lg z-50 overflow-hidden">
                     {Object.entries(LEAD_STATUS_META)
                     .filter(([key]) => Number(key) !== LEAD_STATUS.CONVERTED)
                     .map(([key, meta]) => {

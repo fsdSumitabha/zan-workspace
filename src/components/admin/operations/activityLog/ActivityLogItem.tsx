@@ -51,7 +51,7 @@ export default function ActivityLogItem({ log }: { log: ActivityLogRow }) {
         : "bg-neutral-500/10 text-neutral-600 dark:text-neutral-300 border-neutral-500/30"
 
     return (
-        <article className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3 sm:p-4">
+        <article className="rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3 sm:p-4">
             <div className="flex items-start gap-3">
                 {/* Avatar */}
                 <div className="w-9 h-9 shrink-0 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 overflow-hidden flex items-center justify-center">

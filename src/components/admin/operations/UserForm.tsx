@@ -61,7 +61,7 @@ export default function UserForm({
         <form
             onSubmit={handleSubmit}
             className="
-            p-5 rounded-xl border
+            p-5 rounded-lg dark:rounded-xl border
             border-gray-300 dark:border-neutral-700
             bg-white dark:bg-neutral-900
             space-y-6
@@ -162,7 +162,7 @@ export default function UserForm({
 
                 {/* RIGHT SIDE: Avatar Upload Container */}
                 <div className="lg:col-span-5">
-                    <div className="rounded-xl p-5 bg-gray-50 dark:bg-neutral-800/50 h-full">
+                    <div className="rounded-lg dark:rounded-xl p-5 bg-gray-50 dark:bg-neutral-800/50 h-full">
                         <label className="block text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
                             Avatar
                         </label>

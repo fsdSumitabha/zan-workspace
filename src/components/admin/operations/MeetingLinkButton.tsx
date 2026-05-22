@@ -20,7 +20,7 @@ export default function MeetingLinkButton({ link }: { link: string }) {
                 href={link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-emerald-900 text-white dark:text-green-400 dark:bg-emerald-700 hover:bg-emerald-700 transition"
+                className="flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-green-900 hover:text-white text-green-600 border dark:text-green-400 dark:bg-emerald-700 hover:bg-emerald-700 transition"
             >
                 <Icons.Video className="w-3 h-3" />
                 Join

@@ -1,6 +1,6 @@
 export default function ProjectCardSkeleton() {
     return (
-        <div className="my-4 p-4 rounded-xl border border-neutral-700 bg-slate-100 dark:bg-neutral-950 animate-pulse">
+        <div className="my-4 p-4 rounded-lg dark:rounded-xl border border-neutral-700 bg-slate-100 dark:bg-neutral-950 animate-pulse">
 
             {/* Header */}
             <div className="flex items-start justify-between">

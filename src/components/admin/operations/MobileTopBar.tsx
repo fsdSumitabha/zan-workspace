@@ -107,7 +107,7 @@ export default function OperationsMobileTopBar() {
                         </button>
 
                         {open && (
-                            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-lg overflow-hidden">
+                            <div className="absolute right-0 mt-2 w-56 rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-lg overflow-hidden">
                                 <div className="px-3 py-2">
                                     <div className="text-xs text-neutral-500">
                                         Signed in
@@ -170,7 +170,7 @@ export default function OperationsMobileTopBar() {
                         </button>
 
                         {moreOpen && (
-                            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-lg overflow-hidden">
+                            <div className="absolute right-0 mt-2 w-56 rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-lg overflow-hidden">
                                 <Link
                                     href="/admin/operations/meetings"
                                     onClick={() => setMoreOpen(false)}

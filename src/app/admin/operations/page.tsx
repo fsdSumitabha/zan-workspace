@@ -65,7 +65,7 @@ export default function Page() {
     }, [])
 
     return (
-                <div className="">
+                <div className="w-full">
 
                     {/* ------------------- */}
                     {/* Loading State */}
@@ -75,7 +75,7 @@ export default function Page() {
                             {[...Array(5)].map((_, i) => (
                                 <div
                                     key={i}
-                                    className="h-24 rounded-xl bg-neutral-200 dark:bg-neutral-800 animate-pulse"
+                                    className="h-24 rounded-lg dark:rounded-xl bg-neutral-200 dark:bg-neutral-800 animate-pulse"
                                 />
                             ))}
                         </div>
@@ -85,7 +85,7 @@ export default function Page() {
                     {/* Error State */}
                     {/* ------------------- */}
                     {!loading && error && (
-                        <div className="p-4 rounded-xl border border-red-500/30 bg-red-50 dark:bg-red-900/10 text-sm">
+                        <div className="p-4 rounded-lg dark:rounded-xl border border-red-500/30 bg-red-50 dark:bg-red-900/10 text-sm">
                             <p className="font-medium">Failed to load data</p>
                             <p className="text-xs text-neutral-500 mt-1">{error}</p>
 
@@ -102,7 +102,7 @@ export default function Page() {
                     {/* Empty State */}
                     {/* ------------------- */}
                     {!loading && !error && data.length === 0 && (
-                        <div className="p-6 text-center border border-neutral-800 rounded-xl">
+                        <div className="p-6 text-center border border-neutral-800 rounded-lg dark:rounded-xl">
                             <p className="text-sm text-neutral-400">
                                 No data found
                             </p>
@@ -113,7 +113,7 @@ export default function Page() {
                     {/* Data List */}
                     {/* ------------------- */}
                     {!loading && !error && data.length > 0 && (
-                        <div className="space-y-3">
+                        <div className="space-y-3 w-[90%] mx-auto">
                             {data.map((item) => (
                                 <EntityCard key={item._id} item={item} />
                             ))}

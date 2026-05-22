@@ -15,7 +15,7 @@ export default function MeetingItem({ item }: { item: any }) {
         Icons.Calendar
 
     return (
-        <div className="flex group gap-3 p-4 rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition">
+        <div className="flex group gap-3 p-4 rounded-lg dark:rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition">
 
             {/* Left Icon */}
             <div className="mt-1">

@@ -28,7 +28,7 @@ export default function UnauthorizedPage() {
                 </div>
 
                 {/* Card */}
-                <div className="p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+                <div className="p-6 rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
 
                     <div className="text-sm text-neutral-600 dark:text-neutral-400 text-center space-y-3">
 

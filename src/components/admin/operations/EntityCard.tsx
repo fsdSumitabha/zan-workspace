@@ -50,7 +50,7 @@ export default function EntityCard({ item }: EntityCardProps) {
     return (
         <Link
             href={href}
-            className="flex group gap-3 p-4 rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition"
+            className="flex group gap-3 p-4 rounded-lg dark:rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition"
         >
             {/* Icon */}
             <div className="mt-1">

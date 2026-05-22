@@ -33,7 +33,7 @@ export default function ClientStatusDropdown({ currentStatus, onSelect }: Props)
             </button>
 
             {open && (
-                <div className="absolute mt-2 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg z-50 overflow-hidden">
+                <div className="absolute mt-2 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg dark:rounded-xl shadow-lg z-50 overflow-hidden">
                     {Object.entries(CLIENT_STATUS_META).map(([key, meta]) => {
                         const status = Number(key) as ClientStatus
                         const isActive = status === currentStatus

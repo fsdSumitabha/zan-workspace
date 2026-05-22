@@ -81,9 +81,9 @@ export default function ProjectsClient() {
                         key={project._id}
                         id={project._id}
                         client={{
-                            id: project.clientId._id,
-                            name: project.clientId.name,
-                            company: project.clientId.company,
+                            id: project.clientId?._id,
+                            name: project.clientId?.name,
+                            company: project.clientId?.company,
                         }}
                         title={project.title}
                         description={project.description}
