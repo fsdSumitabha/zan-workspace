@@ -1,5 +1,3 @@
-import path from "path"
-import fs from "fs/promises"
 import bcrypt from "bcryptjs"
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
@@ -7,11 +5,14 @@ import User from "@/models/User"
 import { SortOrder } from "mongoose"
 import { requireRole } from "@/lib/auth/requireRole"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
-import { USER_ROLE_META } from "@/constants/userRoles"
+import { USER_ROLE_META, UserRole } from "@/constants/userRoles"
 import { auditedCreate } from "@/lib/activity-log"
 import { escapeRegex } from "@/lib/search/escapeRegex"
 
 import { imagekit } from "@/lib/imagekit/imagekit"
+
+import { getBaseUrl } from "@/lib/urls/getBaseUrl"
+import { sendRegistrationMail } from "@/services/registrationMail"
 
 export async function GET(req: NextRequest) {
     try {
@@ -194,6 +195,22 @@ export async function POST(req: NextRequest) {
             },
             authUser.id
         )
+
+        
+        try {
+            await sendRegistrationMail({
+                name: user.name,
+                email: user.email,
+                roleLabel: USER_ROLE_META[role as UserRole].label,
+                baseUrl: getBaseUrl(req),
+                createdByName: authUser.name,
+                createdByEmail: authUser.email,
+            })
+        } catch (mailError) {
+            // user is already created — log and continue
+            console.error("Failed to send registration emails:", mailError)
+        }
+        
 
         return NextResponse.json(
             {
