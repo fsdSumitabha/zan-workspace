@@ -11,7 +11,7 @@ import { escapeRegex } from "@/lib/search/escapeRegex"
 export async function GET(req: NextRequest) {
     try {
 
-        await requireAuth(req)
+        await requireRole(req, [10, 60, 70, 45, 50])
 
         await dbConnect()
 

@@ -14,6 +14,7 @@ export async function GET(
         const { id } = await context.params
 
         await dbConnect()
+        await requireRole(req, [10, 60, 70, 45])
 
         const lead = await Lead.findById(id)
 
@@ -28,7 +29,16 @@ export async function GET(
             success: true,
             data: lead
         })
-    } catch {
+    } catch (error: any) {
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: error.message
+                },
+                { status: error.statusCode }
+            )
+        }
         return NextResponse.json(
             { success: false, message: "Invalid ID" },
             { status: 400 }
@@ -161,7 +171,7 @@ export async function DELETE(
             { status: 200 }
         )
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("DELETE LEAD ERROR:", error)
 
         if (error instanceof AuthError) {
