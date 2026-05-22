@@ -14,7 +14,7 @@ import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
 
 /** Roles allowed to edit a Client. Mirrors the backend PATCH role list. */
-const CLIENT_EDIT_ROLES = [10, 60, 70]
+const CLIENT_EDIT_ROLES = [10, 60, 45, 70]
 
 interface Props {
     client: Client
