@@ -31,10 +31,11 @@ export async function GET(req: NextRequest) {
         const entityId = searchParams.get("entityId")
         const status = searchParams.get("status")
         const search = searchParams.get("search")
+        const range = searchParams.get("range")
 
-        if (entityType !== null) query.entityType = Number(entityType)
+        if (entityType) query.entityType = Number(entityType)
         if (entityId) query.entityId = entityId
-        if (status !== null) query.status = Number(status)
+        if (status) query.status = Number(status)
 
         if (search) {
             const re = { $regex: escapeRegex(search), $options: "i" }
@@ -43,6 +44,29 @@ export async function GET(req: NextRequest) {
                 { agenda: re },
                 { description: re },
             ]
+        }
+
+        // Temporal quick-range on scheduledAt.
+        if (range) {
+            const now = new Date()
+
+            if (range === "today") {
+                const start = new Date(now)
+                start.setHours(0, 0, 0, 0)
+                const end = new Date(now)
+                end.setHours(23, 59, 59, 999)
+                query.scheduledAt = { $gte: start, $lte: end }
+            } else if (range === "last7") {
+                // Last 7 days, today inclusive.
+                const start = new Date(now)
+                start.setDate(start.getDate() - 6)
+                start.setHours(0, 0, 0, 0)
+                const end = new Date(now)
+                end.setHours(23, 59, 59, 999)
+                query.scheduledAt = { $gte: start, $lte: end }
+            } else if (range === "upcoming") {
+                query.scheduledAt = { $gte: now }
+            }
         }
 
         const [meetings, total] = await Promise.all([

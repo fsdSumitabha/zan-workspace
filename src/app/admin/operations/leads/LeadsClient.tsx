@@ -3,9 +3,12 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Lead } from "@/types/lead"
+import { LEAD_STATUS_META } from "@/constants/leadStatus"
 import LeadCard from "@/components/admin/operations/LeadCard"
 import LeadCardSkeleton from "@/components/admin/operations/skeletons/LeadCardSkeleton"
+import ListFilters from "@/components/admin/operations/ListFilters"
 import CreateActionButton from "@/components/admin/operations/CreateActionButton"
 import Pagination from "@/components/admin/operations/Pagination"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
@@ -34,6 +37,11 @@ export default function LeadsClient() {
     const { page, setPage } = usePagination()
     const search = useSearch()
 
+    const searchParams = useSearchParams()
+    const status = searchParams.get("status") || ""
+    const from = searchParams.get("from") || ""
+    const to = searchParams.get("to") || ""
+
     const fetchLeads = useCallback(async () => {
         try {
             setLoading(true)
@@ -44,6 +52,9 @@ export default function LeadsClient() {
                 limit: String(PAGE_SIZE),
             })
             if (search) params.set("search", search)
+            if (status) params.set("status", status)
+            if (from) params.set("from", from)
+            if (to) params.set("to", to)
 
             const res = await fetch(
                 `/api/admin/operations/leads?${params.toString()}`
@@ -69,7 +80,7 @@ export default function LeadsClient() {
         } finally {
             setLoading(false)
         }
-    }, [page, search])
+    }, [page, search, status, from, to])
 
     useEffect(() => {
         fetchLeads()
@@ -82,6 +93,8 @@ export default function LeadsClient() {
     return (
         <div className="space-y-4">
             <CreateActionButton href="leads/create" label="Create New Lead" />
+
+            <ListFilters statusMeta={LEAD_STATUS_META} />
 
             {loading && (
                 <div className="space-y-4">
