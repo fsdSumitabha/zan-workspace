@@ -1,11 +1,16 @@
 // app/admin/operations/layout.tsx
-
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Sidebar from "@/components/admin/operations/SideBar";
 import SearchBar from "@/components/admin/operations/SearchBar";
 import StatsPanel from "@/components/admin/operations/StatsPanel";
 import OperationsMobileNav from "@/components/admin/operations/MobileNav";
 import OperationsMobileTopBar from "@/components/admin/operations/MobileTopBar";
+
+export const metadata: Metadata = {
+    title: "Zan Services CRM",
+    description: "An internal CRM for Zan Services, to manage leads, clients, and projects.",
+};
 
 export default function OperationsLayout({
     children,
