@@ -50,7 +50,7 @@ export default function EntityCard({ item }: EntityCardProps) {
     return (
         <Link
             href={href}
-            className="flex group gap-3 p-4 rounded-lg dark:rounded-xl border border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 transition"
+            className="flex group gap-3 p-4 rounded-lg dark:rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm hover:shadow-md hover:border-neutral-400 transition"
         >
             {/* Icon */}
             <div className="mt-1">
@@ -65,12 +65,12 @@ export default function EntityCard({ item }: EntityCardProps) {
                 {/* Header */}
                 <div className="flex justify-between items-start">
                     <div className="flex flex-col">
-                        <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200">
+                        <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-200">
                             {name || title}
                         </h3>
 
                         {(company || companyName) && (
-                            <p className="text-xs text-neutral-500 flex items-center gap-1">
+                            <p className="text-xs text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
                                 <Building2 className="w-3 h-3" />
                                 {company || companyName}
                             </p>
@@ -81,7 +81,7 @@ export default function EntityCard({ item }: EntityCardProps) {
                 </div>
 
                 {/* Meta Info */}
-                <div className="text-xs text-neutral-500 flex flex-wrap gap-x-3 gap-y-1">
+                <div className="text-xs text-neutral-700 dark:text-neutral-300 flex flex-wrap gap-x-3 gap-y-1">
 
                     {phone && (
                         <span className="flex items-center gap-1">

@@ -66,7 +66,7 @@ export default function MeetingCard({ item }: { item: any }) {
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2 flex-wrap">
 
-                        <h3 className="font-medium text-sm">
+                        <h3 className="font-bold text-neutral-800 dark:text-neutral-200 text-md">
                             {meeting.title}
                         </h3>
 
@@ -85,7 +85,7 @@ export default function MeetingCard({ item }: { item: any }) {
 
                     </div>
 
-                    <span className="text-xs text-gray-500 whitespace-nowrap flex gap-2">
+                    <span className="text-xs text-neutral-500 whitespace-nowrap flex gap-2">
                         <Icons.Calendar className="w-3 h-3" />
                         <TimeAgo date={meeting.createdAt} />
                     </span>
@@ -95,7 +95,7 @@ export default function MeetingCard({ item }: { item: any }) {
                 {meeting.entity?.title && (
                     <Link
                         href={entityHref}
-                        className="text-sm font-medium text-emerald-600 hover:underline"
+                        className="text-sm font-medium text-neutral-600 hover:underline"
                     >
                         {meeting.entity.title}
                     </Link>

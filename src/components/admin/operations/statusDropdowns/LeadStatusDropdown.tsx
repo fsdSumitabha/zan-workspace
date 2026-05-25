@@ -74,13 +74,15 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
                                 className={clsx(
                                     "w-full text-left px-3 py-2 transition",
                                     "hover:bg-neutral-100 dark:hover:bg-neutral-800",
-                                    isActive && "bg-neutral-100 dark:bg-neutral-800"
+                                    isActive && "bg-neutral-100 text-neutral-800 dark:bg-neutral-800"
                                 )}
                             >
                                 <div className="flex flex-col">
-                                    <span className="text-sm">{meta.label}</span>
+                                    <span className="text-sm text-neutral-800 dark:text-neutral-200">
+                                        {meta.label}
+                                    </span>
                                     {isActive && (
-                                        <span className="text-[11px] text-neutral-500 mt-0.5">
+                                        <span className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
                                             Current
                                         </span>
                                     )}

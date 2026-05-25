@@ -1,10 +1,12 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import MeetingCard from "@/components/admin/operations/MeetingCard"
 import { Meeting } from "@/types/meeting"
 import Pagination from "@/components/admin/operations/Pagination"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
+import MeetingFilters from "@/components/admin/operations/MeetingFilters"
 import { usePagination } from "@/hooks/usePagination"
 import { useSearch } from "@/hooks/useSearch"
 
@@ -32,6 +34,11 @@ export default function MeetingsClient() {
     const { page, setPage } = usePagination()
     const search = useSearch()
 
+    const searchParams = useSearchParams()
+    const status = searchParams.get("status") || ""
+    const range = searchParams.get("range") || ""
+    const entityType = searchParams.get("entityType") || ""
+
     const fetchMeetings = useCallback(async () => {
         try {
             setLoading(true)
@@ -42,6 +49,9 @@ export default function MeetingsClient() {
                 limit: String(PAGE_SIZE),
             })
             if (search) params.set("search", search)
+            if (status) params.set("status", status)
+            if (range) params.set("range", range)
+            if (entityType) params.set("entityType", entityType)
 
             const res = await fetch(
                 `/api/admin/operations/meetings?${params.toString()}`
@@ -71,7 +81,7 @@ export default function MeetingsClient() {
         } finally {
             setLoading(false)
         }
-    }, [page, search])
+    }, [page, search, status, range, entityType])
 
     useEffect(() => {
         fetchMeetings()
@@ -83,6 +93,7 @@ export default function MeetingsClient() {
 
     return (
         <div className="space-y-4">
+
             {!loading && meetings.length === 0 && (
                 <div className="text-center py-10 text-gray-500">
                     No meetings found

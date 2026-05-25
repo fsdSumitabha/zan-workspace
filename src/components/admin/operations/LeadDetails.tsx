@@ -61,7 +61,7 @@ export default function LeadDetails({ lead, onStatusChange }: Props) {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-semibold">{lead.name}</h2>
+                    <h2 className="text-xl text-neutral-800 dark:text-neutral-200 font-semibold">{lead.name}</h2>
                     <p className="text-sm text-gray-500">{lead.source}</p>
                 </div>
 
@@ -88,7 +88,7 @@ export default function LeadDetails({ lead, onStatusChange }: Props) {
                     <div className="border-t border-neutral-100 dark:border-neutral-800" />
 
                     <div className="space-y-2">
-                        <p className="text-sm font-medium">
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400 font-medium">
                             Change to "{LEAD_STATUS_META[pendingStatus]?.label}"
                         </p>
 
@@ -129,13 +129,15 @@ export default function LeadDetails({ lead, onStatusChange }: Props) {
                 {lead.email && (
                     <div>
                         <p className="text-gray-500">Email</p>
-                        <p>{lead.email}</p>
+                        <p className="text-neutral-800 dark:text-neutral-200">
+                            {lead.email}
+                        </p>
                     </div>
                 )}
             </div>
 
             {/* Meta Info */}
-            <div className="text-xs text-gray-400">
+            <div className="text-xs text-neutral-500 dark:text-neutral-400">
                 Created: {new Date(lead.createdAt).toLocaleString()}
             </div>
 

@@ -1,11 +1,14 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import ProjectCard from "@/components/admin/operations/ProjectCard"
 import ProjectCardSkeleton from "@/components/admin/operations/skeletons/ProjectCardSkeleton"
 import { Project } from "@/types/projects"
+import { PROJECT_STATUS_META } from "@/constants/projectStatus"
 import Pagination from "@/components/admin/operations/Pagination"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
+import ListFilters from "@/components/admin/operations/ListFilters"
 import { usePagination } from "@/hooks/usePagination"
 import { useSearch } from "@/hooks/useSearch"
 
@@ -31,6 +34,11 @@ export default function ProjectsClient() {
     const { page, setPage } = usePagination()
     const search = useSearch()
 
+    const searchParams = useSearchParams()
+    const status = searchParams.get("status") || ""
+    const from = searchParams.get("from") || ""
+    const to = searchParams.get("to") || ""
+
     const fetchProjects = useCallback(async () => {
         try {
             setLoading(true)
@@ -41,6 +49,9 @@ export default function ProjectsClient() {
                 limit: String(PAGE_SIZE),
             })
             if (search) params.set("search", search)
+            if (status) params.set("status", status)
+            if (from) params.set("from", from)
+            if (to) params.set("to", to)
 
             const res = await fetch(
                 `/api/admin/operations/projects?${params.toString()}`
@@ -66,7 +77,7 @@ export default function ProjectsClient() {
         } finally {
             setLoading(false)
         }
-    }, [page, search])
+    }, [page, search, status, from, to])
 
     useEffect(() => {
         fetchProjects()
@@ -78,6 +89,8 @@ export default function ProjectsClient() {
 
     return (
         <div className="space-y-4">
+            <ListFilters statusMeta={PROJECT_STATUS_META} />
+
             {loading && (
                 <div className="space-y-4">
                     {Array.from({ length: 5 }).map((_, i) => (

@@ -21,6 +21,8 @@ export async function GET(req: NextRequest) {
         const limit = Number(searchParams.get("limit")) || 10
         const status = searchParams.get("status")
         const search = searchParams.get("search")
+        const from = searchParams.get("from")
+        const to = searchParams.get("to")
         const sort = searchParams.get("sort") || "latest"
 
         const query: any = {}
@@ -37,6 +39,25 @@ export async function GET(req: NextRequest) {
                 { email: re },
                 { phone: re },
             ]
+        }
+
+        // Date range on createdAt — `to` is treated as end-of-day inclusive.
+        if (from || to) {
+            const createdAt: Record<string, Date> = {}
+            if (from) {
+                const f = new Date(from)
+                if (!isNaN(f.getTime())) createdAt.$gte = f
+            }
+            if (to) {
+                const t = new Date(to)
+                if (!isNaN(t.getTime())) {
+                    t.setHours(23, 59, 59, 999)
+                    createdAt.$lte = t
+                }
+            }
+            if (Object.keys(createdAt).length > 0) {
+                query.createdAt = createdAt
+            }
         }
 
         const skip = (page - 1) * limit
