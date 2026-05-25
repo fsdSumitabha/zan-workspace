@@ -94,7 +94,7 @@ export default function ListFilters({ statusMeta }: Props) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Status */}
                 <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-medium text-neutral-500 uppercase tracking-wide">
+                    <label className="text-[11px] font-medium text-neutral-300 uppercase tracking-wide">
                         Status
                     </label>
                     <select
@@ -113,7 +113,7 @@ export default function ListFilters({ statusMeta }: Props) {
 
                 {/* From date */}
                 <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-medium text-neutral-500 uppercase tracking-wide">
+                    <label className="text-[11px] font-medium text-neutral-300 uppercase tracking-wide">
                         From
                     </label>
                     <input
@@ -128,7 +128,7 @@ export default function ListFilters({ statusMeta }: Props) {
 
                 {/* To date */}
                 <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-medium text-neutral-500 uppercase tracking-wide">
+                    <label className="text-[11px] font-medium text-neutral-300 uppercase tracking-wide">
                         To
                     </label>
                     <input
