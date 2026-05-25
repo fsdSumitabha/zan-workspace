@@ -27,7 +27,7 @@ export default function QuotationItem({ item }: { item: any }) {
                     <div className="flex items-center gap-2 flex-wrap">
 
                         {item.title && (
-                            <h3 className="font-semibold text-sm capitalize tracking-wide text-gray-700 dark:text-gray-300">
+                            <h3 className="font-semibold text-sm capitalize tracking-wide text-neutral-800 dark:text-neutral-200">
                                 {item.title}
                             </h3>
                         )}
@@ -57,7 +57,7 @@ export default function QuotationItem({ item }: { item: any }) {
 
                         {/* Left Info */}
                         <div className="space-y-1">
-                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                            <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
                                 ₹{quotation.amount.toLocaleString()} <small className="text-xs text-gray-500" > + {quotation.gst_percentage}% GST </small>
                             </p>
 

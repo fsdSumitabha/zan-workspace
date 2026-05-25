@@ -31,7 +31,7 @@ export default function MeetingItem({ item }: { item: any }) {
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2 flex-wrap">
 
-                        <h3 className="font-medium text-sm">
+                        <h3 className="font-medium text-neutral-800 dark:text-neutral-200 text-sm">
                             {item.title}
                         </h3>
 

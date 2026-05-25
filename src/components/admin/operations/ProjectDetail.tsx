@@ -65,7 +65,7 @@ export default function ProjectDetail({ project, onStatusChange }: Props) {
             {/* ================= HEADER ================= */}
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold">
+                    <h2 className="text-xl text-neutral-800 dark:text-neutral-200 font-semibold">
                         {project.title}
                     </h2>
 
@@ -165,7 +165,7 @@ export default function ProjectDetail({ project, onStatusChange }: Props) {
 
                     <div className="p-4 rounded-lg dark:rounded-xl bg-gray-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
                         <p className="text-xs text-gray-500">Estimated</p>
-                        <p className="text-lg font-semibold">
+                        <p className="text-lg text-neutral-800 dark:text-neutral-200 font-semibold">
                             ₹{project.budget?.toLocaleString() || "—"}
                         </p>
                     </div>

@@ -29,7 +29,7 @@ export default function NoteItem({ item }: { item: any }) {
                     <div className="flex items-center gap-2 flex-wrap">
 
                         {item.title && (
-                            <h3 className="font-semibold text-sm capitalize tracking-wide text-gray-700 dark:text-gray-300">
+                            <h3 className="font-semibold text-sm capitalize tracking-wide text-neutral-800 dark:text-neutral-200">
                                 {item.title}
                             </h3>
                         )}

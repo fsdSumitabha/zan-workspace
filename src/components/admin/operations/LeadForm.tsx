@@ -108,7 +108,7 @@ export default function LeadForm({
             onSubmit={handleSubmit}
             className="p-5 rounded-lg dark:rounded-xl border border-gray-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 space-y-4"
         >
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-lg text-neutral-800 dark:text-neutral-200 font-semibold">
                 {mode === "edit" ? "Edit Lead" : "Create Lead"}
             </h2>
 
