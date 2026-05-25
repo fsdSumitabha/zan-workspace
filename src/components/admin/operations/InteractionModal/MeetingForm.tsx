@@ -69,11 +69,11 @@ export default function MeetingForm({ entityType, entityId, onClose, onSuccess }
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
 
-            <h2 className="text-lg font-semibold">Schedule Meeting</h2>
+            <h2 className="text-lg text-neutral-800 dark:text-neutral-200 font-semibold">Schedule Meeting</h2>
 
             {/* Title */}
             <div className="space-y-2">
-                <label className="text-sm">Title</label>
+                <label className="text-sm text-neutral-800 dark:text-neutral-200">Title</label>
                 <input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -84,7 +84,7 @@ export default function MeetingForm({ entityType, entityId, onClose, onSuccess }
 
             {/* Agenda */}
             <div className="space-y-2">
-                <label className="text-sm">Agenda</label>
+                <label className="text-sm text-neutral-800 dark:text-neutral-200">Agenda</label>
                 <input
                     value={agenda}
                     onChange={(e) => setAgenda(e.target.value)}
@@ -95,7 +95,7 @@ export default function MeetingForm({ entityType, entityId, onClose, onSuccess }
 
             {/* Date */}
             <div className="space-y-2">
-                <label className="text-sm">Meeting Date & Time</label>
+                <label className="text-sm text-neutral-800 dark:text-neutral-200">Meeting Date & Time</label>
                 <input
                     type="datetime-local"
                     value={date}
@@ -106,7 +106,7 @@ export default function MeetingForm({ entityType, entityId, onClose, onSuccess }
 
             {/* Meeting Type */}
             <div className="space-y-2">
-                <label className="text-sm">Meeting Type</label>
+                <label className="text-sm text-neutral-800 dark:text-neutral-200">Meeting Type</label>
                 <select
                     value={meetingType}
                     onChange={(e) => setMeetingType(Number(e.target.value))}
@@ -120,7 +120,7 @@ export default function MeetingForm({ entityType, entityId, onClose, onSuccess }
             {/* Meeting Link (only for online) */}
             {meetingType === 0 && (
                 <div className="space-y-2">
-                    <label className="text-sm">Meeting Link</label>
+                    <label className="text-sm text-neutral-800 dark:text-neutral-200    ">Meeting Link</label>
                     <input
                         value={meetingLink}
                         onChange={(e) => setMeetingLink(e.target.value)}
@@ -143,7 +143,7 @@ export default function MeetingForm({ entityType, entityId, onClose, onSuccess }
                 <button
                     type="button"
                     onClick={onClose}
-                    className="px-3 py-1 text-sm"
+                    className="px-3 py-1 text-sm text-neutral-800 dark:text-neutral-200"
                 >
                     Cancel
                 </button>

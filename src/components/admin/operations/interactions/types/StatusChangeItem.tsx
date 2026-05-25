@@ -63,13 +63,13 @@ console.log("Parsed status change item:", { parsed, fromMeta, toMeta: parsed?.to
                 {fromMeta && toMeta && (
                     <div className="flex items-center gap-2 text-sm">
 
-                        <span className={`px-2 py-0.5 ${fromMeta.decoration}`}>
+                        <span className={`px-2 py-0.5 text-neutral-800 dark:text-neutral-200 ${fromMeta.decoration}`}>
                             {fromMeta.label}
                         </span>
 
                         <Icons.ArrowRight className="w-4 h-4 text-gray-400" />
 
-                        <span className={`px-2 py-0.5 ${toMeta.decoration}`}>
+                        <span className={`px-2 py-0.5 text-neutral-800 dark:text-neutral-200 ${toMeta.decoration}`}>
                             {toMeta.label}
                         </span>
                     </div>
