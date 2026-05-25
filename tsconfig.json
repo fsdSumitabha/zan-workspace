@@ -31,5 +31,5 @@
     "**/*.mts",
     "global.d.ts"
   ],
-  "exclude": ["node_modules", "src/app/sw.ts"]
+  "exclude": ["node_modules"]
 }
