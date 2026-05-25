@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline — Zan CRM</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            /* slate-50 */
+            --fg: #0a0a0a;
+            /* neutral-950 */
+            --muted: #525252;
+            /* neutral-600 */
+            --border: #e5e5e5;
+            /* neutral-200 */
+            --card: #ffffff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0a0a0a;
+                /* neutral-950 */
+                --fg: #ffffff;
+                --muted: #a3a3a3;
+                /* neutral-400 */
+                --border: #262626;
+                /* neutral-800 */
+                --card: #171717;
+                /* neutral-900 */
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            text-align: center;
+        }
+
+        .card {
+            max-width: 24rem;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            background: var(--card);
+        }
+
+        .icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem;
+            opacity: 0.6;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            margin: 0 0 0.5rem;
+        }
+
+        p {
+            margin: 0 0 1.5rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        button {
+            font: inherit;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            border: none;
+            background: var(--fg);
+            color: var(--bg);
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path
+                d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" />
+        </svg>
+        <h1>You're offline</h1>
+        <p>Zan CRM can't reach the network right now. Reconnect to continue.</p>
+        <button onclick="location.reload()">Try again</button>
+    </div>
+</body>
+
+</html>

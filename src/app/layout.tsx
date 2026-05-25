@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ImageKitProvider } from "@imagekit/next"
+import { SWRegister } from "./sw-register";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({
                     <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!}>
                     <Toaster position="top-center" theme="dark" richColors />
                     {children}
+                    <SWRegister />
                     </ImageKitProvider>
                 </AuthProvider>
             </body>
