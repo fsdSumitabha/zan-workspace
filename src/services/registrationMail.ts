@@ -5,6 +5,7 @@ import { registrationMailTemplate } from "@/lib/templates/registrationMailTempla
 interface RegistrationMailData {
     name: string
     email: string
+    password: string
     roleLabel: string
     baseUrl: string
     createdByName?: string
@@ -17,6 +18,7 @@ export async function sendRegistrationMail(data: RegistrationMailData) {
     const welcome = welcomeMailTemplate({
         name: data.name,
         email: data.email,
+        password: data.password,
         roleLabel: data.roleLabel,
         loginUrl,
     })

@@ -1,6 +1,7 @@
 interface WelcomeMailParams {
     name: string
     email: string
+    password: string
     roleLabel: string
     loginUrl?: string
 }
@@ -8,6 +9,7 @@ interface WelcomeMailParams {
 export function welcomeMailTemplate({
     name,
     email,
+    password,
     roleLabel,
     loginUrl = "https://zanservices.com",
 }: WelcomeMailParams) {
@@ -48,7 +50,8 @@ export function welcomeMailTemplate({
                                     <tr>
                                         <td style="padding:16px 20px;color:#475569;font-size:14px;line-height:1.8;">
                                             <strong style="color:#0f172a;">Email:</strong> ${email}<br/>
-                                            <strong style="color:#0f172a;">Role:</strong> ${roleLabel}
+                                            <strong style="color:#0f172a;">Role:</strong> ${roleLabel}<br/>
+                                            <strong style="color:#0f172a;">Password:</strong> ${password}
                                         </td>
                                     </tr>
                                 </table>

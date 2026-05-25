@@ -201,6 +201,7 @@ export async function POST(req: NextRequest) {
             await sendRegistrationMail({
                 name: user.name,
                 email: user.email,
+                password : password,
                 roleLabel: USER_ROLE_META[role as UserRole].label,
                 baseUrl: getBaseUrl(req),
                 createdByName: authUser.name,
