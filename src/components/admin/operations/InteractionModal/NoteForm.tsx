@@ -66,7 +66,7 @@ export default function NoteForm({ entityType, entityId, onClose, onSuccess }: P
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
 
-            <h2 className="text-lg font-semibold">Add Note</h2>
+            <h2 className="text-lg text-neutral-800 dark:text-neutral-200 font-semibold">Add Note</h2>
 
             <div className="space-y-2">
                 <input
@@ -81,12 +81,12 @@ export default function NoteForm({ entityType, entityId, onClose, onSuccess }: P
                 placeholder="Write your note..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800"
+                className="w-full p-2 border rounded-lg bg-white dark:bg-neutral-800  dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none resize-none"
                 rows={4}
             />
 
             <div className="flex justify-end gap-2">
-                <button type="button" onClick={onClose} className="px-3 py-1 text-sm"> Cancel </button>
+                <button type="button" onClick={onClose} className="px-3 py-1 text-sm text-neutral-800 dark:text-neutral-200"> Cancel </button>
                 <button
                     type="submit"
                     disabled={loading}

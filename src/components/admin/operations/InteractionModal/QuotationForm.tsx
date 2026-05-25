@@ -88,20 +88,20 @@ export default function QuotationForm({
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
 
-            <h2 className="text-lg font-semibold">Send Quotation</h2>
+            <h2 className="text-lg text-neutral-800 dark:text-neutral-200 font-semibold">Send Quotation</h2>
 
             <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Quotation title"
-                className="w-full px-3 py-2 rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800"
+                className="w-full px-3 py-2 rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 focus:outline-none"
             />
 
             <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Description (optional)"
-                className="w-full p-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800"
+                className="w-full p-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 focus:outline-none"
                 rows={3}
             />
 
@@ -110,7 +110,7 @@ export default function QuotationForm({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="Amount (₹)"
-                className="w-full px-3 py-2 rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800"
+                className="w-full px-3 py-2 rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 focus:outline-none"
             />
 
             <input
@@ -118,7 +118,7 @@ export default function QuotationForm({
                 value={gst_percentage}
                 onChange={(e) => setGstPercentage(e.target.value)}
                 placeholder="GST % (Default: 18%)"
-                className="w-full px-3 py-2 rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800"
+                className="w-full px-3 py-2 rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 focus:outline-none"
             />
 
             <FileUpload
@@ -131,10 +131,11 @@ export default function QuotationForm({
                     "application/msword",
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 ]}
+                
             />
 
             <div className="flex justify-end gap-2">
-                <button type="button" onClick={onClose}>
+                <button type="button" onClick={onClose} className="px-3 py-1 text-sm text-neutral-800 dark:text-neutral-200">
                     Cancel
                 </button>
 

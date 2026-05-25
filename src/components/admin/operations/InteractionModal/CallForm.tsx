@@ -76,12 +76,12 @@ export default function CallForm({ entityType, entityId, onClose, onSuccess }: P
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="text-lg font-semibold">Log Call</h2>
+            <h2 className="text-lg text-neutral-800 dark:text-neutral-200 font-semibold">Log Call</h2>
 
             {/* Contact */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                    <label className="text-xs text-gray-500 dark:text-gray-400">Contact Name <span className="text-red-500">*</span></label>
+                    <label className="text-xs text-neutral-800 dark:text-neutral-200">Contact Name <span className="text-red-500">*</span></label>
                     <input
                         required
                         placeholder="Jane Doe"

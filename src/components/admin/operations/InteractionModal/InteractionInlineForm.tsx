@@ -19,11 +19,11 @@ export default function InteractionInlineForm({
         <div className="p-4 rounded-lg dark:rounded-xl border bg-white dark:bg-neutral-900 dark:border-neutral-700 space-y-4">
 
             <div className="flex justify-between items-center">
-                <h2 className="font-semibold text-lg">Add Interaction</h2>
+                <h2 className="font-semibold text-lg text-neutral-800 dark:text-neutral-200">Add Interaction</h2>
 
                 <button
                     onClick={onClose}
-                    className="text-sm text-gray-500"
+                    className="text-sm text-neutral-800 dark:text-neutral-200"
                 >
                     Close
                 </button>
