@@ -13,8 +13,8 @@ import { AuthError } from "@/lib/auth/requireAuth"
 
 export async function GET(req: NextRequest) {
     try {
-        await dbConnect()
         await requireRole(req, [10, 60, 70, 45, 50])
+        await dbConnect()
 
         // fetch all in parallel
         const [leads, clients, projects] = await Promise.all([
@@ -124,7 +124,6 @@ export async function GET(req: NextRequest) {
             { status: 200 }
         )
     } catch (error: any) {
-        console.error("Operations API Error:", error)
 
         if (error instanceof AuthError) {
             return NextResponse.json(

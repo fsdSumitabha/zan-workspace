@@ -72,13 +72,13 @@ export default function StatusChangeItem({ entityType, item }: Props) {
                     {fromMeta && toMeta && (
                         <div className="flex items-center gap-2 text-sm">
 
-                            <span className={`px-2 py-0.5 ${fromMeta.decoration || ""}`}>
+                            <span className={`px-2 text-gray-800 dark:text-gray-300 py-0.5 ${fromMeta.decoration || ""}`}>
                                 {fromMeta.label}
                             </span>
 
                             <Icons.ArrowRight className="w-4 h-4 text-gray-400" />
 
-                            <span className={`px-2 py-0.5 ${toMeta.decoration || ""}`}>
+                            <span className={`px-2 text-gray-800 dark:text-gray-300 py-0.5 ${toMeta.decoration || ""}`}>
                                 {toMeta.label}
                             </span>
                         </div>
