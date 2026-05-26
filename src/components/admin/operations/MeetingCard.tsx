@@ -64,7 +64,16 @@ export default function MeetingCard({
     const isUpcoming = isScheduled && temporalStatus === "UPCOMING"
     const isToday = isScheduled && temporalStatus === "TODAY"
 
-    const dotColor = (isUpcoming || isToday) ? "green" : (isScheduled && temporalStatus === "PAST") ? "red" : null
+    const isRescheduled = meeting.status === MEETING_STATUS.RESCHEDULED
+    // Rescheduled wins over the green/red temporal dot so the state is
+    // immediately visible.
+    const dotColor: "green" | "red" | "orange" | null = isRescheduled
+        ? "orange"
+        : isUpcoming || isToday
+          ? "green"
+          : isScheduled && temporalStatus === "PAST"
+            ? "red"
+            : null
 
     // Dynamic entity route
     const entityHref = `/admin//operations/${meeting.entity?.label?.toLowerCase()}s/${meeting.entityId}`
@@ -74,8 +83,24 @@ export default function MeetingCard({
             
             {dotColor && (
                 <span className="absolute flex h-2 w-2">
-                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dotColor === "green" ? "bg-green-400" : "bg-red-400"}`}></span>
-                    <span className={`relative inline-flex rounded-full h-2 w-2 ${dotColor === "green" ? "bg-green-500" : "bg-red-500"}`}></span>
+                    <span
+                        className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                            dotColor === "green"
+                                ? "bg-green-400"
+                                : dotColor === "red"
+                                  ? "bg-red-400"
+                                  : "bg-orange-400"
+                        }`}
+                    ></span>
+                    <span
+                        className={`relative inline-flex rounded-full h-2 w-2 ${
+                            dotColor === "green"
+                                ? "bg-green-500"
+                                : dotColor === "red"
+                                  ? "bg-red-500"
+                                  : "bg-orange-500"
+                        }`}
+                    ></span>
                 </span>
             )}
 
@@ -153,40 +178,41 @@ export default function MeetingCard({
                     </button>
                 )}
 
-                {/* Reschedule history — show only the latest entry */}
+                {/* Reschedule history — most recent last */}
                 {Array.isArray(meeting.rescheduleHistory) &&
-                    meeting.rescheduleHistory.length > 0 &&
-                    (() => {
-                        const latest =
-                            meeting.rescheduleHistory[
-                                meeting.rescheduleHistory.length - 1
-                            ]
-                        return (
-                            <div className="mt-1 rounded-md border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-2.5 space-y-1.5">
-                                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-                                    <Icons.CalendarClock className="w-3 h-3" />
-                                    Rescheduled
-                                </div>
-
-                                <div className="text-xs text-neutral-700 dark:text-neutral-300">
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                        <span className="line-through text-neutral-500 dark:text-neutral-500">
-                                            {fmtDateTime(latest.oldDate)}
-                                        </span>
-                                        <Icons.ArrowRight className="w-3 h-3 text-neutral-400 shrink-0" />
-                                        <span className="font-medium text-neutral-900 dark:text-neutral-100">
-                                            {fmtDateTime(latest.newDate)}
-                                        </span>
-                                    </div>
-                                    {latest.reason && (
-                                        <p className="mt-0.5 italic text-neutral-600 dark:text-neutral-400">
-                                            &ldquo;{latest.reason}&rdquo;
-                                        </p>
-                                    )}
-                                </div>
+                    meeting.rescheduleHistory.length > 0 && (
+                        <div className="mt-1 rounded-md border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-2.5 space-y-2">
+                            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                                <Icons.CalendarClock className="w-3 h-3" />
+                                Rescheduled
+                                <span className="text-amber-600/80 dark:text-amber-400/80 font-normal">
+                                    ({meeting.rescheduleHistory.length})
+                                </span>
                             </div>
-                        )
-                    })()}
+
+                            {meeting.rescheduleHistory.map(
+                                (entry: any, i: number) => (
+                                    <div
+                                        key={entry._id || i}
+                                        className="text-xs text-neutral-700 dark:text-neutral-300"
+                                    >
+                                        <div className="flex  justify-between items-center gap-1.5">
+                                            
+                                            <div className="line-through text-neutral-500 dark:text-neutral-500">
+                                                {fmtDateTime(entry.oldDate)}
+                                            </div>
+                                               {entry.reason && (
+                                            <p className="mt-0.5 italic text-neutral-600 dark:text-neutral-400">
+                                                &ldquo;{entry.reason}&rdquo;
+                                            </p>
+                                        )}
+                                        </div>
+                                        
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    )}
 
                 {/* Meta */}
                 <div className="flex items-center justify-between flex-wrap gap-3 text-xs text-gray-500 pt-1">
