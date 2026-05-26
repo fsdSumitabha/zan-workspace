@@ -3,12 +3,8 @@ import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { LEAD_STATUS_META } from "@/constants/leadStatus"
 import { CLIENT_STATUS_META } from "@/constants/clientStatus"
 import { PROJECT_STATUS_META } from "@/constants/projectStatus"
-import { SERVICE_META } from "@/constants/services"
-import { ServiceType } from "@/constants/services"
 
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
-import StatusBadge from "./StatusBadge"
-import ServiceBadge from "./ServiceBadge"
 import InteractionCard from "./InteractionCard"
 import TimeAgo from "./dayjs/TimeAgo"
 
@@ -38,7 +34,6 @@ export default function EntityCard({ item }: EntityCardProps) {
         serviceType,
         description
     } = item
-    console.log("Rendering EntityCard with item:", item)
 
     // -----------------------------
     // Config based on entity type
