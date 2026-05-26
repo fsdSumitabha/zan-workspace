@@ -17,6 +17,17 @@ import TemporalBadge from "./TemporalBadge "
 /** Roles allowed to reschedule a meeting (mirrors the backend PATCH). */
 const RESCHEDULE_ROLES = [10, 60, 45, 70]
 
+/** Friendly local-time date for the reschedule history rows. */
+function fmtDateTime(d: string | Date | undefined): string {
+    if (!d) return "—"
+    const dt = new Date(d)
+    if (isNaN(dt.getTime())) return "—"
+    return dt.toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+    })
+}
+
 export default function MeetingCard({
     item,
     onChanged,
@@ -141,6 +152,41 @@ export default function MeetingCard({
                         {expanded ? "Read less" : "Read more…"}
                     </button>
                 )}
+
+                {/* Reschedule history — show only the latest entry */}
+                {Array.isArray(meeting.rescheduleHistory) &&
+                    meeting.rescheduleHistory.length > 0 &&
+                    (() => {
+                        const latest =
+                            meeting.rescheduleHistory[
+                                meeting.rescheduleHistory.length - 1
+                            ]
+                        return (
+                            <div className="mt-1 rounded-md border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-2.5 space-y-1.5">
+                                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                                    <Icons.CalendarClock className="w-3 h-3" />
+                                    Rescheduled
+                                </div>
+
+                                <div className="text-xs text-neutral-700 dark:text-neutral-300">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                        <span className="line-through text-neutral-500 dark:text-neutral-500">
+                                            {fmtDateTime(latest.oldDate)}
+                                        </span>
+                                        <Icons.ArrowRight className="w-3 h-3 text-neutral-400 shrink-0" />
+                                        <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                                            {fmtDateTime(latest.newDate)}
+                                        </span>
+                                    </div>
+                                    {latest.reason && (
+                                        <p className="mt-0.5 italic text-neutral-600 dark:text-neutral-400">
+                                            &ldquo;{latest.reason}&rdquo;
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )
+                    })()}
 
                 {/* Meta */}
                 <div className="flex items-center justify-between flex-wrap gap-3 text-xs text-gray-500 pt-1">
