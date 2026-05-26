@@ -187,7 +187,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const authUser = await requireRole(req, [10, 60, 70])
+        const authUser = await requireRole(req, [10, 60, 45, 70])
 
         await dbConnect()
 
