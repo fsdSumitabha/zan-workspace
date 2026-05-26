@@ -40,12 +40,9 @@ export default function MeetingCard({
     const [rescheduleOpen, setRescheduleOpen] = useState(false)
 
     const { user } = useAuth()
-    const canReschedule =
-        !!user && RESCHEDULE_ROLES.includes(user.role)
+    const canReschedule = !!user && RESCHEDULE_ROLES.includes(user.role)
 
-    const Icon =
-        (Icons as any)[item.icon?.charAt(0).toUpperCase() + item.icon?.slice(1)] ||
-        Icons.Calendar
+    const Icon = (Icons as any)[item.icon?.charAt(0).toUpperCase() + item.icon?.slice(1)] || Icons.Calendar
 
     const meeting = item
 
@@ -112,7 +109,7 @@ export default function MeetingCard({
             </div>
 
             {/* Content */}
-            <div className="flex-1 space-y-2">
+            <div className="flex-1 min-w-0 space-y-2">
 
                 {/* Header */}
                 <div className="flex justify-between items-start">
@@ -155,14 +152,14 @@ export default function MeetingCard({
 
                 {/* Agenda */}
                 {agenda && (
-                    <p className={`text-sm text-gray-600 dark:text-gray-400 ${clampClass}`}>
+                    <p className={`text-sm text-gray-600 dark:text-gray-400 break-all ${clampClass}`}>
                         Agenda: {agenda}
                     </p>
                 )}
 
                 {/* Description */}
                 {description && (
-                    <p className={`text-sm text-gray-500 ${clampClass}`}>
+                    <p className={`text-sm text-gray-500 break-all ${clampClass}`}>
                         {description}
                     </p>
                 )}
