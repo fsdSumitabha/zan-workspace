@@ -9,7 +9,7 @@ import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { MEETING_STATUS, MEETING_STATUS_META } from "@/constants/meetingStatus"
 import { MEETING_TYPE } from "@/constants/meetingTypes"
 import MeetingLinkButton from "@/components/admin/operations/MeetingLinkButton"
-import RescheduleMeetingModal from "@/components/admin/operations/RescheduleMeetingModal"
+import RescheduleMeetingForm from "@/components/admin/operations/RescheduleMeetingForm"
 import { getMeetingTemporalStatus } from "@/utils/MeetingTemporalStatus"
 import { useAuth } from "@/contexts/AuthContext"
 import TemporalBadge from "./TemporalBadge "
@@ -196,14 +196,14 @@ export default function MeetingCard({
                                         key={entry._id || i}
                                         className="text-xs text-neutral-700 dark:text-neutral-300"
                                     >
-                                        <div className="flex  justify-between items-center gap-1.5">
+                                        <div className="flex  justify-start items-center gap-1.5">
                                             
                                             <div className="line-through text-neutral-500 dark:text-neutral-500">
                                                 {fmtDateTime(entry.oldDate)}
                                             </div>
                                                {entry.reason && (
-                                            <p className="mt-0.5 italic text-neutral-600 dark:text-neutral-400">
-                                                &ldquo;{entry.reason}&rdquo;
+                                            <p className="mt-0.5 italic text-neutral-600 dark:text-neutral-500">
+                                               | &ldquo;{entry.reason}&rdquo;
                                             </p>
                                         )}
                                         </div>
@@ -224,7 +224,7 @@ export default function MeetingCard({
 
                     {/* Right */}
                     <div className="flex items-center gap-2">
-                        {canReschedule && isScheduled && (
+                        {canReschedule && isScheduled && !rescheduleOpen && (
                             <button
                                 type="button"
                                 onClick={() => setRescheduleOpen(true)}
@@ -241,15 +241,20 @@ export default function MeetingCard({
                             )}
                     </div>
                 </div>
-            </div>
 
-            <RescheduleMeetingModal
-                meetingId={String(meeting._id)}
-                currentScheduledAt={meeting.scheduledAt}
-                open={rescheduleOpen}
-                onClose={() => setRescheduleOpen(false)}
-                onSuccess={() => onChanged?.()}
-            />
+                {/* Inline reschedule form (replaces the prior modal) */}
+                {rescheduleOpen && (
+                    <RescheduleMeetingForm
+                        meetingId={String(meeting._id)}
+                        currentScheduledAt={meeting.scheduledAt}
+                        onCancel={() => setRescheduleOpen(false)}
+                        onSuccess={() => {
+                            setRescheduleOpen(false)
+                            onChanged?.()
+                        }}
+                    />
+                )}
+            </div>
         </div>
     )
 }
