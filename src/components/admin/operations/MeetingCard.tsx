@@ -9,12 +9,28 @@ import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { MEETING_STATUS, MEETING_STATUS_META } from "@/constants/meetingStatus"
 import { MEETING_TYPE } from "@/constants/meetingTypes"
 import MeetingLinkButton from "@/components/admin/operations/MeetingLinkButton"
+import RescheduleMeetingModal from "@/components/admin/operations/RescheduleMeetingModal"
 import { getMeetingTemporalStatus } from "@/utils/MeetingTemporalStatus"
+import { useAuth } from "@/contexts/AuthContext"
 import TemporalBadge from "./TemporalBadge "
 
-export default function MeetingCard({ item }: { item: any }) {
+/** Roles allowed to reschedule a meeting (mirrors the backend PATCH). */
+const RESCHEDULE_ROLES = [10, 60, 45, 70]
+
+export default function MeetingCard({
+    item,
+    onChanged,
+}: {
+    item: any
+    onChanged?: () => void
+}) {
 
     const [expanded, setExpanded] = useState(false)
+    const [rescheduleOpen, setRescheduleOpen] = useState(false)
+
+    const { user } = useAuth()
+    const canReschedule =
+        !!user && RESCHEDULE_ROLES.includes(user.role)
 
     const Icon =
         (Icons as any)[item.icon?.charAt(0).toUpperCase() + item.icon?.slice(1)] ||
@@ -135,11 +151,33 @@ export default function MeetingCard({ item }: { item: any }) {
                     </div>
 
                     {/* Right */}
-                    {meeting.meetingType === MEETING_TYPE.ONLINE && meeting.meetingLink && isScheduled && (
-                            <MeetingLinkButton link={meeting.meetingLink} />
+                    <div className="flex items-center gap-2">
+                        {canReschedule && isScheduled && (
+                            <button
+                                type="button"
+                                onClick={() => setRescheduleOpen(true)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition"
+                            >
+                                <Icons.CalendarClock className="w-3 h-3" />
+                                Reschedule
+                            </button>
                         )}
+                        {meeting.meetingType === MEETING_TYPE.ONLINE &&
+                            meeting.meetingLink &&
+                            isScheduled && (
+                                <MeetingLinkButton link={meeting.meetingLink} />
+                            )}
+                    </div>
                 </div>
             </div>
+
+            <RescheduleMeetingModal
+                meetingId={String(meeting._id)}
+                currentScheduledAt={meeting.scheduledAt}
+                open={rescheduleOpen}
+                onClose={() => setRescheduleOpen(false)}
+                onSuccess={() => onChanged?.()}
+            />
         </div>
     )
 }

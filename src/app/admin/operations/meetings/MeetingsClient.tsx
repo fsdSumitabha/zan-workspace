@@ -102,7 +102,11 @@ export default function MeetingsClient() {
 
             {!loading &&
                 meetings.map((meeting) => (
-                    <MeetingCard key={meeting._id} item={meeting} />
+                    <MeetingCard
+                        key={meeting._id}
+                        item={meeting}
+                        onChanged={fetchMeetings}
+                    />
                 ))}
 
             {!loading && (

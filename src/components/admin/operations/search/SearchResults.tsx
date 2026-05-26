@@ -46,7 +46,7 @@ export default function SearchResults({
     let flatCursor = 0
 
     return (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xl shadow-black/5 max-h-[70vh] overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 z-40 rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xl shadow-black/5 max-h-[70vh] overflow-y-auto">
             {loading && (!data || data.total === 0) ? (
                 <div className="flex items-center gap-2 px-3 py-4 text-sm text-neutral-500 dark:text-neutral-400">
                     <Loader2 className="w-4 h-4 animate-spin" />
