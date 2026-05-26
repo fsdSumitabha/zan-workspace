@@ -94,6 +94,8 @@ export default function MeetingsClient() {
     return (
         <div className="space-y-4">
 
+            <MeetingFilters />
+
             {!loading && meetings.length === 0 && (
                 <div className="text-center py-10 text-gray-500">
                     No meetings found
