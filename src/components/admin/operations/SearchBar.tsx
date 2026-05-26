@@ -210,7 +210,7 @@ function SearchBarInner() {
                 />
             )}
 
-            <div className="relative z-50">
+            <div className="relative z-40">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
 
                 <input
