@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Plus } from "lucide-react"
 import { User } from "@/types/user"
 import { useCallback, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import UserCard from "@/components/admin/operations/UserCard"
 import UserCardSkeleton from "@/components/admin/operations/UserCardSkeleton"
 import CreateActionButton from "@/components/admin/operations/CreateActionButton"
@@ -11,6 +12,7 @@ import Pagination from "@/components/admin/operations/Pagination"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
 import { usePagination } from "@/hooks/usePagination"
 import { useSearch } from "@/hooks/useSearch"
+import { handleAuthError } from "@/lib/auth/handleAuthError"
 
 interface ApiResponse {
     success: boolean
@@ -31,6 +33,7 @@ export default function UsersClient() {
     const [loading, setLoading] = useState(true)
     const [totalPages, setTotalPages] = useState(1)
     const [accessError, setAccessError] = useState<string | null>(null)
+    const router = useRouter()
     const { page, setPage } = usePagination()
     const search = useSearch()
 
@@ -51,12 +54,12 @@ export default function UsersClient() {
 
             const json: ApiResponse = await res.json()
 
-            if (res.status === 401 || res.status === 403) {
-                setAccessError(
-                    json?.message ||
-                        "You aren't authorized to perform this action."
-                )
-                setUsers([])
+            if (
+                handleAuthError(res, json, router, (msg) => {
+                    setAccessError(msg)
+                    setUsers([])
+                })
+            ) {
                 return
             }
 
@@ -69,7 +72,7 @@ export default function UsersClient() {
         } finally {
             setLoading(false)
         }
-    }, [page, search])
+    }, [page, search, router])
 
     useEffect(() => {
         fetchUsers()

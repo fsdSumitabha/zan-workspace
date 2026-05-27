@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import ProjectCard from "@/components/admin/operations/ProjectCard"
 import ProjectCardSkeleton from "@/components/admin/operations/skeletons/ProjectCardSkeleton"
 import { Project } from "@/types/projects"
@@ -11,6 +11,7 @@ import AccessDenied from "@/components/admin/operations/AccessDenied"
 import ListFilters from "@/components/admin/operations/ListFilters"
 import { usePagination } from "@/hooks/usePagination"
 import { useSearch } from "@/hooks/useSearch"
+import { handleAuthError } from "@/lib/auth/handleAuthError"
 
 interface ApiResponse {
     success: boolean
@@ -31,6 +32,7 @@ export default function ProjectsClient() {
     const [loading, setLoading] = useState(true)
     const [totalPages, setTotalPages] = useState(1)
     const [accessError, setAccessError] = useState<string | null>(null)
+    const router = useRouter()
     const { page, setPage } = usePagination()
     const search = useSearch()
 
@@ -59,12 +61,12 @@ export default function ProjectsClient() {
 
             const json: ApiResponse = await res.json()
 
-            if (res.status === 401 || res.status === 403) {
-                setAccessError(
-                    json?.message ||
-                        "You aren't authorized to perform this action."
-                )
-                setProjects([])
+            if (
+                handleAuthError(res, json, router, (msg) => {
+                    setAccessError(msg)
+                    setProjects([])
+                })
+            ) {
                 return
             }
 
@@ -77,7 +79,7 @@ export default function ProjectsClient() {
         } finally {
             setLoading(false)
         }
-    }, [page, search, status, from, to])
+    }, [page, search, status, from, to, router])
 
     useEffect(() => {
         fetchProjects()

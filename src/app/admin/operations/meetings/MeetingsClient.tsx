@@ -1,14 +1,16 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import MeetingCard from "@/components/admin/operations/MeetingCard"
+import MeetingCardSkeleton from "@/components/admin/operations/skeletons/MeetingCardSkeleton"
 import { Meeting } from "@/types/meeting"
 import Pagination from "@/components/admin/operations/Pagination"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
 import MeetingFilters from "@/components/admin/operations/MeetingFilters"
 import { usePagination } from "@/hooks/usePagination"
 import { useSearch } from "@/hooks/useSearch"
+import { handleAuthError } from "@/lib/auth/handleAuthError"
 
 interface ApiResponse {
     success: boolean
@@ -31,6 +33,7 @@ export default function MeetingsClient() {
     const [loading, setLoading] = useState(true)
     const [totalPages, setTotalPages] = useState(1)
     const [accessError, setAccessError] = useState<string | null>(null)
+    const router = useRouter()
     const { page, setPage } = usePagination()
     const search = useSearch()
 
@@ -59,12 +62,12 @@ export default function MeetingsClient() {
 
             const json: ApiResponse = await res.json()
 
-            if (res.status === 401 || res.status === 403) {
-                setAccessError(
-                    json?.message ||
-                        "You aren't authorized to perform this action."
-                )
-                setMeetings([])
+            if (
+                handleAuthError(res, json, router, (msg) => {
+                    setAccessError(msg)
+                    setMeetings([])
+                })
+            ) {
                 return
             }
 
@@ -81,7 +84,7 @@ export default function MeetingsClient() {
         } finally {
             setLoading(false)
         }
-    }, [page, search, status, range, entityType])
+    }, [page, search, status, range, entityType, router])
 
     useEffect(() => {
         fetchMeetings()
@@ -95,6 +98,14 @@ export default function MeetingsClient() {
         <div className="space-y-4">
 
             <MeetingFilters />
+
+            {loading && (
+                <div className="space-y-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <MeetingCardSkeleton key={i} />
+                    ))}
+                </div>
+            )}
 
             {!loading && meetings.length === 0 && (
                 <div className="text-center py-10 text-gray-500">
