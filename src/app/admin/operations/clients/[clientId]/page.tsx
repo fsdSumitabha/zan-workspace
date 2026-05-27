@@ -19,6 +19,7 @@ import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/Acti
 import { InteractionItemSkeleton } from "@/components/admin/operations/skeletons/InteractionItemSkeleton"
 import CreateActionButton from "@/components/admin/operations/CreateActionButton"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
+import { handleAuthError } from "@/lib/auth/handleAuthError"
 
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -50,11 +51,7 @@ export default function Page() {
                 const res = await fetch(`/api/admin/operations/clients/${clientId}`)
                 const data = await res.json().catch(() => null)
 
-                if (res.status === 401 || res.status === 403) {
-                    setAccessError(
-                        data?.message ||
-                            "You aren't authorized to perform this action."
-                    )
+                if (handleAuthError(res, data, router, setAccessError)) {
                     return
                 }
 
@@ -68,7 +65,7 @@ export default function Page() {
         }
 
         if (clientId) fetchClient()
-    }, [clientId])
+    }, [clientId, router])
 
     const handleOpen = (type: number) => {
         setActiveType(type as InteractionType)

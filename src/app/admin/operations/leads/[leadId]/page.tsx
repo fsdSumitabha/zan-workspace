@@ -17,6 +17,7 @@ import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/Acti
 import { InteractionType } from "@/constants/interactionTypes"
 import { useAuth } from "@/contexts/AuthContext"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
+import { handleAuthError } from "@/lib/auth/handleAuthError"
 
 export default function Page() {
     const params = useParams()
@@ -30,6 +31,7 @@ export default function Page() {
     const [interactionLoading, setInteractionLoading] = useState(true)
 
     const { role } = useAuth()
+    const router = useRouter()
 
     useEffect(() => {
         const fetchLead = async () => {
@@ -37,11 +39,7 @@ export default function Page() {
                 const res = await fetch(`/api/admin/operations/leads/${leadId}`)
                 const data = await res.json().catch(() => null)
 
-                if (res.status === 401 || res.status === 403) {
-                    setAccessError(
-                        data?.message ||
-                            "You aren't authorized to perform this action."
-                    )
+                if (handleAuthError(res, data, router, setAccessError)) {
                     return
                 }
 
@@ -54,7 +52,7 @@ export default function Page() {
         }
 
         if (leadId) fetchLead()
-    }, [leadId])
+    }, [leadId, router])
 
     const [activeType, setActiveType] = useState<InteractionType | null>(null)
     const [isOpen, setIsOpen] = useState(false)
@@ -114,7 +112,6 @@ export default function Page() {
         await fetchInteractions()
     }
 
-    const router = useRouter()
     const [deleting, setDeleting] = useState(false)
 
     const deleteLead = async () => {

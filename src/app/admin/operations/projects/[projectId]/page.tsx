@@ -15,6 +15,7 @@ import InteractionTimeline from "@/components/admin/operations/interactions/Inte
 import { ProjectStatus } from "@/constants/projectStatus";
 import { InteractionType } from "@/constants/interactionTypes";
 import AccessDenied from "@/components/admin/operations/AccessDenied";
+import { handleAuthError } from "@/lib/auth/handleAuthError";
 
 interface ApiResponse {
     success: boolean;
@@ -59,11 +60,7 @@ export default function Page() {
 
             const json: ApiResponse = await res.json();
 
-            if (res.status === 401 || res.status === 403) {
-                setAccessError(
-                    json?.message ||
-                        "You aren't authorized to perform this action.",
-                );
+            if (handleAuthError(res, json, router, setAccessError)) {
                 return;
             }
 
