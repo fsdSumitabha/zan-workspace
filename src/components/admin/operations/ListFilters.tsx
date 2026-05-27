@@ -2,14 +2,14 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { X } from "lucide-react"
+import DateField from "./filters/DateField"
 
-const FIELD =
-    "w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+const FIELD = "w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
 
 /** Solid text — used when the field holds an actively-chosen value. */
 const TEXT_ACTIVE = "text-neutral-900 dark:text-neutral-100"
 /** Muted text — makes a default/unset value read like a placeholder. */
-const TEXT_PLACEHOLDER = "text-neutral-400 dark:text-neutral-500"
+const TEXT_PLACEHOLDER = "text-neutral-600 dark:text-neutral-500"
 
 /** Earliest selectable date — the pipeline starts in 2026. */
 const MIN_DATE = "2026-01-01"
@@ -90,11 +90,11 @@ export default function ListFilters({ statusMeta }: Props) {
     }
 
     return (
-        <div className="rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm p-3 sm:p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="rounded-lg border border-slate-300 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm p-3 sm:p-4">
+            <div className="grid grid-cols-4 sm:grid-cols-3 gap-2 sm:gap-3">
                 {/* Status */}
-                <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-medium text-neutral-300 uppercase tracking-wide">
+                <div className="col-span-2 sm:col-span-1 flex flex-col gap-1 min-w-0">
+                    <label className="text-xs font-medium text-neutral-700 dark:text-neutral-300 uppercase tracking-wide">
                         Status
                     </label>
                     <select
@@ -112,32 +112,26 @@ export default function ListFilters({ statusMeta }: Props) {
                 </div>
 
                 {/* From date */}
-                <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-medium text-neutral-300 uppercase tracking-wide">
-                        From
-                    </label>
-                    <input
-                        type="date"
-                        className={`${FIELD} ${fromParam ? TEXT_ACTIVE : TEXT_PLACEHOLDER}`}
+                <div className="col-span-1">
+                    <DateField
+                        label="From"
                         value={fromValue}
                         min={MIN_DATE}
                         max={toValue}
-                        onChange={(e) => onFromChange(e.target.value)}
+                        active={!!fromParam}
+                        onChange={onFromChange}
                     />
                 </div>
 
                 {/* To date */}
-                <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-medium text-neutral-300 uppercase tracking-wide">
-                        To
-                    </label>
-                    <input
-                        type="date"
-                        className={`${FIELD} ${toParam ? TEXT_ACTIVE : TEXT_PLACEHOLDER}`}
+                <div className="col-span-1">
+                    <DateField
+                        label="To"
                         value={toValue}
                         min={fromValue}
                         max={today}
-                        onChange={(e) => onToChange(e.target.value)}
+                        active={!!toParam}
+                        onChange={onToChange}
                     />
                 </div>
             </div>

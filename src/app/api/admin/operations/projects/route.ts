@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const { clientId, title, description, serviceType, status } = body
+        const { clientId, title, description, serviceType, budget, status } = body
 
         const project = await auditedCreate(
             Project,
@@ -133,6 +133,7 @@ export async function POST(req: NextRequest) {
                 title,
                 description,
                 serviceType,
+                budget,
                 status,
                 createdBy: authUser.id,
             },

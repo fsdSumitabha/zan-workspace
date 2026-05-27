@@ -2,16 +2,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import {
-    Activity,
-    FolderKanban,
-    Home,
-    Users,
-    UserRoundCog,
-    Handshake,
-} from "lucide-react";
+import { FolderKanban, Home, Target, UserRoundCog, Handshake, } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "@/assets/css/MobileNav.module.css";
+
 
 const navItems: Array<{
     name: string;
@@ -22,25 +16,25 @@ const navItems: Array<{
     {
         name: "Dashboard",
         href: "/admin/operations",
-        roles: [10, 20, 30, 40, 50, 60, 70, 80],
+        roles: [10, 20, 30, 40, 42, 45, 50, 60, 70, 80],
         icon: Home,
     },
     {
         name: "Leads",
         href: "/admin/operations/leads",
-        roles: [10, 20, 30, 40, 50, 60, 70, 80],
-        icon: Users,
+        roles: [10, 20, 30, 40, 42, 45, 50, 60, 70, 80],
+        icon: Target,
     },
     {
         name: "Clients",
         href: "/admin/operations/clients",
-        roles: [10, 20, 30, 40, 50, 60, 70, 80],
+        roles: [10, 20, 30, 40, 42, 45, 50, 60, 70, 80],
         icon: Handshake,
     },
     {
         name: "Projects",
         href: "/admin/operations/projects",
-        roles: [10, 20, 30, 40, 50, 60, 70, 80],
+        roles: [10, 20, 30, 40, 42, 45, 50, 60, 70, 80],
         icon: FolderKanban,
     },
     {
@@ -49,12 +43,6 @@ const navItems: Array<{
         roles: [10, 20],
         icon: UserRoundCog,
     },
-    // {
-    //     name: "Activity",
-    //     href: "/admin/operations/activity-logs",
-    //     roles: [10, 20],
-    //     icon: Activity,
-    // },
 ];
 
 export default function OperationsMobileNav() {

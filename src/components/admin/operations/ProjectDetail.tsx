@@ -105,7 +105,7 @@ export default function ProjectDetail({ project, onStatusChange }: Props) {
                     <div className="border-t border-neutral-100 dark:border-neutral-800" />
 
                     <div className="space-y-2">
-                        <p className="text-sm font-medium">
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400 font-medium">
                             Change to "{PROJECT_STATUS_META[pendingStatus].label}"
                         </p>
 
@@ -114,13 +114,13 @@ export default function ProjectDetail({ project, onStatusChange }: Props) {
                             onChange={(e) => setRemarks(e.target.value)}
                             placeholder="Add remarks (required)"
                             rows={3}
-                            className="w-full p-2 text-sm border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full p-2 text-sm border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 rounded resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
 
                         <div className="flex justify-end gap-2">
                             <button
                                 onClick={handleCancel}
-                                className="text-xs px-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded hover:bg-neutral-50 dark:hover:bg-neutral-800 transition"
+                                className="text-xs px-3 py-1.5 border border-neutral-300 text-neutral-600 dark:text-neutral-300 dark:border-neutral-700 rounded hover:bg-neutral-50 dark:hover:bg-neutral-800 transition"
                             >
                                 Cancel
                             </button>

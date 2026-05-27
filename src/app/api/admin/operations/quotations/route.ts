@@ -2,16 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Quotation from "@/models/Quotation"
 import Interaction from "@/models/Interaction"
-import { mkdir, writeFile } from "fs/promises"
-import path from "path"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
-import Lead from "@/models/Lead"
-import Client from "@/models/Client"
-import Project from "@/models/Project"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-log"
+import { imagekit } from "@/lib/imagekit/imagekit"
+
 
 export async function POST(req: NextRequest) {
     try {
@@ -41,23 +38,47 @@ export async function POST(req: NextRequest) {
         let fileUrl = ""
 
         // 1. Handle file upload
-        // 1. Handle file upload
-        if (file) {
+        if (file && file.size > 0) {
+            const allowedTypes = [
+                "application/pdf",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ]
+            const allowedExtensions = [".pdf", ".doc", ".docx"]
+
+            const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."))
+            const typeOk = allowedTypes.includes(file.type)
+            const extOk = allowedExtensions.includes(ext)
+
+            if (!typeOk && !extOk) {
+                return NextResponse.json(
+                    { success: false, error: "Invalid file type (PDF, DOC or DOCX only)" },
+                    { status: 415 }
+                )
+            }
+
+            // Free plan ceiling for raw/image files is 20MB
+            if (file.size > 20 * 1024 * 1024) {
+                return NextResponse.json(
+                    { success: false, error: "File too large (max 20MB)" },
+                    { status: 413 }
+                )
+            }
+
             const bytes = await file.arrayBuffer()
             const buffer = Buffer.from(bytes)
 
-            const uploadDir = path.join(process.cwd(), "public/uploads/quotations")
-
-            // ensure folder exists
-            await mkdir(uploadDir, { recursive: true })
-
             const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")
-            const fileName = `${Date.now()}-${safeName}`
-            const filePath = path.join(uploadDir, fileName)
 
-            await writeFile(filePath, buffer)
+            const uploadResponse = await imagekit.upload({
+                file: buffer,
+                fileName: `${Date.now()}-${safeName}`,
+                folder: "/quotations",
+                useUniqueFileName: true,
+                tags: ["quotation", `entityType:${entityType}`],
+            })
 
-            fileUrl = `/uploads/quotations/${fileName}`
+            fileUrl = uploadResponse.url
         }
 
         // 2. Create quotation
@@ -122,7 +143,7 @@ export async function POST(req: NextRequest) {
             { success: true, data: quotation },
             { status: 201 }
         )
-    } catch (error : any) {
+    } catch (error: any) {
         console.error(error)
 
         if (error instanceof AuthError) {

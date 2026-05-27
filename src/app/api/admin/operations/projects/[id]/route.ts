@@ -87,7 +87,8 @@ export async function PATCH(
             title,
             description,
             serviceType,
-            status
+            status,
+            budget
         }
 
         if (companyName !== undefined) {
