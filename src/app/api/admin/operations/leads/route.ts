@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
 
         const lead = await auditedCreate(
             Lead,
-            "LEAD",
+            0,
             {
                 name,
                 email,

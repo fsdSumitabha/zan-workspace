@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Search, X } from "lucide-react"
-
-import { ENTITY_TYPES, type EntityType } from "@/lib/activity-log/types"
+import { EntityType, } from "@/constants/entityTypes"
 import { EMPTY_FILTERS, type ActivityLogFilterState } from "./types"
 
 interface UserOption {

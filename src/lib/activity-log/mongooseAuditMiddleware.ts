@@ -5,7 +5,7 @@ import { getAuditContext } from "./auditContext"
 import { logEntityChanges } from "./logEntityChanges"
 import { resolveTrackedFields } from "./fieldResolution"
 import { toAuditPlain } from "./normalize"
-import type { EntityType } from "./types"
+import { EntityType } from "@/constants/entityTypes"
 
 export interface AuditPluginOptions {
     entityType: EntityType

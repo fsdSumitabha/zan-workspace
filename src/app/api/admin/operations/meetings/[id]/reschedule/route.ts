@@ -105,7 +105,7 @@ export async function PATCH(
 
         const updated = await auditedFindByIdAndUpdate(
             Meeting,
-            "MEETING",
+            4,
             id,
             {
                 scheduledAt: newDate,
@@ -136,7 +136,7 @@ export async function PATCH(
 
         const interaction = await auditedCreate(
             Interaction,
-            "INTERACTION",
+            4,
             {
                 entityType: meeting.entityType,
                 entityId: meeting.entityId,

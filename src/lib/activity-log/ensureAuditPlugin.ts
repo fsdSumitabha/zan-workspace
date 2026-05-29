@@ -1,7 +1,7 @@
 import type { Schema } from "mongoose"
 
 import { auditPlugin } from "./mongooseAuditMiddleware"
-import type { EntityType } from "./types"
+import { EntityType } from "@/constants/entityTypes"
 
 const appliedSchemas = new WeakSet<Schema>()
 

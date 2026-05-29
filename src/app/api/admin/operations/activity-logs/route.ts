@@ -8,7 +8,7 @@ import Lead from "@/models/Lead"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
-import { ENTITY_TYPES, type EntityType } from "@/lib/activity-log"
+import { EntityType, ENTITY_TYPE } from "@/constants/entityTypes"
 
 const ADMIN_ROLES = [10, 20]
 const MAX_LIMIT = 100
@@ -33,10 +33,10 @@ type LogRow = {
 }
 
 const NAME_RESOLVABLE_TYPES = new Set<EntityType>([
-    "USER",
-    "LEAD",
-    "CLIENT",
-    "PROJECT",
+    ENTITY_TYPE.USER,
+    ENTITY_TYPE.LEAD,
+    ENTITY_TYPE.CLIENT,
+    ENTITY_TYPE.PROJECT,
 ])
 
 function parseDate(value: string | null): Date | null {
@@ -79,7 +79,7 @@ async function resolveEntityNames(
         tasks.push(
             (async () => {
                 switch (type) {
-                    case "USER": {
+                    case 4: {
                         const docs = await User.find({ _id: { $in: ids } })
                             .select("_id name")
                             .lean()
@@ -91,7 +91,7 @@ async function resolveEntityNames(
                         }
                         return
                     }
-                    case "LEAD": {
+                    case 0: {
                         const docs = await Lead.find({ _id: { $in: ids } })
                             .select("_id name")
                             .lean()
@@ -103,7 +103,7 @@ async function resolveEntityNames(
                         }
                         return
                     }
-                    case "CLIENT": {
+                    case 1: {
                         const docs = await Client.find({ _id: { $in: ids } })
                             .select("_id name company")
                             .lean()
@@ -115,7 +115,7 @@ async function resolveEntityNames(
                         }
                         return
                     }
-                    case "PROJECT": {
+                    case 2: {
                         const docs = await Project.find({ _id: { $in: ids } })
                             .select("_id title")
                             .lean()
@@ -170,13 +170,14 @@ export async function GET(req: NextRequest) {
         }
 
         if (entityTypeRaw) {
-            if (!ENTITY_TYPES.includes(entityTypeRaw as EntityType)) {
+            const entityType = Number(entityTypeRaw) as EntityType
+            if (!Object.values(ENTITY_TYPE).includes(entityType)) {
                 return NextResponse.json(
                     { success: false, message: "Invalid entityType" },
                     { status: 400 }
                 )
             }
-            filter.entityType = entityTypeRaw as EntityType
+            filter.entityType = entityType
         }
 
         if (entityIdRaw) {

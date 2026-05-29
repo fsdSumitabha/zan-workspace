@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document } from "mongoose"
+import { ENTITY_TYPE, EntityType } from "@/constants/entityTypes"
 
 export interface IActivityLog extends Document {
-    entityType?: | "USER" | "LEAD" | "CLIENT" | "PROJECT" | "INTERACTION" | "CALL" | "MEETING" | "DOCUMENT" | "QUOTATION"
+    entityType?: EntityType
     entityId?: mongoose.Types.ObjectId
     action?: string
     oldData?: Record<string, unknown>
@@ -12,18 +13,9 @@ export interface IActivityLog extends Document {
 const ActivityLogSchema = new mongoose.Schema<IActivityLog>({
 
     entityType: {
-        type: String,
-        enum: [
-            "USER",
-            "LEAD",
-            "CLIENT",
-            "PROJECT",
-            "INTERACTION",
-            "CALL",
-            "MEETING",
-            "DOCUMENT",
-            "QUOTATION",
-        ]
+        type: Number,
+        enum: Object.values(ENTITY_TYPE),
+        required: true,
     },
 
     entityId: mongoose.Schema.Types.ObjectId,

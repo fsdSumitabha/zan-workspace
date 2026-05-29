@@ -110,7 +110,7 @@ export async function PATCH(
 
         const updatedLead = await auditedFindByIdAndUpdate(
             Lead,
-            "LEAD",
+            0,
             id,
             { status },
             {},
@@ -127,7 +127,7 @@ export async function PATCH(
         // Create interaction (timeline entry)
         await auditedCreate(
             Interaction,
-            "INTERACTION",
+            4,
             {
                 entityType: 0,
                 entityId: lead._id,

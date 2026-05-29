@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
 
         const client = await auditedCreate(
             Client,
-            "CLIENT",
+            1,
             body,
             authUser.id
         )
