@@ -73,6 +73,7 @@ export async function POST(
             email: lead.email,
             status: CLIENT_STATUS.ACTIVE,
             createdBy: authUser.id,
+            leadId: lead._id
         })
         createdClient.$locals._auditUserId = authUser.id
         await createdClient.save({ session })
