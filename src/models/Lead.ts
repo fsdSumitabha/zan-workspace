@@ -2,6 +2,7 @@ import mongoose, { Schema, Document, Query } from "mongoose"
 import { LEAD_STATUS } from "@/constants/leadStatus"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export interface ILead extends Document {
     name: string
@@ -72,13 +73,13 @@ LeadSchema.pre(/^find/, function (this: Query<any, ILead>) {
     this.where({ deletedAt: null })
 })
 
-ensureAuditPlugin(LeadSchema, "LEAD")
+ensureAuditPlugin(LeadSchema, ENTITY_TYPE.LEAD)
 statsInvalidatePlugin(LeadSchema)
 
 const Lead =
     mongoose.models.Lead || mongoose.model<ILead>("Lead", LeadSchema)
 
-ensureAuditPlugin(Lead.schema, "LEAD")
+ensureAuditPlugin(Lead.schema, ENTITY_TYPE.LEAD)
 statsInvalidatePlugin(Lead.schema)
 
 export default Lead

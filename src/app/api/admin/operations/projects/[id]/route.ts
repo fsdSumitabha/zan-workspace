@@ -5,6 +5,7 @@ import { Types } from "mongoose"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
 import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export async function GET(
     req: NextRequest,
@@ -104,7 +105,7 @@ export async function PATCH(
 
         const project = await auditedFindByIdAndUpdate(
             Project,
-            "PROJECT",
+            ENTITY_TYPE.PROJECT,
             id,
             update,
             {},

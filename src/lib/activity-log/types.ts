@@ -1,5 +1,7 @@
 import { EntityType } from "@/constants/entityTypes"
 
+export type { EntityType }
+
 export interface AuditContextStore {
     userId: string | null
     disabled?: boolean

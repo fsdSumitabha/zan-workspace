@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose"
 import { PROJECT_STATUS } from "@/constants/projectStatus"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export interface IProject extends Document {
     clientId: mongoose.Types.ObjectId
@@ -52,14 +53,14 @@ const ProjectSchema = new Schema<IProject>(
     { timestamps: true }
 )
 
-ensureAuditPlugin(ProjectSchema, "PROJECT")
+ensureAuditPlugin(ProjectSchema, ENTITY_TYPE.PROJECT)
 statsInvalidatePlugin(ProjectSchema)
 
 const Project =
     mongoose.models.Project ||
     mongoose.model<IProject>("Project", ProjectSchema)
 
-ensureAuditPlugin(Project.schema, "PROJECT")
+ensureAuditPlugin(Project.schema, ENTITY_TYPE.PROJECT)
 statsInvalidatePlugin(Project.schema)
 
 export default Project

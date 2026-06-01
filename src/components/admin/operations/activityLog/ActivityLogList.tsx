@@ -40,7 +40,9 @@ function buildQuery(
         params.set("userId", filters.userId)
     }
 
-    if (filters.entityType) params.set("entityType", filters.entityType)
+    if (filters.entityType !== "") {
+        params.set("entityType", String(filters.entityType))
+    }
     if (filters.from) params.set("from", filters.from)
     if (filters.to) {
         // Treat "to" as end-of-day so the date filter feels inclusive.

@@ -5,6 +5,7 @@ import { verifyFacebookSignature } from "@/lib/webhooks/facebook/verify-signatur
 import { fetchFacebookLead } from "@/lib/webhooks/facebook/fetch-lead"
 import type { FacebookWebhookPayload } from "@/types/facebook/facebook-leads"
 import { auditedCreate } from "@/lib/activity-log"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 // Prevent any caching/static optimization on this route
 export const dynamic = "force-dynamic"
@@ -95,7 +96,7 @@ async function processLeads(payload: FacebookWebhookPayload) {
                 // System-created (no auth user). Audit row will have null userId.
                 await auditedCreate(
                     Lead,
-                    "LEAD",
+                    ENTITY_TYPE.LEAD,
                     {
                         name,
                         email,

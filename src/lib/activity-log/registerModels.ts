@@ -1,14 +1,18 @@
 import mongoose from "mongoose"
 
 import { ensureAuditPlugin } from "./ensureAuditPlugin"
-import { EntityType } from "@/constants/entityTypes"
+import { ENTITY_TYPE, EntityType } from "@/constants/entityTypes"
 
 const MODEL_ENTITY_MAP: Array<{ modelName: string; entityType: EntityType }> = [
-    { modelName: "User", entityType: 4 },
-    { modelName: "Lead", entityType: 0 },
-    { modelName: "Client", entityType: 1 },
-    { modelName: "Project", entityType: 2 },
-    { modelName: "Interaction", entityType: 3 },
+    { modelName: "User", entityType: ENTITY_TYPE.USER },
+    { modelName: "Lead", entityType: ENTITY_TYPE.LEAD },
+    { modelName: "Client", entityType: ENTITY_TYPE.CLIENT },
+    { modelName: "Project", entityType: ENTITY_TYPE.PROJECT },
+    { modelName: "Interaction", entityType: ENTITY_TYPE.INTERACTION },
+    { modelName: "Meeting", entityType: ENTITY_TYPE.MEETING },
+    { modelName: "Document", entityType: ENTITY_TYPE.DOCUMENT },
+    { modelName: "Call", entityType: ENTITY_TYPE.CALL },
+    { modelName: "Quotation", entityType: ENTITY_TYPE.QUOTATION },
 ]
 
 /** Ensure audit hooks exist on compiled models (fixes Next.js hot-reload). */

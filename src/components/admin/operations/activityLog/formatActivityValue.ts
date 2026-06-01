@@ -2,20 +2,21 @@ import { LEAD_STATUS_META } from "@/constants/leadStatus"
 import { CLIENT_STATUS_META } from "@/constants/clientStatus"
 import { PROJECT_STATUS_META } from "@/constants/projectStatus"
 import { USER_ROLE_META } from "@/constants/userRoles"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 import type { EntityType } from "@/lib/activity-log/types"
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/
 const OBJECT_ID_RE = /^[a-f0-9]{24}$/i
 
 function statusLabel(entityType: EntityType, value: number): string | null {
-    if (entityType === "LEAD" && value in LEAD_STATUS_META) {
+    if (entityType === ENTITY_TYPE.LEAD && value in LEAD_STATUS_META) {
         return LEAD_STATUS_META[value as keyof typeof LEAD_STATUS_META].label
     }
-    if (entityType === "CLIENT" && value in CLIENT_STATUS_META) {
+    if (entityType === ENTITY_TYPE.CLIENT && value in CLIENT_STATUS_META) {
         return CLIENT_STATUS_META[value as keyof typeof CLIENT_STATUS_META]
             .label
     }
-    if (entityType === "PROJECT" && value in PROJECT_STATUS_META) {
+    if (entityType === ENTITY_TYPE.PROJECT && value in PROJECT_STATUS_META) {
         return PROJECT_STATUS_META[value as keyof typeof PROJECT_STATUS_META]
             .label
     }

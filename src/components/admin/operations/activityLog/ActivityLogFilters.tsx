@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Search, X } from "lucide-react"
-import { EntityType, } from "@/constants/entityTypes"
+import { EntityType, ENTITY_TYPE_META } from "@/constants/entityTypes"
 import { EMPTY_FILTERS, type ActivityLogFilterState } from "./types"
 
 interface UserOption {
@@ -41,9 +41,11 @@ export default function ActivityLogFilters({
 }: Props) {
     const [users, setUsers] = useState<UserOption[]>([])
     const [usersLoading, setUsersLoading] = useState(false)
-    const [entityTypes, setEntityTypes] = useState<string[]>([
-        ...ENTITY_TYPES,
-    ])
+    // Seed with the canonical label list — server `meta` endpoint can
+    // override later if it returns a curated subset.
+    const [entityTypes, setEntityTypes] = useState<string[]>(() =>
+        Object.values(ENTITY_TYPE_META).map((m) => m.label)
+    )
 
     const capitalize = (str: string) =>
     str.charAt(0) + str.slice(1).toLowerCase();

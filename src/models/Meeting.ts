@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 interface IRescheduleEntry {
     oldDate?: Date
@@ -125,14 +126,14 @@ const MeetingSchema = new mongoose.Schema<IMeeting>({
 
 }, { timestamps: true })
 
-ensureAuditPlugin(MeetingSchema, "MEETING")
+ensureAuditPlugin(MeetingSchema, ENTITY_TYPE.MEETING)
 statsInvalidatePlugin(MeetingSchema)
 
 const Meeting =
     mongoose.models.Meeting ||
     mongoose.model<IMeeting>("Meeting", MeetingSchema)
 
-ensureAuditPlugin(Meeting.schema, "MEETING")
+ensureAuditPlugin(Meeting.schema, ENTITY_TYPE.MEETING)
 statsInvalidatePlugin(Meeting.schema)
 
 export default Meeting

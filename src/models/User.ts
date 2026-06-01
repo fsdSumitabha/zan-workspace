@@ -3,6 +3,7 @@ import { UserRole } from "@/constants/userRoles"
 import mongoose, { Schema, Document } from "mongoose"
 import { USER_ROLE_META } from "@/constants/userRoles"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export interface IUser extends Document {
     name: string
@@ -80,11 +81,11 @@ UserSchema.pre(/^find/, function (this: Query<any, IUser>) {
     this.where({ deletedAt: null })
 })
 
-ensureAuditPlugin(UserSchema, "USER")
+ensureAuditPlugin(UserSchema, ENTITY_TYPE.USER)
 
 const User =
     mongoose.models.User || mongoose.model<IUser>("User", UserSchema)
 
-ensureAuditPlugin(User.schema, "USER")
+ensureAuditPlugin(User.schema, ENTITY_TYPE.USER)
 
 export default User

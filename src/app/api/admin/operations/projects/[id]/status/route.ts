@@ -11,6 +11,7 @@ import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedCreate, auditedFindByIdAndUpdate } from "@/lib/activity-log"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export async function PATCH(
     req: NextRequest,
@@ -94,7 +95,7 @@ export async function PATCH(
 
         const updatedProject = await auditedFindByIdAndUpdate(
             Project,
-            "PROJECT",
+            ENTITY_TYPE.PROJECT,
             id,
             { status },
             {},
@@ -110,7 +111,7 @@ export async function PATCH(
 
         const interaction = await auditedCreate(
             Interaction,
-            "INTERACTION",
+            ENTITY_TYPE.INTERACTION,
             {
                 entityType: 2,
                 entityId: updatedProject._id,
@@ -128,7 +129,7 @@ export async function PATCH(
 
         await auditedFindByIdAndUpdate(
             Project,
-            "PROJECT",
+            ENTITY_TYPE.PROJECT,
             id,
             {
                 lastInteractionAt: new Date(),
