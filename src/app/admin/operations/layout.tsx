@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import Sidebar from "@/components/admin/operations/SideBar";
 import SearchBar from "@/components/admin/operations/SearchBar";
 import StatsPanel from "@/components/admin/operations/StatsPanel";
+import UpcomingMeetingsPanel from "@/components/admin/operations/UpcomingMeetingsPanel";
 import OperationsMobileNav from "@/components/admin/operations/MobileNav";
 import OperationsMobileTopBar from "@/components/admin/operations/MobileTopBar";
 
@@ -46,7 +47,10 @@ export default function OperationsLayout({
                 {/* Page Content */}
                 <div className="w-full overflow-y-auto max-w-7xl mx-auto px-3 md:px-4 py-5 md:py-6 grid lg:grid-cols-3 gap-6 w-full">
                     <div className="lg:col-span-2 space-y-4">{children}</div>
-                    <StatsPanel />
+                    <aside className="space-y-4">
+                        <StatsPanel />
+                        <UpcomingMeetingsPanel />
+                    </aside>
                 </div>
 
                 {/* Mobile bottom nav (twitter-like) */}
