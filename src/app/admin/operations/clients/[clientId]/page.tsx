@@ -1,14 +1,17 @@
 "use client"
 
 import Link from "next/link"
-import { Plus } from "lucide-react"
+import { ArrowRight, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 
 import ClientDetails from "@/components/admin/operations/ClientDetails"
 import ClientDetailsSkeleton from "@/components/admin/operations/skeletons/ClientDetailsSkeleton"
+import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 
 import type { Client } from "@/types/clients"
+import type { Lead } from "@/types/lead"
+import { LEAD_STATUS_META } from "@/constants/leadStatus"
 import ClientProjectPreviewCard from "@/components/admin/operations/ClientProjectPreviewCard"
 
 import type { Interaction } from "@/types/interaction"
@@ -32,6 +35,7 @@ export default function Page() {
     const clientId = params.clientId as string
 
     const [client, setClient] = useState<Client | null>(null)
+    const [lead, setLead] = useState<Lead | null>(null)
     const [projects, setProjects] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [accessError, setAccessError] = useState<string | null>(null)
@@ -56,6 +60,7 @@ export default function Page() {
                 }
 
                 setClient(data?.data?.client ?? null)
+                setLead(data?.data?.lead ?? null)
                 setProjects(data?.data?.projects || [])
             } catch (err) {
                 console.error("Failed to fetch client", err)
@@ -156,7 +161,7 @@ export default function Page() {
     }
 
     return (
-                <div className="space-y-4">
+                <div className="space-y-2">
 
                     {/* Loading */}
                     {loading && (
@@ -183,7 +188,73 @@ export default function Page() {
                     {/* Data */}
                     {!loading && client && (
                         <>
+                        
                             <ClientDetails client={client} onStatusChange={handleStatusChange} />
+
+                            {lead && (
+                                <div className="p-5  rounded-b-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+                                    <div className="flex items-center justify-between gap-3 mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <ArrowRight className="w-4 h-4 text-blue-500" />
+                                            <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                                                Converted from Lead
+                                            </h3>
+                                        </div>
+                                        <Link
+                                            href={`/admin/operations/leads/${lead._id}`}
+                                            className="text-xs text-blue-500 hover:underline"
+                                        >
+                                            View lead
+                                        </Link>
+                                    </div>
+
+                                    <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                        <div>
+                                            <dt className="text-[11px] uppercase tracking-wide text-neutral-500">
+                                                Source
+                                            </dt>
+                                            <dd className="mt-1 text-sm font-medium text-neutral-900 dark:text-neutral-100 capitalize">
+                                                {lead.source || "—"}
+                                            </dd>
+                                        </div>
+
+                                        <div>
+                                            <dt className="text-[11px] uppercase tracking-wide text-neutral-500">
+                                                Lead status
+                                            </dt>
+                                            <dd className="mt-1">
+                                                <span
+                                                    className={`inline-block px-2 py-0.5 rounded-full text-xs ${
+                                                        LEAD_STATUS_META[lead.status]?.color ||
+                                                        "bg-neutral-300 text-neutral-800"
+                                                    }`}
+                                                >
+                                                    {LEAD_STATUS_META[lead.status]?.label || "—"}
+                                                </span>
+                                            </dd>
+                                        </div>
+
+                                        <div>
+                                            <dt className="text-[11px] uppercase tracking-wide text-neutral-500">
+                                                Captured
+                                            </dt>
+                                            <dd className="mt-1">
+                                                <TimeAgo date={lead.createdAt} />
+                                            </dd>
+                                        </div>
+
+                                        <div>
+                                            <dt className="text-[11px] uppercase tracking-wide text-neutral-500">
+                                                Converted
+                                            </dt>
+                                            <dd className="mt-1">
+                                                <TimeAgo date={client.createdAt} />
+                                            </dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                            )}
+
                             <CreateActionButton href={`${clientId}/projects/create`} label="Create New Project" />
                             <LeadInteractionActions leadId={clientId} onAction={handleOpen} activeType={activeType} />
                             <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={1} entityId={clientId} onSuccess={fetchInteractions} />

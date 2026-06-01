@@ -61,7 +61,7 @@ export default function ClientDetails({ client, onStatusChange }: Props) {
     }
 
     return (
-        <div className="p-5 rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm space-y-4">
+        <div className="p-5 rounded-t-lg dark:rounded-t-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm space-y-4">
 
             {/* Header */}
             <div className="flex items-start justify-between gap-3">
