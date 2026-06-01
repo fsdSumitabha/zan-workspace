@@ -7,6 +7,8 @@ import type { FacebookWebhookPayload } from "@/types/facebook/facebook-leads"
 import { auditedCreate } from "@/lib/activity-log"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
 
+
+
 // Prevent any caching/static optimization on this route
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs" // crypto needs Node runtime, not Edge
@@ -18,7 +20,7 @@ export async function GET(req: NextRequest) {
     const token = searchParams.get("hub.verify_token")
     const challenge = searchParams.get("hub.challenge")
 
-    if (mode === "subscribe" && token === process.env.FACEBOOK_VERIFY_TOKEN) {
+    if (mode === "subscribe" && token === process.env.META_VERIFY_TOKEN) {
         // Must return the challenge as plain text, status 200
         return new NextResponse(challenge, { status: 200 })
     }
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
         !verifyFacebookSignature(
             rawBody,
             signature,
-            process.env.FACEBOOK_APP_SECRET!
+            process.env.META_APP_SECRET!
         )
     ) {
         return new NextResponse("Invalid signature", { status: 401 })
