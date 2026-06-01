@@ -7,12 +7,22 @@ import User from "@/models/User"
 import Lead from "@/models/Lead"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
+import Interaction from "@/models/Interaction"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { EntityType, ENTITY_TYPE } from "@/constants/entityTypes"
 
 const ADMIN_ROLES = [10, 20]
 const MAX_LIMIT = 100
 const DEFAULT_LIMIT = 20
+
+interface InteractionDetail {
+    type: number
+    parentEntityType: EntityType | null
+    parentEntityId: string | null
+    parentEntityName: string | null
+    title: string | null
+    description: string | null
+}
 
 type LogRow = {
     _id: string
@@ -30,6 +40,17 @@ type LogRow = {
         role?: number
     } | null
     createdAt: string
+    /**
+     * Populated only when `entityType === INTERACTION`. Carries the
+     * fields needed for the activity-log UI to label the row (type,
+     * parent entity link, optional remarks) without an extra round-trip.
+     */
+    interaction?: InteractionDetail | null
+}
+
+/** Activity-log rows may have either the numeric code or the legacy string. */
+function isInteractionEntityType(et: unknown): boolean {
+    return et === ENTITY_TYPE.INTERACTION || et === "INTERACTION"
 }
 
 const NAME_RESOLVABLE_TYPES = new Set<EntityType>([
@@ -136,6 +157,108 @@ async function resolveEntityNames(
     return result
 }
 
+/**
+ * For activity-log rows whose entity is an Interaction, fetch the
+ * underlying Interaction document so the UI can show what kind of
+ * interaction it was (note / call / meeting / status change) and link
+ * to the parent Lead/Client/Project — none of which can be derived
+ * from the audit row alone.
+ *
+ * Done as a batched lookup (one `$in` query per parent type) to keep
+ * this O(1) request count per page.
+ */
+async function resolveInteractionDetails(
+    logs: Array<Pick<IActivityLog, "entityType" | "entityId">>
+): Promise<Map<string, InteractionDetail>> {
+    const interactionIds = new Set<string>()
+    for (const log of logs) {
+        if (!isInteractionEntityType(log.entityType)) continue
+        if (!log.entityId) continue
+        interactionIds.add(String(log.entityId))
+    }
+
+    if (interactionIds.size === 0) return new Map()
+
+    const ids = [...interactionIds].map(
+        (id) => new mongoose.Types.ObjectId(id)
+    )
+    const interactions = await Interaction.find({ _id: { $in: ids } })
+        .select("_id type entityType entityId title description")
+        .lean<
+            Array<{
+                _id: mongoose.Types.ObjectId
+                type: number
+                entityType: number
+                entityId: mongoose.Types.ObjectId
+                title?: string
+                description?: string
+            }>
+        >()
+
+    // Group parent IDs by parent entityType so we can batch-name them.
+    const parentByType = new Map<number, Set<string>>()
+    for (const i of interactions) {
+        const set = parentByType.get(i.entityType) ?? new Set<string>()
+        set.add(String(i.entityId))
+        parentByType.set(i.entityType, set)
+    }
+
+    const parentNames = new Map<string, string>()
+    const parentTasks: Array<Promise<void>> = []
+    for (const [type, idSet] of parentByType.entries()) {
+        const parentIds = [...idSet].map(
+            (id) => new mongoose.Types.ObjectId(id)
+        )
+        parentTasks.push(
+            (async () => {
+                if (type === ENTITY_TYPE.LEAD) {
+                    const docs = await Lead.find({ _id: { $in: parentIds } })
+                        .select("_id name")
+                        .lean()
+                    for (const d of docs) {
+                        parentNames.set(`${type}:${String(d._id)}`, d.name ?? "")
+                    }
+                } else if (type === ENTITY_TYPE.CLIENT) {
+                    const docs = await Client.find({ _id: { $in: parentIds } })
+                        .select("_id name company")
+                        .lean()
+                    for (const d of docs) {
+                        const label = d.company
+                            ? `${d.name} (${d.company})`
+                            : d.name ?? ""
+                        parentNames.set(`${type}:${String(d._id)}`, label)
+                    }
+                } else if (type === ENTITY_TYPE.PROJECT) {
+                    const docs = await Project.find({ _id: { $in: parentIds } })
+                        .select("_id title")
+                        .lean()
+                    for (const d of docs) {
+                        parentNames.set(
+                            `${type}:${String(d._id)}`,
+                            d.title ?? ""
+                        )
+                    }
+                }
+            })()
+        )
+    }
+    await Promise.all(parentTasks)
+
+    const map = new Map<string, InteractionDetail>()
+    for (const i of interactions) {
+        const parentKey = `${i.entityType}:${String(i.entityId)}`
+        map.set(String(i._id), {
+            type: i.type,
+            parentEntityType: (i.entityType as EntityType) ?? null,
+            parentEntityId: String(i.entityId),
+            parentEntityName: parentNames.get(parentKey) ?? null,
+            title: i.title ?? null,
+            description: i.description ?? null,
+        })
+    }
+    return map
+}
+
 export async function GET(req: NextRequest) {
     try {
         const authUser = await requireAuth(req)
@@ -232,7 +355,10 @@ export async function GET(req: NextRequest) {
             ActivityLog.countDocuments(filter),
         ])
 
-        const entityNameMap = await resolveEntityNames(rawLogs)
+        const [entityNameMap, interactionMap] = await Promise.all([
+            resolveEntityNames(rawLogs),
+            resolveInteractionDetails(rawLogs),
+        ])
 
         const data: LogRow[] = rawLogs.map((log) => {
             const populatedUser = log.userId as
@@ -251,6 +377,11 @@ export async function GET(req: NextRequest) {
                     ? `${log.entityType}:${String(log.entityId)}`
                     : ""
 
+            const interactionDetail =
+                isInteractionEntityType(log.entityType) && log.entityId
+                    ? interactionMap.get(String(log.entityId)) ?? null
+                    : null
+
             return {
                 _id: String(log._id),
                 entityType: (log.entityType as EntityType) ?? null,
@@ -261,6 +392,7 @@ export async function GET(req: NextRequest) {
                 action: log.action ?? null,
                 oldData: log.oldData ?? null,
                 newData: log.newData ?? null,
+                interaction: interactionDetail,
                 user:
                     populatedUser &&
                     typeof populatedUser === "object" &&
