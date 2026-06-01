@@ -16,6 +16,10 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
     const [loading, setLoading] = useState(false)
     const [pendingStatus, setPendingStatus] = useState<LeadStatus | null>(null)
 
+    // Defensive — if a lead doc somehow lacks `status` (legacy data, a
+    // shape-change race during HMR), fall back to the schema default
+    // so the dropdown still renders instead of crashing on `.color`.
+    const meta = LEAD_STATUS_META[currentStatus] ?? LEAD_STATUS_META[LEAD_STATUS.NEW]
     const isTerminal = currentStatus >= LEAD_STATUS.CONVERTED
 
     //  Async lifecycle lives here — not inside the toast
@@ -57,7 +61,7 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
                     "px-3 py-1.5 rounded-md text-sm font-medium transition",
                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
                     "focus-visible:ring-blue-500 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-900",
-                    LEAD_STATUS_META[currentStatus].color,
+                    meta.color,
                     loading
                         ? "opacity-50 cursor-not-allowed"
                         : isTerminal
@@ -65,7 +69,7 @@ export default function LeadStatusDropdown({ currentStatus, onChange }: Props) {
                             : "hover:opacity-90"
                 )}
             >
-                {loading ? "Updating..." : LEAD_STATUS_META[currentStatus].label}
+                {loading ? "Updating..." : meta.label}
             </button>
 
             {open && !loading && (
