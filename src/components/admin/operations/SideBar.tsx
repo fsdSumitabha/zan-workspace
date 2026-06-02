@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Image } from "@imagekit/next"
-import { User, LogOut, Home, Target, Handshake, FolderKanban, CalendarClock, UserRoundCog, Activity, } from "lucide-react"
+import { User, LogOut, Home, Target, Handshake, FolderKanban, CalendarClock, UserRoundCog, Activity, BarChart3 } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
@@ -13,6 +13,7 @@ const navItems = [
     { name: "Clients", href: "/admin/operations/clients", icon: Handshake, roles: [10, 20, 30, 40, 42, 45, 50, 60, 70, 80] },
     { name: "Projects", href: "/admin/operations/projects", icon: FolderKanban, roles: [10, 20, 30, 40, 42, 45, 50, 60, 70, 80] },
     { name: "Meetings", href: "/admin/operations/meetings", icon: CalendarClock, roles: [10, 20, 30, 40, 42, 45, 50, 60, 70, 80] },
+    { name: "Overall Stats", href: "/admin/operations/overall-stats", icon: BarChart3, roles: [10, 20, 30, 40, 42, 45, 50, 60, 70, 80] },
     { name: "Users", href: "/admin/operations/users", icon: UserRoundCog, roles: [10, 20, 45] },
     { name: "Activity Log", href: "/admin/operations/activity-logs", icon: Activity, roles: [10, 20] },
 ]
