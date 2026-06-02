@@ -13,15 +13,6 @@ import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedCreate, auditedFindByIdAndUpdate, auditedUpdateByNumericEntityType,} from "@/lib/activity-log"
 
-/**
- * PATCH /api/admin/operations/meetings/:id/reschedule
- *
- * Body: { scheduledAt: ISO date, reason: string }
- *
- * Updates scheduledAt + status (→ RESCHEDULED), appends to
- * rescheduleHistory, writes a timeline Interaction on the parent
- * entity, and bumps the parent's lastInteractionAt/Id.
- */
 export async function PATCH(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }
@@ -41,81 +32,49 @@ export async function PATCH(
         }
 
         const body = await req.json()
-        const { scheduledAt, reason } = body as {
-            scheduledAt?: string
-            reason?: string
+        const { status, outcome } = body as {
+            status?: number
+            outcome?: string
         }
 
-        if (!scheduledAt) {
-            return NextResponse.json(
-                { success: false, message: "scheduledAt is required" },
-                { status: 400 }
-            )
-        }
-        if (!reason || !reason.trim()) {
-            return NextResponse.json(
-                { success: false, message: "Reason is required" },
-                { status: 400 }
-            )
+        if (status !== MEETING_STATUS.CANCELLED && status !== MEETING_STATUS.COMPLETED) {
+            return NextResponse.json({ success: false, message: "status must be CANCELLED or COMPLETED" }, { status: 400 })
         }
 
-        const newDate = new Date(scheduledAt)
-        if (isNaN(newDate.getTime())) {
-            return NextResponse.json(
-                { success: false, message: "Invalid scheduledAt" },
-                { status: 400 }
-            )
-        }
-        if (newDate.getTime() <= Date.now()) {
-            return NextResponse.json(
-                { success: false, message: "scheduledAt must be in the future" },
-                { status: 400 }
-            )
+        const trimmedOutcome = (outcome ?? "").trim()
+
+        if (status === MEETING_STATUS.COMPLETED && !trimmedOutcome) {
+            return NextResponse.json({ success: false, message: "Outcome note is required to mark as completed" }, { status: 400 })
         }
 
         const meeting = await Meeting.findById(id)
         if (!meeting) {
-            return NextResponse.json(
-                { success: false, message: "Meeting not found" },
-                { status: 404 }
-            )
+            return NextResponse.json({ success: false, message: "Meeting not found" }, { status: 404 })
         }
 
-        // Terminal statuses can't be rescheduled.
+        // COMPLETED only valid once the meeting time has passed. CANCELLED is allowed any time before close.
+        if (status === MEETING_STATUS.COMPLETED && meeting.scheduledAt.getTime() > Date.now()) {
+            return NextResponse.json({ success: false, message: "Cannot mark a future meeting as completed" }, { status: 409 })
+        }
+
         if (
             meeting.status === MEETING_STATUS.CANCELLED ||
             meeting.status === MEETING_STATUS.MISSED ||
             meeting.status === MEETING_STATUS.COMPLETED
         ) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: "Cannot reschedule a closed meeting",
-                },
-                { status: 409 }
-            )
+            return NextResponse.json({ success: false, message: "Meeting is already closed" }, { status: 409 })
         }
 
-        const oldDate = meeting.scheduledAt
-        const trimmedReason = reason.trim()
+        const updatePayload: Record<string, unknown> = { status }
+        if (status === MEETING_STATUS.COMPLETED) {
+            updatePayload.outcome = trimmedOutcome
+        }
 
         const updated = await auditedFindByIdAndUpdate(
             Meeting,
             "MEETING",
             id,
-            {
-                scheduledAt: newDate,
-                status: MEETING_STATUS.RESCHEDULED,
-                $push: {
-                    rescheduleHistory: {
-                        oldDate,
-                        newDate,
-                        reason: trimmedReason,
-                        changedBy: authUser.id,
-                        changedAt: new Date(),
-                    },
-                },
-            },
+            updatePayload,
             {},
             authUser.id
         )
@@ -127,8 +86,9 @@ export async function PATCH(
             )
         }
 
-        // Timeline entry on the parent entity (lead / client / project).
-        const friendlyTitle = `Meeting rescheduled to ${newDate.toLocaleString()}`
+        const interactionType = status as typeof INTERACTION_TYPE.MEETING_CANCELLED | typeof INTERACTION_TYPE.MEETING_COMPLETED
+
+        const friendlyTitle = status === MEETING_STATUS.COMPLETED ? "Meeting completed" : "Meeting cancelled"
 
         const interaction = await auditedCreate(
             Interaction,
@@ -136,16 +96,20 @@ export async function PATCH(
             {
                 entityType: meeting.entityType,
                 entityId: meeting.entityId,
-                type: INTERACTION_TYPE.MEETING_RESCHEDULED,
+                type: interactionType,
                 title: friendlyTitle,
-                description: trimmedReason,
+                // For COMPLETED the outcome IS the description (the note).
+                // For MISSED there's no note, leave undefined.
+                description:
+                    status === MEETING_STATUS.COMPLETED
+                        ? trimmedOutcome
+                        : undefined,
                 createdBy: authUser.id,
                 refId: meeting._id,
             },
             authUser.id
         )
 
-        // Bump the parent's lastInteractionAt/Id.
         if (
             meeting.entityType === ENTITY_TYPE.LEAD ||
             meeting.entityType === ENTITY_TYPE.CLIENT ||
@@ -162,20 +126,13 @@ export async function PATCH(
             )
         }
 
-        return NextResponse.json(
-            {
-                success: true,
-                message: "Meeting rescheduled",
-                data: {
-                    id: String(updated._id),
-                    scheduledAt: updated.scheduledAt,
-                    status: updated.status,
-                },
-            },
-            { status: 200 }
-        )
+        return NextResponse.json({
+            success: true,
+            message: status === MEETING_STATUS.COMPLETED ? "Meeting marked as completed" : "Meeting cancelled",
+            data: { id: String(updated._id), status: updated.status, outcome: updated.outcome },
+        }, { status: 200 })
     } catch (error) {
-        console.error("Reschedule Meeting Error:", error)
+        console.error("Meeting Status Update Error:", error)
 
         if (error instanceof AuthError) {
             return NextResponse.json(

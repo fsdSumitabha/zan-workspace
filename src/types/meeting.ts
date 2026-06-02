@@ -1,6 +1,20 @@
 import { MeetingStatus } from "@/constants/meetingStatus"
 import { MeetingType } from "@/constants/meetingTypes"
 import { EntityType } from "@/constants/entityTypes"
+import { UserRole } from "@/constants/userRoles"
+
+/**
+ * Subset of User fields exposed when `attendees` is populated by the
+ * meetings GET endpoint (see `users/picker/route.ts` for the matching
+ * selector used by the meeting-creation form).
+ */
+export interface MeetingAttendee {
+    _id: string
+    name: string
+    email?: string
+    role?: UserRole
+    avatar?: string
+}
 
 export interface Meeting {
     _id: string
@@ -15,7 +29,11 @@ export interface Meeting {
     meetingType: MeetingType
     meetingLink?: string
 
-    attendees: string[]
+    /**
+     * Either raw ObjectId strings (when used as POST payload) or the
+     * populated User subset (when read from the GET endpoint).
+     */
+    attendees: string[] | MeetingAttendee[]
 
     scheduledAt: string
 
