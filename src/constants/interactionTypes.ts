@@ -30,12 +30,12 @@ export const INTERACTION_TYPE_META: Record<
     2020: {
         label: "Meeting Rescheduled",
         icon: "refresh",
-        color: "bg-yellow-500 text-black",
+        color: "border border-yellow-600 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
     },
     2030: {
         label: "Meeting Cancelled",
         icon: "times",
-        color: "bg-red-600 text-white",
+        color: "border border-red-600 bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
     },
     2040: {
         label: "Meeting Missed",
