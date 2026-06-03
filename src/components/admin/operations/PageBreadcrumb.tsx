@@ -27,7 +27,7 @@ export default function PageBreadcrumb() {
     })
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-3 md:px-4 pt-3">
+        <div className="w-full max-w-7xl mx-auto px-3 mt-2 md:px-4 pt-3">
             <div className="flex items-center gap-3 flex-wrap">
                 <button
                     type="button"
