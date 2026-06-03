@@ -1,8 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import EntityCard from "@/components/admin/operations/EntityCard"
+import EntityCardSkeleton from "@/components/admin/operations/skeletons/EntityCardSkeleton"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
+import { handleAuthError } from "@/lib/auth/handleAuthError"
 
 import { toast } from "sonner"
 
@@ -17,6 +20,7 @@ export default function Page() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [accessError, setAccessError] = useState<string | null>(null)
+    const router = useRouter()
 
     useEffect(() => {
         let isMounted = true
@@ -34,13 +38,11 @@ export default function Page() {
 
                 const json = await res.json().catch(() => null)
 
-                if (res.status === 401 || res.status === 403) {
-                    if (isMounted) {
-                        setAccessError(
-                            json?.message ||
-                                "You aren't authorized to perform this action."
-                        )
-                    }
+                if (
+                    handleAuthError(res, json, router, (msg) => {
+                        if (isMounted) setAccessError(msg)
+                    })
+                ) {
                     return
                 }
 
@@ -75,7 +77,7 @@ export default function Page() {
         return () => {
             isMounted = false
         }
-    }, [])
+    }, [router])
 
     if (!loading && accessError) {
         return <AccessDenied message={accessError} hideAction />
@@ -89,11 +91,8 @@ export default function Page() {
                     {/* ------------------- */}
                     {loading && (
                         <div className="space-y-3">
-                            {[...Array(5)].map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="h-24 rounded-lg dark:rounded-xl bg-neutral-200 dark:bg-neutral-800 animate-pulse"
-                                />
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <EntityCardSkeleton key={i} />
                             ))}
                         </div>
                     )}

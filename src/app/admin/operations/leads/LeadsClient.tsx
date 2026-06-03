@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Lead } from "@/types/lead"
 import { LEAD_STATUS_META } from "@/constants/leadStatus"
 import LeadCard from "@/components/admin/operations/LeadCard"
@@ -14,6 +14,7 @@ import Pagination from "@/components/admin/operations/Pagination"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
 import { usePagination } from "@/hooks/usePagination"
 import { useSearch } from "@/hooks/useSearch"
+import { handleAuthError } from "@/lib/auth/handleAuthError"
 
 interface ApiResponse {
     success: boolean
@@ -34,6 +35,7 @@ export default function LeadsClient() {
     const [loading, setLoading] = useState(true)
     const [totalPages, setTotalPages] = useState(1)
     const [accessError, setAccessError] = useState<string | null>(null)
+    const router = useRouter()
     const { page, setPage } = usePagination()
     const search = useSearch()
 
@@ -62,12 +64,12 @@ export default function LeadsClient() {
 
             const json: ApiResponse = await res.json()
 
-            if (res.status === 401 || res.status === 403) {
-                setAccessError(
-                    json?.message ||
-                        "You aren't authorized to perform this action."
-                )
-                setLeads([])
+            if (
+                handleAuthError(res, json, router, (msg) => {
+                    setAccessError(msg)
+                    setLeads([])
+                })
+            ) {
                 return
             }
 
@@ -80,7 +82,7 @@ export default function LeadsClient() {
         } finally {
             setLoading(false)
         }
-    }, [page, search, status, from, to])
+    }, [page, search, status, from, to, router])
 
     useEffect(() => {
         fetchLeads()

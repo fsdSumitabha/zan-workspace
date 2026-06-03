@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
+import mongoose from "mongoose"
 import dbConnect from "@/lib/db/dbConnect"
 import Meeting from "@/models/Meeting"
 import Interaction from "@/models/Interaction"
+import User from "@/models/User"
 import { ENTITY_TYPE, ENTITY_TYPE_META } from "@/constants/entityTypes"
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import Lead from "@/models/Lead"
@@ -74,6 +76,11 @@ export async function GET(req: NextRequest) {
                 .sort({ scheduledAt: -1 })
                 .skip(skip)
                 .limit(limit)
+                .populate({
+                    path: "attendees",
+                    select: "_id name email role avatar",
+                    model: User,
+                })
                 .lean<IMeeting[]>(),
 
             Meeting.countDocuments(query)
@@ -202,7 +209,8 @@ export async function POST(req: NextRequest) {
             meetingType,
             meetingLink,
             scheduledAt,
-            status
+            status,
+            attendees,
         } = body
 
         if (entityType === undefined || entityType === null || !entityId) {
@@ -211,6 +219,19 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             )
         }
+
+        // Normalize attendees: keep only valid ObjectId strings, dedupe.
+        const attendeeIds: string[] = Array.isArray(attendees)
+            ? [
+                  ...new Set(
+                      attendees.filter(
+                          (a: unknown): a is string =>
+                              typeof a === "string" &&
+                              mongoose.Types.ObjectId.isValid(a)
+                      )
+                  ),
+              ]
+            : []
 
         // 1. Create Meeting
         const meeting = await auditedCreate(
@@ -226,6 +247,7 @@ export async function POST(req: NextRequest) {
                 meetingLink,
                 scheduledAt,
                 status,
+                attendees: attendeeIds,
                 createdBy: authUser.id
             },
             authUser.id

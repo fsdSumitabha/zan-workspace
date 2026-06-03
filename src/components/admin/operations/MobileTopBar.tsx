@@ -178,12 +178,19 @@ export default function OperationsMobileTopBar() {
                                 >
                                     Meetings
                                 </Link>
-                                 <Link
+                                <Link
                                     href="/admin/operations/activity-logs"
                                     onClick={() => setMoreOpen(false)}
                                     className="block px-3 py-2 text-sm text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900"
                                 >
                                     Activity Logs
+                                </Link>
+                                <Link
+                                    href="/admin/operations/overall-stats"
+                                    onClick={() => setMoreOpen(false)}
+                                    className="block px-3 py-2 text-sm text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900"
+                                >
+                                    Overall Stats
                                 </Link>
                             </div>
                         )}

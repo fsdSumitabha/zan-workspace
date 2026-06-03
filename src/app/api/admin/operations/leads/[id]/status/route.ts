@@ -16,7 +16,7 @@ export async function PATCH(
 ) {
     try {
         const authUser = await requireRole(req, [10, 60, 45, 70])
-        
+
         await dbConnect()
 
         const { id } = await context.params

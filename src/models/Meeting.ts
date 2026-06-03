@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { MEETING_STATUS } from "@/constants/meetingStatus"
 
 interface IRescheduleEntry {
     oldDate?: Date
@@ -92,8 +93,10 @@ const MeetingSchema = new mongoose.Schema<IMeeting>({
 
     outcome: {
         type: String,
+        // Outcome is mandatory only when the meeting has been marked
+        // completed — captures what was discussed / decided.
         required: function () {
-            return this.status === 1050 // COMPLETED
+            return this.status === MEETING_STATUS.COMPLETED
         }
     },
 

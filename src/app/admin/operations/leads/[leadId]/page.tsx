@@ -1,13 +1,18 @@
 "use client"
 
+import Link from "next/link"
+import { ArrowRight } from "lucide-react"
 import { toast } from "sonner"
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 
 import LeadDetails from "@/components/admin/operations/LeadDetails"
+import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import type { Interaction } from "@/types/interaction"
 
 import type { Lead } from "@/types/lead"
+import type { Client } from "@/types/clients"
+import { CLIENT_STATUS_META } from "@/constants/clientStatus"
 import LeadDetailsSkeleton from "@/components/admin/operations/skeletons/LeadDetailsSkeleton"
 import LeadInteractionActions from "@/components/admin/operations/LeadInteractionActions"
 import InteractionModal from "@/components/admin/operations/InteractionModal/InteractionInlineForm"
@@ -17,12 +22,14 @@ import { ActionTypeSkeleton } from "@/components/admin/operations/skeletons/Acti
 import { InteractionType } from "@/constants/interactionTypes"
 import { useAuth } from "@/contexts/AuthContext"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
+import { handleAuthError } from "@/lib/auth/handleAuthError"
 
 export default function Page() {
     const params = useParams()
     const leadId = params.leadId as string
 
     const [lead, setLead] = useState<Lead | null>(null)
+    const [client, setClient] = useState<Client | null>(null)
     const [loading, setLoading] = useState(true)
     const [accessError, setAccessError] = useState<string | null>(null)
 
@@ -30,6 +37,7 @@ export default function Page() {
     const [interactionLoading, setInteractionLoading] = useState(true)
 
     const { role } = useAuth()
+    const router = useRouter()
 
     useEffect(() => {
         const fetchLead = async () => {
@@ -37,15 +45,15 @@ export default function Page() {
                 const res = await fetch(`/api/admin/operations/leads/${leadId}`)
                 const data = await res.json().catch(() => null)
 
-                if (res.status === 401 || res.status === 403) {
-                    setAccessError(
-                        data?.message ||
-                            "You aren't authorized to perform this action."
-                    )
+                if (handleAuthError(res, data, router, setAccessError)) {
                     return
                 }
 
-                setLead(data?.data ?? null)
+                // API now returns { lead, client } — client is the
+                // converted Client doc (or null) when this lead has
+                // been converted.
+                setLead(data?.data?.lead ?? null)
+                setClient(data?.data?.client ?? null)
             } catch (err) {
                 console.error("Failed to fetch lead", err)
             } finally {
@@ -54,7 +62,7 @@ export default function Page() {
         }
 
         if (leadId) fetchLead()
-    }, [leadId])
+    }, [leadId, router])
 
     const [activeType, setActiveType] = useState<InteractionType | null>(null)
     const [isOpen, setIsOpen] = useState(false)
@@ -106,15 +114,15 @@ export default function Page() {
 
         toast.success("Status updated")
 
-        // refresh lead
+        // refresh lead (and the converted client, if any)
         const updated = await fetch(`/api/admin/operations/leads/${leadId}`)
         const updatedData = await updated.json()
-        setLead(updatedData.data)
+        setLead(updatedData?.data?.lead ?? null)
+        setClient(updatedData?.data?.client ?? null)
 
         await fetchInteractions()
     }
 
-    const router = useRouter()
     const [deleting, setDeleting] = useState(false)
 
     const deleteLead = async () => {
@@ -162,7 +170,7 @@ export default function Page() {
     }
 
     return (
-                    <div className="lg:col-span-2 space-y-4">
+                    <div className="lg:col-span-2 space-y-2">
 
                         {/* Loading */}
                         {loading && (
@@ -190,6 +198,71 @@ export default function Page() {
                         {!loading && lead && (
                             <>
                                 <LeadDetails lead={lead} onStatusChange={handleStatusChange} />
+
+                                {client && (
+                                    <div className="p-5  rounded-b-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+                                        <div className="flex items-center justify-between gap-3 mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <ArrowRight className="w-4 h-4 text-emerald-500" />
+                                                <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                                                    Converted to Client
+                                                </h3>
+                                            </div>
+                                            <Link
+                                                href={`/admin/operations/clients/${client._id}`}
+                                                className="text-xs text-emerald-600 hover:underline"
+                                            >
+                                                View client
+                                            </Link>
+                                        </div>
+
+                                        <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                            <div>
+                                                <dt className="text-[11px] uppercase tracking-wide text-neutral-500">
+                                                    Name
+                                                </dt>
+                                                <dd className="mt-1 text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                                                    {client.name || "—"}
+                                                </dd>
+                                            </div>
+
+                                            <div>
+                                                <dt className="text-[11px] uppercase tracking-wide text-neutral-500">
+                                                    Company
+                                                </dt>
+                                                <dd className="mt-1 text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                                                    {client.company || "—"}
+                                                </dd>
+                                            </div>
+
+                                            <div>
+                                                <dt className="text-[11px] uppercase tracking-wide text-neutral-500">
+                                                    Client status
+                                                </dt>
+                                                <dd className="mt-1">
+                                                    <span
+                                                        className={`inline-block px-2 py-0.5 rounded-full text-xs ${
+                                                            CLIENT_STATUS_META[client.status]?.color ||
+                                                            "bg-neutral-300 text-neutral-800"
+                                                        }`}
+                                                    >
+                                                        {CLIENT_STATUS_META[client.status]?.label || "—"}
+                                                    </span>
+                                                </dd>
+                                            </div>
+
+                                            <div>
+                                                <dt className="text-[11px] uppercase tracking-wide text-neutral-500">
+                                                    Converted
+                                                </dt>
+                                                <dd className="mt-1">
+                                                    <TimeAgo date={client.createdAt} />
+                                                </dd>
+                                            </div>
+                                        </dl>
+                                    </div>
+                                )}
+
                                 <LeadInteractionActions leadId={leadId} onAction={handleOpen} activeType={activeType} />
                             </>
                         )}

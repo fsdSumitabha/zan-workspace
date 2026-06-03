@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Lead from "@/models/Lead"
+import Client from "@/models/Client"
 import { Types } from "mongoose"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
@@ -25,9 +26,19 @@ export async function GET(
             )
         }
 
+        // If this lead has been converted, also return the resulting
+        // client so the UI can render a "Converted to Client" panel
+        // with a link — mirrors what the client GET does for `lead`.
+        const client = lead.convertedClientId
+            ? await Client.findById(lead.convertedClientId)
+            : null
+
         return NextResponse.json({
             success: true,
-            data: lead
+            data: {
+                lead,
+                client: client || null,
+            },
         })
     } catch (error: any) {
         if (error instanceof AuthError) {

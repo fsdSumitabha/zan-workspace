@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
+import Lead from "@/models/Lead"
 import { Types } from "mongoose"
 import { requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
@@ -33,10 +34,14 @@ export async function GET(
         const projects = await Project.find({ clientId: id })
             .sort({ createdAt: -1 }) // optional: latest first
 
+        // Fetch lead linked to this client
+        const lead = await Lead.findById(client.leadId)
+
         return NextResponse.json({
             success: true,
             data: {
                 client,
+                lead: lead || null,
                 projects
             }
         })
