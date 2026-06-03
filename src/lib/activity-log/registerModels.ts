@@ -9,7 +9,6 @@ const MODEL_ENTITY_MAP: Array<{ modelName: string; entityType: EntityType }> = [
     { modelName: "Client", entityType: ENTITY_TYPE.CLIENT },
     { modelName: "Project", entityType: ENTITY_TYPE.PROJECT },
     { modelName: "Interaction", entityType: ENTITY_TYPE.INTERACTION },
-    { modelName: "Meeting", entityType: ENTITY_TYPE.MEETING },
     { modelName: "Document", entityType: ENTITY_TYPE.DOCUMENT },
     { modelName: "Call", entityType: ENTITY_TYPE.CALL },
     { modelName: "Quotation", entityType: ENTITY_TYPE.QUOTATION },

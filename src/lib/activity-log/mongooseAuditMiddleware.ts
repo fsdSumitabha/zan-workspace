@@ -25,18 +25,6 @@ async function safeLog(
     }
 }
 
-/**
- * Mongoose middleware for .save() / .create().
- * For findByIdAndUpdate in API routes use auditedFindByIdAndUpdate() instead.
- *
- * Actor capture strategy:
- *   pre("save") snapshots the audit-context userId onto the document's
- *   $locals. post("save") prefers that snapshot over a fresh ctx read.
- *   This is defensive — across Mongoose's internal middleware hops and
- *   Promise boundaries the AsyncLocalStorage context can occasionally
- *   appear empty in post hooks even though it was set on the request
- *   handler. Capturing in pre keeps the actor on the doc itself.
- */
 export function auditPlugin(
     schema: Schema,
     options: AuditPluginOptions

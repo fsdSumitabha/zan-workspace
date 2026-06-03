@@ -11,7 +11,7 @@ import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
-import { auditedCreate, auditedFindByIdAndUpdate, auditedUpdateByNumericEntityType,} from "@/lib/activity-log"
+import { auditedCreate, auditedFindByIdAndUpdate, auditedUpdateByNumericEntityType, } from "@/lib/activity-log"
 
 export async function PATCH(
     req: NextRequest,
@@ -66,17 +66,18 @@ export async function PATCH(
         }
 
         const updatePayload: Record<string, unknown> = { status }
+
         if (status === MEETING_STATUS.COMPLETED) {
             updatePayload.outcome = trimmedOutcome
         }
 
-        const updated = await auditedFindByIdAndUpdate(
-            Meeting,
-            "MEETING",
+        const updated = await Meeting.findByIdAndUpdate(
             id,
             updatePayload,
-            {},
-            authUser.id
+            {
+                new: true,              // return the updated document
+                runValidators: true     // ensure schema validators run
+            }
         )
 
         if (!updated) {
@@ -92,7 +93,7 @@ export async function PATCH(
 
         const interaction = await auditedCreate(
             Interaction,
-            "INTERACTION",
+            4,
             {
                 entityType: meeting.entityType,
                 entityId: meeting.entityId,
