@@ -1,16 +1,6 @@
-export const ENTITY_TYPES = [
-    "USER",
-    "LEAD",
-    "CLIENT",
-    "PROJECT",
-    "INTERACTION",
-    "CALL",
-    "MEETING",
-    "DOCUMENT",
-    "QUOTATION",
-] as const
+import { EntityType } from "@/constants/entityTypes"
 
-export type EntityType = (typeof ENTITY_TYPES)[number]
+export type { EntityType }
 
 export interface AuditContextStore {
     userId: string | null

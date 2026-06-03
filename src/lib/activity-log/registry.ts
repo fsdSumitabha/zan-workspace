@@ -1,4 +1,4 @@
-import type { EntityType } from "./types"
+import { EntityType } from "@/constants/entityTypes"
 
 export interface EntityAuditConfig {
     /**
@@ -22,12 +22,9 @@ export interface EntityAuditConfig {
  *   - opt into strict-allowlist mode via `trackedFields`.
  */
 export const ENTITY_AUDIT_CONFIG: Partial<Record<EntityType, EntityAuditConfig>> = {
-    USER: {
+    4: {
         // `password` is auto-skipped by the sensitive-name pattern; listed
         // here as an extra belt-and-braces guard. `lastLoginAt` is noisy.
         skipFields: ["password", "lastLoginAt"],
-    },
-    MEETING: {
-        skipFields: ["rescheduleHistory", "external"],
     },
 }

@@ -8,6 +8,7 @@ import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { USER_ROLE_META, UserRole } from "@/constants/userRoles"
 import { auditedCreate } from "@/lib/activity-log"
 import { escapeRegex } from "@/lib/search/escapeRegex"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 import { imagekit } from "@/lib/imagekit/imagekit"
 
@@ -183,7 +184,7 @@ export async function POST(req: NextRequest) {
 
         const user = await auditedCreate(
             User,
-            "USER",
+            ENTITY_TYPE.USER,
             {
                 name,
                 email,

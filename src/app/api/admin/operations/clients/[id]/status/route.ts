@@ -94,7 +94,7 @@ export async function PATCH(
 
         const updatedClient = await auditedFindByIdAndUpdate(
             Client,
-            "CLIENT",
+            1,
             id,
             { status },
             {},
@@ -110,7 +110,7 @@ export async function PATCH(
 
         const interaction = await auditedCreate(
             Interaction,
-            "INTERACTION",
+            4,
             {
                 entityType: 1,
                 entityId: updatedClient._id,
@@ -128,7 +128,7 @@ export async function PATCH(
 
         await auditedFindByIdAndUpdate(
             Client,
-            "CLIENT",
+            2,
             id,
             {
                 lastInteractionAt: new Date(),

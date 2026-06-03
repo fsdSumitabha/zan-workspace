@@ -99,7 +99,7 @@ export async function PATCH(
 
         const lead = await auditedFindByIdAndUpdate(
             Lead,
-            "LEAD",
+            0,
             id,
             { name, email, phone, source },
             {},
@@ -155,7 +155,7 @@ export async function DELETE(
 
         const lead = await auditedFindByIdAndUpdate(
             Lead,
-            "LEAD",
+            0,
             id,
             {
                 deletedAt: new Date(),

@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 
         const interaction = await auditedCreate(
             Interaction,
-            "INTERACTION",
+            4,
             {
                 entityType,
                 entityId,

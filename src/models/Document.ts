@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export interface IDocument extends Document {
     clientId?: mongoose.Types.ObjectId
@@ -44,12 +45,12 @@ const DocumentSchema = new mongoose.Schema<IDocument>({
 
 }, { timestamps: true })
 
-ensureAuditPlugin(DocumentSchema, "DOCUMENT")
+ensureAuditPlugin(DocumentSchema, ENTITY_TYPE.DOCUMENT)
 
 const DocumentModel =
     mongoose.models.Document ||
     mongoose.model<IDocument>("Document", DocumentSchema)
 
-ensureAuditPlugin(DocumentModel.schema, "DOCUMENT")
+ensureAuditPlugin(DocumentModel.schema, ENTITY_TYPE.DOCUMENT)
 
 export default DocumentModel

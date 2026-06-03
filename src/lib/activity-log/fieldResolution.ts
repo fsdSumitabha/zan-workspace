@@ -1,7 +1,7 @@
 import type { Schema } from "mongoose"
 
 import { ENTITY_AUDIT_CONFIG } from "./registry"
-import type { EntityType } from "./types"
+import { EntityType } from "@/constants/entityTypes"
 
 /** Mongoose-managed / framework fields. Never logged regardless of entity. */
 export const GLOBAL_SKIP_FIELDS: ReadonlySet<string> = new Set([

@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose"
 import { CLIENT_STATUS } from "@/constants/clientStatus"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export interface IClient extends Document {
     name: string
@@ -48,14 +49,14 @@ const ClientSchema = new Schema<IClient>(
     { timestamps: true }
 )
 
-ensureAuditPlugin(ClientSchema, "CLIENT")
+ensureAuditPlugin(ClientSchema, ENTITY_TYPE.CLIENT)
 statsInvalidatePlugin(ClientSchema)
 
 const Client =
     mongoose.models.Client ||
     mongoose.model<IClient>("Client", ClientSchema)
 
-ensureAuditPlugin(Client.schema, "CLIENT")
+ensureAuditPlugin(Client.schema, ENTITY_TYPE.CLIENT)
 statsInvalidatePlugin(Client.schema)
 
 export default Client

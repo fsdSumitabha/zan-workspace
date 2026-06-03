@@ -8,6 +8,15 @@ export interface ActivityLogUser {
     role?: number
 }
 
+export interface InteractionDetail {
+    type: number
+    parentEntityType: EntityType | null
+    parentEntityId: string | null
+    parentEntityName: string | null
+    title: string | null
+    description: string | null
+}
+
 export interface ActivityLogRow {
     _id: string
     entityType: EntityType | null
@@ -18,6 +27,12 @@ export interface ActivityLogRow {
     newData: unknown
     user: ActivityLogUser | null
     createdAt: string
+    /**
+     * Populated by the API only when `entityType === INTERACTION`. The
+     * UI uses this to label the row with the interaction type and link
+     * back to the parent Lead/Client/Project.
+     */
+    interaction?: InteractionDetail | null
 }
 
 export interface ActivityLogPagination {

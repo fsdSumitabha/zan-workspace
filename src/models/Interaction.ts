@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export interface IInteraction extends Document {
     entityType: number
@@ -42,12 +43,12 @@ const InteractionSchema = new mongoose.Schema<IInteraction>({
 
 }, { timestamps: true })
 
-ensureAuditPlugin(InteractionSchema, "INTERACTION")
+ensureAuditPlugin(InteractionSchema, ENTITY_TYPE.INTERACTION)
 
 const Interaction =
     mongoose.models.Interaction ||
     mongoose.model<IInteraction>("Interaction", InteractionSchema)
 
-ensureAuditPlugin(Interaction.schema, "INTERACTION")
+ensureAuditPlugin(Interaction.schema, ENTITY_TYPE.INTERACTION)
 
 export default Interaction

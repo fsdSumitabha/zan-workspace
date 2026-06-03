@@ -2,9 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Search, X } from "lucide-react"
-
-import { ENTITY_TYPES, type EntityType } from "@/lib/activity-log/types"
+import { EntityType, ENTITY_TYPE_META } from "@/constants/entityTypes"
 import { EMPTY_FILTERS, type ActivityLogFilterState } from "./types"
+
+// Build the dropdown options once at module load. Object.entries gives
+// us string keys; coerce back to number so the option value matches the
+// filter state shape.
+const ENTITY_TYPE_OPTIONS: Array<{ value: EntityType; label: string }> =
+    Object.entries(ENTITY_TYPE_META).map(([k, v]) => ({
+        value: Number(k) as EntityType,
+        label: v.label,
+    }))
 
 interface UserOption {
     _id: string
@@ -15,12 +23,6 @@ interface UserOption {
 interface UsersApiResponse {
     success: boolean
     data?: UserOption[]
-    message?: string
-}
-
-interface MetaApiResponse {
-    success: boolean
-    data?: { entityTypes?: string[] }
     message?: string
 }
 
@@ -42,12 +44,6 @@ export default function ActivityLogFilters({
 }: Props) {
     const [users, setUsers] = useState<UserOption[]>([])
     const [usersLoading, setUsersLoading] = useState(false)
-    const [entityTypes, setEntityTypes] = useState<string[]>([
-        ...ENTITY_TYPES,
-    ])
-
-    const capitalize = (str: string) =>
-    str.charAt(0) + str.slice(1).toLowerCase();
 
 
     useEffect(() => {
@@ -78,46 +74,21 @@ export default function ActivityLogFilters({
         }
     }, [isAdmin])
 
-    // Discover entity types from real audit data. Falls back to the
-    // ENTITY_TYPES constant (set as initial state) if the request fails
-    // or returns nothing, so the dropdown is never empty.
-    useEffect(() => {
-        let cancelled = false
-
-        const loadMeta = async () => {
-            try {
-                const res = await fetch(
-                    "/api/admin/operations/activity-logs/meta",
-                    { credentials: "include", cache: "no-store" }
-                )
-                const json: MetaApiResponse = await res.json()
-                if (cancelled) return
-                if (
-                    res.ok &&
-                    json.success &&
-                    json.data?.entityTypes &&
-                    json.data.entityTypes.length > 0
-                ) {
-                    setEntityTypes(json.data.entityTypes)
-                }
-            } catch {
-                // keep ENTITY_TYPES fallback
-            }
-        }
-
-        loadMeta()
-        return () => {
-            cancelled = true
-        }
-    }, [])
+    // Note: previously this component fetched a `meta` endpoint that
+    // returned entity-type strings to populate the dropdown. With
+    // entityType now numeric, that endpoint's payload no longer
+    // matches — we drive the dropdown straight from ENTITY_TYPE_META
+    // instead (full set, no extra request needed).
 
     const hasActive = useMemo(() => {
+        // Check entityType against "" explicitly — `0` (LEAD) is a valid
+        // selected value and truthy-check would treat it as "no filter".
         return (
-            value.entityType ||
-            value.userId ||
-            value.from ||
-            value.to ||
-            value.q
+            value.entityType !== "" ||
+            value.userId !== "" ||
+            value.from !== "" ||
+            value.to !== "" ||
+            value.q !== ""
         )
     }, [value])
 
@@ -135,21 +106,20 @@ export default function ActivityLogFilters({
                     </label>
                     <select
                         className={SELECT_BASE}
-                        value={value.entityType}
-                        onChange={(e) =>
+                        value={value.entityType === "" ? "" : String(value.entityType)}
+                        onChange={(e) => {
+                            const v = e.target.value
                             update({
-                                entityType: e.target.value as
-                                    | EntityType
-                                    | "",
+                                entityType: v === "" ? "" : (Number(v) as EntityType),
                             })
-                        }
+                        }}
                     >
                         <option value="">All entities</option>
-                        {entityTypes.map((t) => (
-    <option key={t} value={t}>
-        {capitalize(t)}
-    </option>
-))}
+                        {ENTITY_TYPE_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </option>
+                        ))}
                     </select>
                 </div>
 

@@ -4,9 +4,6 @@ import Interaction from "@/models/Interaction"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import Call from "@/models/Call"
-import Lead from "@/models/Lead"
-import Client from "@/models/Client"
-import Project from "@/models/Project"
 
 import path from "path"
 import { writeFile, mkdir } from "fs/promises"
@@ -69,7 +66,7 @@ export async function POST(req: NextRequest) {
         // 2. Create Call document
         const call = await auditedCreate(
             Call,
-            "CALL",
+            4,
             {
                 entityType,
                 entityId,
@@ -89,7 +86,7 @@ export async function POST(req: NextRequest) {
         // 3. Create Interaction (timeline entry)
         const interaction = await auditedCreate(
             Interaction,
-            "INTERACTION",
+            4,
             {
                 entityType,
                 entityId,

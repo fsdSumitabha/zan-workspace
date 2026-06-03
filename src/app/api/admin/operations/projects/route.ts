@@ -7,6 +7,7 @@ import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
 import { auditedCreate } from "@/lib/activity-log"
 import { escapeRegex } from "@/lib/search/escapeRegex"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export async function GET(req: NextRequest) {
     try {
@@ -127,7 +128,7 @@ export async function POST(req: NextRequest) {
 
         const project = await auditedCreate(
             Project,
-            "PROJECT",
+            ENTITY_TYPE.PROJECT,
             {
                 clientId,
                 title,
