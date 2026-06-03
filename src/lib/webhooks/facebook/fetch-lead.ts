@@ -1,8 +1,8 @@
 import type { GraphApiLeadResponse } from "@/types/facebook/facebook-leads"
 
 export async function fetchFacebookLead(leadgenId: string) {
-    const token = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
-    if (!token) throw new Error("FACEBOOK_PAGE_ACCESS_TOKEN not set")
+    const token = process.env.META_PAGE_TOKEN
+    if (!token) throw new Error("META_PAGE_TOKEN not set")
 
     const url = `https://graph.facebook.com/v21.0/${leadgenId}?access_token=${token}`
     const res = await fetch(url, { cache: "no-store" })

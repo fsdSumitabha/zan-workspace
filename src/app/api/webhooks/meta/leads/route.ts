@@ -15,6 +15,7 @@ export const runtime = "nodejs" // crypto needs Node runtime, not Edge
 
 // 1. Verification handshake — Meta calls this once when you save the URL
 export async function GET(req: NextRequest) {
+    console.log("[fb-webhook] verification request received")
     const { searchParams } = new URL(req.url)
     const mode = searchParams.get("hub.mode")
     const token = searchParams.get("hub.verify_token")
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
 
 // 2. Lead notification — Meta calls this every time a lead is submitted
 export async function POST(req: NextRequest) {
+    console.log("[fb-webhook] lead notification received")
     // a) Read RAW body (needed for signature verification)
     const rawBody = await req.text()
     const signature = req.headers.get("x-hub-signature-256")
@@ -58,6 +60,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function processLeads(payload: FacebookWebhookPayload) {
+    console.log("[fb-webhook] processing payload:", JSON.stringify(payload))
     if (payload.object !== "page") return
 
     await dbConnect()
