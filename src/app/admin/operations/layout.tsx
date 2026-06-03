@@ -7,6 +7,7 @@ import StatsPanel from "@/components/admin/operations/StatsPanel";
 import UpcomingMeetingsPanel from "@/components/admin/operations/UpcomingMeetingsPanel";
 import OperationsMobileNav from "@/components/admin/operations/MobileNav";
 import OperationsMobileTopBar from "@/components/admin/operations/MobileTopBar";
+import PageBreadcrumb from "@/components/admin/operations/PageBreadcrumb";
 
 export const metadata: Metadata = {
     title: "Zan Services CRM",
@@ -43,6 +44,8 @@ export default function OperationsLayout({
                         <div className="hidden md:col-span-4" />
                     </div>
                 </div>
+
+                <PageBreadcrumb />
 
                 {/* Page Content */}
                 <div className="w-full overflow-y-auto max-w-7xl mx-auto px-3 md:px-4 py-5 md:py-6 grid lg:grid-cols-3 gap-6 w-full">
