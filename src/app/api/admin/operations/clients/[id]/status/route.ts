@@ -128,7 +128,7 @@ export async function PATCH(
 
         await auditedFindByIdAndUpdate(
             Client,
-            3,
+            2,
             id,
             {
                 lastInteractionAt: new Date(),

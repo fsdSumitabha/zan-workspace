@@ -125,7 +125,7 @@ export async function PATCH(
         }
 
         // Create interaction (timeline entry)
-        await auditedCreate(
+        const interaction = await auditedCreate(
             Interaction,
             4,
             {
@@ -140,6 +140,18 @@ export async function PATCH(
                 description: remarks,
                 createdBy: authUser.id
             },
+            authUser.id
+        )
+
+        await auditedFindByIdAndUpdate(
+            Lead,
+            0,
+            id,
+            {
+                lastInteractionAt: new Date(),
+                lastInteractionId: interaction._id,
+            },
+            {},
             authUser.id
         )
 
