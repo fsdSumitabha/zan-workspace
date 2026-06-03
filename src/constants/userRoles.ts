@@ -9,6 +9,8 @@ export const USER_ROLE_META = {
     60: { label: "Business Development Executive", description: "Handles leads" },
     70: { label: "Accountant", description: "Manages finances" },
     80: { label: "Technical Support", description: "IT support" },
+
+    90: { label: "System Integration User", description: "Automated user for API-based lead ingestion" }
 } as const
 
 export type UserRole = keyof typeof USER_ROLE_META
