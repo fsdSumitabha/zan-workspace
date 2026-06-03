@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
+import Link from "next/link"
 import {
     Chart as ChartJS,
     ArcElement,
@@ -206,6 +207,7 @@ export default function OverallStatsPanel() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <EntityPieCard
                     label="Leads"
+                    link="/admin/operations/leads"
                     total={data.leads.total}
                     accent="89% converted"
                     accentTone="emerald"
@@ -217,6 +219,7 @@ export default function OverallStatsPanel() {
                 />
                 <EntityPieCard
                     label="Clients"
+                    link="/admin/operations/clients"
                     total={data.clients.total}
                     byStatus={data.clients.byStatus}
                     meta={CLIENT_STATUS_META}
@@ -224,6 +227,7 @@ export default function OverallStatsPanel() {
                 />
                 <EntityPieCard
                     label="Projects"
+                    link="/admin/operations/projects"
                     total={data.projects.total}
                     accent={INR_COMPACT(data.projects.totalBudgetRunning)}
                     accentTone="amber"
@@ -233,6 +237,7 @@ export default function OverallStatsPanel() {
                 />
                 <EntityPieCard
                     label="Meetings"
+                    link="/admin/operations/meetings"
                     total={data.meetings.total}
                     accent={`${data.meetings.upcoming} upcoming`}
                     accentTone="blue"
@@ -324,6 +329,7 @@ function EntityPieCard({
     chartType,
     centerLine1,
     centerLine2,
+    link,
 }: {
     label: string
     total: number
@@ -334,6 +340,7 @@ function EntityPieCard({
     chartType: "pie" | "doughnut"
     centerLine1?: string
     centerLine2?: string
+    link?: string
 }) {
     const entries = Object.entries(byStatus).filter(([, v]) => v > 0)
 
@@ -342,6 +349,7 @@ function EntityPieCard({
             <div className="rounded-lg dark:rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 shadow-sm">
                 <CardHeader
                     label={label}
+                    link={link}
                     total={total}
                     accent={accent}
                     accentTone={accentTone}
@@ -395,6 +403,7 @@ function EntityPieCard({
         <div className="rounded-lg dark:rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 shadow-sm">
             <CardHeader
                 label={label}
+                link={link}
                 total={total}
                 accent={accent}
                 accentTone={accentTone}
@@ -472,18 +481,29 @@ function CardHeader({
     total,
     accent,
     accentTone,
+    link,
 }: {
     label: string
     total: number
     accent?: string
     accentTone?: keyof typeof TONE
+    link?: string
 }) {
     return (
         <div className="flex items-baseline justify-between gap-3">
             <div className="flex items-baseline gap-2">
-                <h3 className="text-base font-semibold text-neutral-900 dark:text-white">
-                    {label}
-                </h3>
+                {link ? (
+                    <Link
+                        href={link}
+                        className="text-base font-semibold text-neutral-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition"
+                    >
+                        {label}
+                    </Link>
+                ) : (
+                    <h3 className="text-base font-semibold text-neutral-900 dark:text-white">
+                        {label}
+                    </h3>
+                )}
                 <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
                     {total}
                 </span>
