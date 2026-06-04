@@ -106,7 +106,7 @@ export async function PATCH(
 
         const client = await auditedFindByIdAndUpdate(
             Client,
-            "CLIENT",
+            2,
             id,
             { name, company, email, phone },
             {},

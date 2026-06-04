@@ -4,11 +4,12 @@ import { getAuditContext } from "./auditContext"
 import { logEntityChanges } from "./logEntityChanges"
 import { resolveTrackedFields } from "./fieldResolution"
 import { toAuditPlain } from "./normalize"
-import type { EntityType } from "./types"
+import { ENTITY_TYPE, EntityType } from "@/constants/entityTypes"
 import { NUMERIC_ENTITY_TO_AUDIT } from "./entityTypeMap"
 import Lead from "@/models/Lead"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
+import Interaction from "@/models/Interaction"
 
 type Id = string | Types.ObjectId
 
@@ -16,6 +17,7 @@ const MODEL_BY_AUDIT_TYPE = {
     LEAD: Lead,
     CLIENT: Client,
     PROJECT: Project,
+    Interaction: Interaction,
 } as const
 
 async function writeAuditLog(
@@ -118,12 +120,14 @@ export async function auditedUpdateByNumericEntityType(
     update: Record<string, unknown>,
     actorId: string
 ): Promise<void> {
-    const auditType = NUMERIC_ENTITY_TO_AUDIT[entityTypeNum]
-    if (!auditType) return
+    const auditKey = NUMERIC_ENTITY_TO_AUDIT[entityTypeNum]
+    if (!auditKey) return
 
-    const model = MODEL_BY_AUDIT_TYPE[auditType]
+    const model = MODEL_BY_AUDIT_TYPE[auditKey]
+    const auditType = ENTITY_TYPE[auditKey] // numeric EntityType (0|1|2|3)
+
     await auditedFindByIdAndUpdate(
-        model,
+        model as Model<Document>,
         auditType,
         entityId,
         update,

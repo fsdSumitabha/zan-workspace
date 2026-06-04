@@ -236,7 +236,7 @@ export async function POST(req: NextRequest) {
         // 1. Create Meeting
         const meeting = await auditedCreate(
             Meeting,
-            "MEETING",
+            ENTITY_TYPE.MEETING,
             {
                 entityType,
                 entityId,
@@ -256,7 +256,7 @@ export async function POST(req: NextRequest) {
         // 2. Create Interaction (timeline entry)
         const interaction = await auditedCreate(
             Interaction,
-            "INTERACTION",
+            ENTITY_TYPE.INTERACTION,
             {
                 entityType,
                 entityId,

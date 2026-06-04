@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose"
-import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
-import { MEETING_STATUS } from "@/constants/meetingStatus"
+import { MEETING_STATUS, MeetingStatus } from "@/constants/meetingStatus"
+import { MeetingType } from "@/constants/meetingTypes"
 
 interface IRescheduleEntry {
     oldDate?: Date
@@ -17,11 +17,11 @@ export interface IMeeting extends Document {
     title: string
     agenda: string
     description?: string
-    meetingType?: number
+    meetingType?: MeetingType
     meetingLink?: string
     attendees?: mongoose.Types.ObjectId[]
     scheduledAt: Date
-    status: number
+    status: MeetingStatus
     outcome?: string
     rescheduleHistory?: IRescheduleEntry[]
     external?: {
@@ -92,8 +92,6 @@ const MeetingSchema = new mongoose.Schema<IMeeting>({
 
     outcome: {
         type: String,
-        // Outcome is mandatory only when the meeting has been marked
-        // completed — captures what was discussed / decided.
         required: function () {
             return this.status === MEETING_STATUS.COMPLETED
         }
@@ -128,14 +126,12 @@ const MeetingSchema = new mongoose.Schema<IMeeting>({
 
 }, { timestamps: true })
 
-ensureAuditPlugin(MeetingSchema, "MEETING")
 statsInvalidatePlugin(MeetingSchema)
 
 const Meeting =
     mongoose.models.Meeting ||
     mongoose.model<IMeeting>("Meeting", MeetingSchema)
 
-ensureAuditPlugin(Meeting.schema, "MEETING")
 statsInvalidatePlugin(Meeting.schema)
 
 export default Meeting

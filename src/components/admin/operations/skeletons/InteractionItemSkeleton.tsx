@@ -12,7 +12,7 @@ export const InteractionItemSkeleton = () => {
                     <div className="flex items-center gap-2 flex-wrap">
                         <div className="h-4 w-32 bg-neutral-300 dark:bg-neutral-700 rounded" />
                         <div className="h-4 w-16 bg-neutral-300 dark:bg-neutral-700 rounded-full" />
-                    </div>``
+                    </div>
 
                     <div className="flex items-center gap-2">
                         <div className="w-3 h-3 bg-neutral-300 dark:bg-neutral-700 rounded" />

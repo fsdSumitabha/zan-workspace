@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
         // 1. Create Interaction (timeline entry)
         const note = await auditedCreate(
             Interaction,
-            "INTERACTION",
+            ENTITY_TYPE.INTERACTION,
             {
                 entityType,
                 entityId,

@@ -12,6 +12,7 @@ async function main() {
     const Lead = (await import("@/models/Lead")).default
     const ActivityLog = (await import("@/models/ActivityLog")).default
     const mongoose = (await import("mongoose")).default
+    const { ENTITY_TYPE } = await import("@/constants/entityTypes")
 
     await dbConnect()
     console.log("DB:", mongoose.connection.db?.databaseName)
@@ -29,7 +30,7 @@ async function main() {
     const beforeCount = await ActivityLog.countDocuments()
     const newName = `${lead.name} t${Date.now() % 10000}`
 
-    await auditedFindByIdAndUpdate(Lead, "LEAD", LEAD_ID, {
+    await auditedFindByIdAndUpdate(Lead, ENTITY_TYPE.LEAD, LEAD_ID, {
         name: newName,
         email: lead.email,
         phone: lead.phone,

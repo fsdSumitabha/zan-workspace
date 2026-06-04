@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
         // 2. Create quotation
         const quotation = await auditedCreate(
             Quotation,
-            "QUOTATION",
+            ENTITY_TYPE.QUOTATION,
             {
                 entityType,
                 entityId,
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
         // 3. Create interaction
         const interaction = await auditedCreate(
             Interaction,
-            "INTERACTION",
+            ENTITY_TYPE.INTERACTION,
             {
                 entityType,
                 entityId,

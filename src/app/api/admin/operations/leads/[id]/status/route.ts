@@ -16,7 +16,7 @@ export async function PATCH(
 ) {
     try {
         const authUser = await requireRole(req, [10, 60, 45, 70])
-        
+
         await dbConnect()
 
         const { id } = await context.params
@@ -110,7 +110,7 @@ export async function PATCH(
 
         const updatedLead = await auditedFindByIdAndUpdate(
             Lead,
-            "LEAD",
+            0,
             id,
             { status },
             {},
@@ -125,9 +125,9 @@ export async function PATCH(
         }
 
         // Create interaction (timeline entry)
-        await auditedCreate(
+        const interaction = await auditedCreate(
             Interaction,
-            "INTERACTION",
+            4,
             {
                 entityType: 0,
                 entityId: lead._id,
@@ -140,6 +140,18 @@ export async function PATCH(
                 description: remarks,
                 createdBy: authUser.id
             },
+            authUser.id
+        )
+
+        await auditedFindByIdAndUpdate(
+            Lead,
+            0,
+            id,
+            {
+                lastInteractionAt: new Date(),
+                lastInteractionId: interaction._id,
+            },
+            {},
             authUser.id
         )
 
