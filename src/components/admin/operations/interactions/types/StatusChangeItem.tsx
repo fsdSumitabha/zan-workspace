@@ -5,6 +5,7 @@ import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { INTERACTION_TYPE_META } from "@/constants/interactionTypes"
 import * as Icons from "lucide-react"
 import { STATUS_META_BY_ENTITY } from "@/constants/statusMetaByEntity"
+import Tooltip from "@/components/admin/operations/tooltip/Tooltip"
 
 export default function StatusChangeItem({ entityType, item }: { entityType: number, item: any }) {
     let parsed: {
@@ -22,7 +23,7 @@ export default function StatusChangeItem({ entityType, item }: { entityType: num
     const statusMeta = STATUS_META_BY_ENTITY[entityType as keyof typeof STATUS_META_BY_ENTITY]
 
     const fromMeta = parsed?.from !== undefined ? statusMeta?.[parsed.from] : null
-console.log("Parsed status change item:", { parsed, fromMeta, toMeta: parsed?.to !== undefined ? statusMeta?.[parsed.to] : null })
+
     const toMeta = parsed?.to !== undefined ? statusMeta?.[parsed.to] : null
 
     return (
@@ -89,6 +90,9 @@ console.log("Parsed status change item:", { parsed, fromMeta, toMeta: parsed?.to
                     </div>
                 )}
             </div>
+            {item.createdBy && (
+                <Tooltip content={`Created by ${item.createdBy.name} `} />
+            )}
         </div>
     )
 }
