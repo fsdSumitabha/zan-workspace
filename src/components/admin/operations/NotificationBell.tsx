@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Bell, Check, CheckCheck } from "lucide-react"
 import TimeAgo from "./dayjs/TimeAgo"
+import NotificationBadge from "./NotificationBadge"
 
 interface NotificationRow {
     _id: string
@@ -11,6 +12,8 @@ interface NotificationRow {
     title: string
     body?: string
     url?: string
+    badge?: string
+    imageUrl?: string
     seenAt: string | null
     readAt: string | null
     createdAt: string
@@ -36,7 +39,7 @@ export default function NotificationBell() {
     const load = async () => {
         try {
             setLoading(true)
-            const res = await fetch("/api/notifications?limit=20", {
+            const res = await fetch("/api/notifications?limit=4", {
                 credentials: "include",
                 cache: "no-store",
             })
@@ -112,11 +115,18 @@ export default function NotificationBell() {
             </button>
 
             {open && (
-                <div className="absolute right-0 mt-2 w-80 max-w-[90vw] rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-lg overflow-hidden z-50">
+                <div className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-1rem)] rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-lg overflow-hidden z-50">
                     <div className="px-3 py-2 flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-                            Notifications
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                                Notifications
+                            </span>
+                            {unread > 0 && (
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
+                                    {unread > 99 ? "99+" : unread} unread
+                                </span>
+                            )}
+                        </div>
                         {unread > 0 && (
                             <button type="button" onClick={markAllRead} className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1">
                                 <CheckCheck className="w-3 h-3" />
@@ -141,11 +151,12 @@ export default function NotificationBell() {
 
                             return (
                                 <Wrapper key={row._id}>
-                                    <div className={`px-3 py-2.5 flex gap-2 cursor-pointer border-l-2 transition ${
+                                    <div className={`px-3 py-2.5 flex gap-2.5 cursor-pointer border-l-2 transition ${
                                         isUnread
                                             ? "border-blue-500 bg-blue-50/60 dark:bg-blue-500/5 hover:bg-blue-50 dark:hover:bg-blue-500/10"
                                             : "border-transparent hover:bg-neutral-50 dark:hover:bg-neutral-900"
                                     }`}>
+                                        <NotificationBadge badge={row.badge} size="sm" />
                                         <div className="flex-1 min-w-0">
                                             <div className={`text-xs truncate ${isUnread ? "font-semibold text-neutral-900 dark:text-white" : "font-medium text-neutral-700 dark:text-neutral-300"}`}>
                                                 {row.title}

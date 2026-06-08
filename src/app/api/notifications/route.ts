@@ -25,18 +25,22 @@ export async function GET(req: NextRequest) {
             filter._id = { $lt: new mongoose.Types.ObjectId(before) }
         }
 
-        const [rows, unseen, unread] = await Promise.all([
+        const totalFilter: Record<string, unknown> = { recipient: userId }
+        if (onlyUnread) totalFilter.readAt = null
+
+        const [rows, unseen, unread, total] = await Promise.all([
             Notification.find(filter)
                 .sort({ _id: -1 })
                 .limit(limit)
                 .lean(),
             Notification.countDocuments({ recipient: userId, seenAt: null }),
             Notification.countDocuments({ recipient: userId, readAt: null }),
+            Notification.countDocuments(totalFilter),
         ])
 
         const nextCursor = rows.length === limit ? String(rows[rows.length - 1]._id) : null
 
-        return NextResponse.json({ success: true, data: rows, unseen, unread, nextCursor })
+        return NextResponse.json({ success: true, data: rows, unseen, unread, total, nextCursor })
     } catch (err) {
         if (err instanceof AuthError) {
             return NextResponse.json({ success: false, message: err.message }, { status: err.statusCode })

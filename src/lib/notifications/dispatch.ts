@@ -23,7 +23,7 @@ export async function notifyEvent(input: EmitInput): Promise<void> {
             console.warn(`[notifications] type=${input.type} resolved ${recipients.length} recipients; truncating to ${MAX_RECIPIENTS}`)
         }
 
-        const { title, body, url } = renderMessage(input.type, input.payload, input.actor)
+        const { title, body, url, badge, imageUrl } = renderMessage(input.type, input.payload, input.actor)
 
         const actorOid = input.actor?.id ? new mongoose.Types.ObjectId(input.actor.id) : null
         const entityOid = typeof input.entityId === "string"
@@ -39,6 +39,8 @@ export async function notifyEvent(input: EmitInput): Promise<void> {
             title,
             body,
             url,
+            badge,
+            imageUrl,
             channels: input.channels ?? [NOTIFICATION_CHANNEL.IN_APP],
             meta: input.meta,
         }))

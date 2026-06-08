@@ -26,7 +26,8 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
                         seenAt: { $ifNull: ["$seenAt", now] },
                     },
                 },
-            ]
+            ],
+            { updatePipeline: true }
         )
 
         if (result.matchedCount === 0) {

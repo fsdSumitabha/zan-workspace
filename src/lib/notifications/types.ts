@@ -11,6 +11,8 @@ export interface RenderedMessage {
     title: string
     body?: string
     url?: string
+    badge: string
+    imageUrl?: string
 }
 
 export interface EmitInput {

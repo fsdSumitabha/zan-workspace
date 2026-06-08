@@ -21,7 +21,8 @@ export async function PATCH(req: NextRequest) {
                         seenAt: { $ifNull: ["$seenAt", now] },
                     },
                 },
-            ]
+            ],
+            { updatePipeline: true }
         )
 
         return NextResponse.json({ success: true, updated: result.modifiedCount ?? 0 })

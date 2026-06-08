@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
             entityType,
             entityId,
             actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
-            payload: { parentUrl: parentUrlFor(entityType, String(entityId)), parentName, contactPersonName, title },
+            payload: { parentUrl: parentUrlFor(entityType, String(entityId)), parentName, contactPersonName, title, status, duration },
         })
 
         return NextResponse.json(
