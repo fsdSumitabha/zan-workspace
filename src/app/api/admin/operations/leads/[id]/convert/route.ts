@@ -9,6 +9,9 @@ import { LEAD_STATUS } from "@/constants/leadStatus"
 import { CLIENT_STATUS } from "@/constants/clientStatus"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
+import { notifyEvent } from "@/lib/notifications/dispatch"
+import { EVENT_CODE } from "@/constants/eventTypes"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export async function POST(
     req: NextRequest,
@@ -84,6 +87,17 @@ export async function POST(
         await lead.save({ session })
 
         await session.commitTransaction()
+
+        await notifyEvent({
+            type: EVENT_CODE.LEAD_CONVERTED,
+            entityType: ENTITY_TYPE.CLIENT,
+            entityId: createdClient._id,
+            actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
+            payload: {
+                lead: { _id: lead._id, name: lead.name },
+                client: { _id: createdClient._id, name: createdClient.name },
+            },
+        })
 
         return NextResponse.json(
             { success: true, data: { clientId: createdClient._id } },

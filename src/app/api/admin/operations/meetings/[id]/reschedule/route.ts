@@ -8,6 +8,9 @@ import Interaction from "@/models/Interaction"
 import { MEETING_STATUS } from "@/constants/meetingStatus"
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { notifyEvent } from "@/lib/notifications/dispatch"
+import { EVENT_CODE } from "@/constants/eventTypes"
+import { resolveParentName } from "@/lib/notifications/resolveParentName"
 
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
@@ -161,6 +164,16 @@ export async function PATCH(
                 authUser.id
             )
         }
+
+        const parentName = await resolveParentName(meeting.entityType, String(meeting.entityId))
+        await notifyEvent({
+            type: EVENT_CODE.MEETING_RESCHEDULED,
+            entityType: ENTITY_TYPE.MEETING,
+            entityId: meeting._id,
+            actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
+            payload: { meeting: { _id: meeting._id, title: meeting.title, entityType: meeting.entityType, entityId: meeting.entityId, scheduledAt: newDate }, parentName, oldDate, reason: trimmedReason },
+            extraRecipients: Array.isArray(meeting.attendees) ? meeting.attendees.map((a: any) => String(a)) : undefined,
+        })
 
         return NextResponse.json(
             {

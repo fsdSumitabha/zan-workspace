@@ -8,6 +8,8 @@ import { requireRole } from "@/lib/auth/requireRole"
 import { auditedCreate } from "@/lib/activity-log"
 import { escapeRegex } from "@/lib/search/escapeRegex"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { notifyEvent } from "@/lib/notifications/dispatch"
+import { EVENT_CODE } from "@/constants/eventTypes"
 
 export async function GET(req: NextRequest) {
     try {
@@ -140,6 +142,14 @@ export async function POST(req: NextRequest) {
             },
             authUser.id
         )
+
+        await notifyEvent({
+            type: EVENT_CODE.PROJECT_CREATED,
+            entityType: ENTITY_TYPE.PROJECT,
+            entityId: project._id,
+            actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
+            payload: { project: { _id: project._id, title: project.title } },
+        })
 
         return NextResponse.json(
             { success: true, data: project },

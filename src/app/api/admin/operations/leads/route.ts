@@ -7,6 +7,9 @@ import { requireRole } from "@/lib/auth/requireRole"
 import { auditedCreate } from "@/lib/activity-log"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { escapeRegex } from "@/lib/search/escapeRegex"
+import { notifyEvent } from "@/lib/notifications/dispatch"
+import { EVENT_CODE } from "@/constants/eventTypes"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export async function GET(req: NextRequest) {
     try {
@@ -147,6 +150,14 @@ export async function POST(req: NextRequest) {
             },
             authUser.id
         )
+
+        await notifyEvent({
+            type: EVENT_CODE.LEAD_CREATED,
+            entityType: ENTITY_TYPE.LEAD,
+            entityId: lead._id,
+            actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
+            payload: { lead: { _id: lead._id, name: lead.name, source: lead.source } },
+        })
 
         return NextResponse.json(
             {
