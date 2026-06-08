@@ -4,6 +4,7 @@ import * as Icons from "lucide-react"
 import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { INTERACTION_TYPE_META } from "@/constants/interactionTypes"
+import Tooltip from "@/components/admin/operations/tooltip/Tooltip"
 
 export default function QuotationItem({ item }: { item: any }) {
 
@@ -83,6 +84,10 @@ export default function QuotationItem({ item }: { item: any }) {
                     </div>
                 )}
             </div>
+
+            {item.createdBy && (
+                <Tooltip content={`Created by ${item.createdBy.name} `} />
+            )}
         </div>
     )
 }

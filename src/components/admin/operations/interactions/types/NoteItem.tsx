@@ -4,6 +4,7 @@ import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { INTERACTION_TYPE_META } from "@/constants/interactionTypes"
 import * as Icons from "lucide-react"
+import Tooltip from "@/components/admin/operations/tooltip/Tooltip"
 
 export default function NoteItem({ item }: { item: any }) {
     const Icon =
@@ -57,6 +58,10 @@ export default function NoteItem({ item }: { item: any }) {
                     </div>
                 )}
             </div>
+
+            {item.createdBy && (
+                <Tooltip content={`Created by ${item.createdBy.name} `} />
+            )}
         </div>
     )
 }

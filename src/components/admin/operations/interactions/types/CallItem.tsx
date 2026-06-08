@@ -6,7 +6,7 @@ import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { INTERACTION_TYPE_META } from "@/constants/interactionTypes"
 import { CALL_DIRECTION_META, CALL_STATUS_META } from "@/constants/callStatus"
-
+import Tooltip from "@/components/admin/operations/tooltip/Tooltip"
 
 export default function CallItem({ item }: { item: any }) {
 
@@ -148,6 +148,10 @@ export default function CallItem({ item }: { item: any }) {
                     </div>
                 )}
             </div>
+
+            {item.createdBy && (
+                <Tooltip content={`Created by ${item.createdBy.name} `} />
+            )}
         </div>
     )
 }
