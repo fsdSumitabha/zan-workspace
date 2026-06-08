@@ -1,5 +1,6 @@
 import type { Types } from "mongoose"
 import type { EventType } from "@/constants/eventTypes"
+import { NotificationChannel } from "@/constants/notificationChannels"
 
 export interface NotificationActor {
     id: string
@@ -22,6 +23,6 @@ export interface EmitInput {
     actor: NotificationActor | null
     payload: Record<string, unknown>
     meta?: Record<string, unknown>
-    channels?: number[]
+    channels?: NotificationChannel[]
     extraRecipients?: string[]
 }

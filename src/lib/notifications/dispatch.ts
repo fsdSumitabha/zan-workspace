@@ -15,7 +15,7 @@ export async function notifyEvent(input: EmitInput): Promise<void> {
             extraRecipients: input.extraRecipients,
         })
 
-        console.log(`[notifications] type=${input.type} actor=${input.actor?.id ?? "system"} recipients=${recipients.length}`)
+        // console.log(`[notifications] type=${input.type} actor=${input.actor?.id ?? "system"} recipients=${recipients.length}`)
 
         if (recipients.length === 0) return
 
@@ -41,7 +41,7 @@ export async function notifyEvent(input: EmitInput): Promise<void> {
             url,
             badge,
             imageUrl,
-            channels: input.channels ?? [NOTIFICATION_CHANNEL.IN_APP],
+            channels: input.channels ?? [NOTIFICATION_CHANNEL[1]],
             meta: input.meta,
         }))
 
