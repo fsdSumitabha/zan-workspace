@@ -36,7 +36,7 @@ export default function NotificationBell() {
     const [loading, setLoading] = useState(false)
     const wrapRef = useRef<HTMLDivElement>(null)
 
-    const load = async () => {
+    const fetchNotifications = async () => {
         try {
             setLoading(true)
             const res = await fetch("/api/notifications?limit=4", {
@@ -57,8 +57,8 @@ export default function NotificationBell() {
     }
 
     useEffect(() => {
-        load()
-        const t = setInterval(load, POLL_INTERVAL_MS)
+        fetchNotifications()
+        const t = setInterval(fetchNotifications, POLL_INTERVAL_MS)
         return () => clearInterval(t)
     }, [])
 
@@ -79,23 +79,72 @@ export default function NotificationBell() {
     const handleOpen = async () => {
         const next = !open
         setOpen(next)
+
         if (next && unseen > 0) {
             setUnseen(0)
-            fetch("/api/notifications/seen", { method: "PATCH", credentials: "include" }).catch(() => {})
+
+            try {
+                await fetch("/api/notifications/seen", {
+                    method: "PATCH",
+                    credentials: "include",
+                })
+            } catch (error) {
+                console.error(error)
+            }
         }
     }
 
     const markOneRead = async (id: string) => {
-        setRows((prev) => prev.map((r) => r._id === id ? { ...r, readAt: new Date().toISOString() } : r))
+        setRows((prev) =>
+            prev.map((r) =>
+                r._id === id
+                    ? { ...r, readAt: new Date().toISOString() }
+                    : r
+            )
+        )
+
         setUnread((u) => Math.max(0, u - 1))
-        fetch(`/api/notifications/${id}/read`, { method: "PATCH", credentials: "include" }).catch(() => {})
+
+        try {
+            const res = await fetch(`/api/notifications/${id}/read`, {
+                method: "PATCH",
+                credentials: "include",
+            })
+
+            if (!res.ok) {
+                throw new Error("Failed to mark notification as read")
+            }
+        } catch (error) {
+            console.error(error)
+            fetchNotifications()
+        }
     }
 
     const markAllRead = async () => {
         const now = new Date().toISOString()
-        setRows((prev) => prev.map((r) => ({ ...r, readAt: r.readAt ?? now })))
+
+        setRows((prev) =>
+            prev.map((r) => ({
+                ...r,
+                readAt: r.readAt ?? now,
+            }))
+        )
+
         setUnread(0)
-        fetch("/api/notifications/read-all", { method: "PATCH", credentials: "include" }).catch(() => {})
+
+        try {
+            const res = await fetch("/api/notifications/read-all", {
+                method: "PATCH",
+                credentials: "include",
+            })
+
+            if (!res.ok) {
+                throw new Error("Failed to mark all notifications as read")
+            }
+        } catch (error) {
+            console.error(error)
+            fetchNotifications()
+        }
     }
 
     return (
