@@ -12,7 +12,7 @@ import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedCreate, auditedFindByIdAndUpdate, auditedUpdateByNumericEntityType, } from "@/lib/activity-log"
-import { notifyEvent } from "@/lib/notifications/dispatch"
+import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { resolveParentName } from "@/lib/notifications/resolveParentName"
 
@@ -131,7 +131,7 @@ export async function PATCH(
         }
 
         const parentName = await resolveParentName(meeting.entityType, String(meeting.entityId))
-        await notifyEvent({
+        await emitNotification({
             type: status === MEETING_STATUS.COMPLETED ? EVENT_CODE.MEETING_COMPLETED : EVENT_CODE.MEETING_CANCELLED,
             entityType: ENTITY_TYPE.MEETING,
             entityId: meeting._id,

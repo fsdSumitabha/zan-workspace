@@ -8,7 +8,7 @@ import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-log"
 import { imagekit } from "@/lib/imagekit/imagekit"
-import { notifyEvent } from "@/lib/notifications/dispatch"
+import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { resolveParentName } from "@/lib/notifications/resolveParentName"
 
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
                 )
         }
         const parentName = await resolveParentName(entityType, String(entityId))
-        await notifyEvent({
+        await emitNotification({
             type: EVENT_CODE.QUOTATION_SENT,
             entityType,
             entityId,

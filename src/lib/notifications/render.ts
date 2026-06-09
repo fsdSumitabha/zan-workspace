@@ -203,7 +203,7 @@ export function renderMessage(
                 ? `${amountStr} · valid for ${validity} days`
                 : (amountStr ?? payload.title ?? undefined)
             return {
-                badge: "receipt-rupee",
+                badge: "indian-rupee",
                 title: clip(`Quotation sent to ${who}`, 60),
                 body,
                 url: payload.parentUrl,

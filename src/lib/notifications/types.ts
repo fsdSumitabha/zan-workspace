@@ -25,3 +25,15 @@ export interface EmitInput {
     channels?: number[]
     extraRecipients?: string[]
 }
+
+export interface DispatchContext {
+    type: EventType
+    entityType: number
+    entityId: Types.ObjectId
+    actor: NotificationActor | null
+    actorOid: Types.ObjectId | null
+    recipients: Types.ObjectId[]
+    message: RenderedMessage
+    channels: number[]
+    meta?: Record<string, unknown>
+}

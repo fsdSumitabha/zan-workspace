@@ -8,7 +8,7 @@ import { requireRole } from "@/lib/auth/requireRole"
 import { auditedCreate } from "@/lib/activity-log"
 import { escapeRegex } from "@/lib/search/escapeRegex"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
-import { notifyEvent } from "@/lib/notifications/dispatch"
+import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { resolveParentName } from "@/lib/notifications/resolveParentName"
 
@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
         )
 
         const clientName = await resolveParentName(ENTITY_TYPE.CLIENT, String(clientId))
-        await notifyEvent({
+        await emitNotification({
             type: EVENT_CODE.PROJECT_CREATED,
             entityType: ENTITY_TYPE.PROJECT,
             entityId: project._id,

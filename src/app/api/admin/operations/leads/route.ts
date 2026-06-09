@@ -7,7 +7,7 @@ import { requireRole } from "@/lib/auth/requireRole"
 import { auditedCreate } from "@/lib/activity-log"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { escapeRegex } from "@/lib/search/escapeRegex"
-import { notifyEvent } from "@/lib/notifications/dispatch"
+import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
 
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
             authUser.id
         )
 
-        await notifyEvent({
+        await emitNotification({
             type: EVENT_CODE.LEAD_CREATED,
             entityType: ENTITY_TYPE.LEAD,
             entityId: lead._id,

@@ -12,7 +12,7 @@ import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedCreate, auditedFindByIdAndUpdate } from "@/lib/activity-log"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
-import { notifyEvent } from "@/lib/notifications/dispatch"
+import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 
 export async function PATCH(
@@ -141,7 +141,7 @@ export async function PATCH(
             authUser.id
         )
 
-        await notifyEvent({
+        await emitNotification({
             type: EVENT_CODE.PROJECT_STATUS_CHANGED,
             entityType: ENTITY_TYPE.PROJECT,
             entityId: project._id,

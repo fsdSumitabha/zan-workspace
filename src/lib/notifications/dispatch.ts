@@ -1,52 +1,22 @@
-import mongoose from "mongoose"
-import Notification from "@/models/Notification"
 import { NOTIFICATION_CHANNEL } from "@/constants/notificationChannels"
-import { resolveRecipients } from "./resolveRecipients"
-import { renderMessage } from "./render"
-import type { EmitInput } from "./types"
+import { dispatchInApp } from "./channels/inApp"
+import { dispatchEmail } from "./channels/email"
+import { dispatchPush } from "./channels/push"
+import { dispatchSms } from "./channels/sms"
+import type { DispatchContext } from "./types"
 
-const MAX_RECIPIENTS = 500
+export async function dispatchNotification(ctx: DispatchContext): Promise<void> {
+    const tasks: { name: string; run: () => Promise<void> }[] = []
 
-export async function notifyEvent(input: EmitInput): Promise<void> {
-    try {
-        const recipients = await resolveRecipients({
-            type: input.type,
-            actorId: input.actor?.id ?? null,
-            extraRecipients: input.extraRecipients,
-        })
+    if (ctx.channels.includes(NOTIFICATION_CHANNEL.IN_APP)) tasks.push({ name: "in-app", run: () => dispatchInApp(ctx) })
+    if (ctx.channels.includes(NOTIFICATION_CHANNEL.EMAIL))  tasks.push({ name: "email",  run: () => dispatchEmail(ctx) })
+    if (ctx.channels.includes(NOTIFICATION_CHANNEL.PUSH))   tasks.push({ name: "push",   run: () => dispatchPush(ctx) })
+    if (ctx.channels.includes(NOTIFICATION_CHANNEL.SMS))    tasks.push({ name: "sms",    run: () => dispatchSms(ctx) })
 
-        console.log(`[notifications] type=${input.type} actor=${input.actor?.id ?? "system"} recipients=${recipients.length}`)
-
-        if (recipients.length === 0) return
-
-        if (recipients.length > MAX_RECIPIENTS) {
-            console.warn(`[notifications] type=${input.type} resolved ${recipients.length} recipients; truncating to ${MAX_RECIPIENTS}`)
+    const results = await Promise.allSettled(tasks.map((t) => t.run()))
+    results.forEach((r, i) => {
+        if (r.status === "rejected") {
+            console.error(`[notifications] channel="${tasks[i].name}" failed:`, r.reason)
         }
-
-        const { title, body, url, badge, imageUrl } = renderMessage(input.type, input.payload, input.actor)
-
-        const actorOid = input.actor?.id ? new mongoose.Types.ObjectId(input.actor.id) : null
-        const entityOid = typeof input.entityId === "string"
-            ? new mongoose.Types.ObjectId(input.entityId)
-            : input.entityId
-
-        const docs = recipients.slice(0, MAX_RECIPIENTS).map((id) => ({
-            recipient: new mongoose.Types.ObjectId(id),
-            type: input.type,
-            actor: actorOid,
-            entityType: input.entityType,
-            entityId: entityOid,
-            title,
-            body,
-            url,
-            badge,
-            imageUrl,
-            channels: input.channels ?? [NOTIFICATION_CHANNEL.IN_APP],
-            meta: input.meta,
-        }))
-
-        await Notification.insertMany(docs, { ordered: false })
-    } catch (err) {
-        console.error("[notifications] notifyEvent failed:", err)
-    }
+    })
 }

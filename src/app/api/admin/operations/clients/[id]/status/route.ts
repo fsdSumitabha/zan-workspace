@@ -11,7 +11,7 @@ import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedCreate, auditedFindByIdAndUpdate } from "@/lib/activity-log"
-import { notifyEvent } from "@/lib/notifications/dispatch"
+import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
 
@@ -141,7 +141,7 @@ export async function PATCH(
             authUser.id
         )
 
-        await notifyEvent({
+        await emitNotification({
             type: EVENT_CODE.CLIENT_STATUS_CHANGED,
             entityType: ENTITY_TYPE.CLIENT,
             entityId: client._id,

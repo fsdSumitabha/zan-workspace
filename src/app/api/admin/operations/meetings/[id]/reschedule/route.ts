@@ -8,7 +8,7 @@ import Interaction from "@/models/Interaction"
 import { MEETING_STATUS } from "@/constants/meetingStatus"
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
-import { notifyEvent } from "@/lib/notifications/dispatch"
+import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { resolveParentName } from "@/lib/notifications/resolveParentName"
 
@@ -166,7 +166,7 @@ export async function PATCH(
         }
 
         const parentName = await resolveParentName(meeting.entityType, String(meeting.entityId))
-        await notifyEvent({
+        await emitNotification({
             type: EVENT_CODE.MEETING_RESCHEDULED,
             entityType: ENTITY_TYPE.MEETING,
             entityId: meeting._id,
