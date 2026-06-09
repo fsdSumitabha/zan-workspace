@@ -1,25 +1,24 @@
 import { NOTIFICATION_CHANNEL, type NotificationChannel } from "@/constants/notificationChannels"
-import { dispatchInApp } from "./channels/inApp"
-import { dispatchEmail } from "./channels/email"
-import { dispatchPush } from "./channels/push"
-import { dispatchSms } from "./channels/sms"
+import { commitNotification } from "./commitNotification"
 import type { DispatchContext } from "../../types/notification"
 
-const ROUTES: Array<[NotificationChannel, (ctx: DispatchContext) => Promise<void>]> = [
-    [1, dispatchInApp],
-    [2, dispatchEmail],
-    [3, dispatchSms],
-    [4, dispatchPush],
-]
+const OPTIONAL_CODES = [2, 3, 4] as const satisfies readonly NotificationChannel[]
 
 export async function dispatchNotification(ctx: DispatchContext): Promise<void> {
-    const active = ROUTES.filter(([code]) => ctx.channels.includes(code))
+    try {
+        await commitNotification(ctx)
+    } catch (err) {
+        console.error(`[notifications] In-App persist failed:`, err)
+        return
+    }
+
+    const active = OPTIONAL_CODES.filter((c) => ctx.channels.includes(c))
     if (active.length === 0) return
 
-    const results = await Promise.allSettled(active.map(([, run]) => run(ctx)))
+    const results = await Promise.allSettled(active.map((c) => NOTIFICATION_CHANNEL[c].channel(ctx)))
     results.forEach((r, i) => {
         if (r.status === "rejected") {
-            console.error(`[notifications] channel="${NOTIFICATION_CHANNEL[active[i][0]]}" failed:`, r.reason)
+            console.error(`[notifications] channel="${NOTIFICATION_CHANNEL[active[i]].label}" failed:`, r.reason)
         }
     })
 }

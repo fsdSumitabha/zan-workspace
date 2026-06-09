@@ -305,6 +305,7 @@ export async function POST(req: NextRequest) {
             actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
             payload: { meeting: { _id: meeting._id, title: meeting.title, entityType: meeting.entityType, entityId: meeting.entityId, scheduledAt: meeting.scheduledAt }, parentName },
             extraRecipients: Array.isArray(meeting.attendees) ? meeting.attendees.map((a: any) => String(a)) : undefined,
+            
         })
 
         return NextResponse.json(

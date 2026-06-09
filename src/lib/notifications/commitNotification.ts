@@ -1,7 +1,7 @@
 import Notification from "@/models/Notification"
-import type { DispatchContext } from "../../../types/notification"
+import type { DispatchContext } from "../../types/notification"
 
-export async function dispatchInApp(ctx: DispatchContext): Promise<void> {
+export async function commitNotification(ctx: DispatchContext): Promise<void> {
     const { title, body, url, badge, imageUrl } = ctx.message
 
     const docs = ctx.recipients.map((recipient) => ({

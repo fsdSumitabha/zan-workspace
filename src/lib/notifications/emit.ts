@@ -38,7 +38,7 @@ export async function emitNotification(input: EmitInput): Promise<void> {
             actorOid,
             recipients,
             message,
-            channels: input.channels ?? [1],
+            channels: input.channels ?? [],
             meta: input.meta,
         }
 
