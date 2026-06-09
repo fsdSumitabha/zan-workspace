@@ -1,5 +1,4 @@
 import mongoose from "mongoose"
-import { CHANNEL_CODE } from "@/constants/notificationChannels"
 import { resolveRecipients } from "./resolveRecipients"
 import { renderMessage } from "./render"
 import { dispatchNotification } from "./dispatch"
@@ -39,7 +38,7 @@ export async function emitNotification(input: EmitInput): Promise<void> {
             actorOid,
             recipients,
             message,
-            channels: input.channels ?? [CHANNEL_CODE.IN_APP],
+            channels: input.channels ?? [1],
             meta: input.meta,
         }
 

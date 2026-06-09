@@ -1,22 +1,25 @@
-import { CHANNEL_CODE } from "@/constants/notificationChannels"
+import { NOTIFICATION_CHANNEL, type NotificationChannel } from "@/constants/notificationChannels"
 import { dispatchInApp } from "./channels/inApp"
 import { dispatchEmail } from "./channels/email"
 import { dispatchPush } from "./channels/push"
 import { dispatchSms } from "./channels/sms"
 import type { DispatchContext } from "../../types/notification"
 
+const ROUTES: Array<[NotificationChannel, (ctx: DispatchContext) => Promise<void>]> = [
+    [1, dispatchInApp],
+    [2, dispatchEmail],
+    [3, dispatchSms],
+    [4, dispatchPush],
+]
+
 export async function dispatchNotification(ctx: DispatchContext): Promise<void> {
-    const tasks: { name: string; run: () => Promise<void> }[] = []
+    const active = ROUTES.filter(([code]) => ctx.channels.includes(code))
+    if (active.length === 0) return
 
-    if (ctx.channels.includes(CHANNEL_CODE.IN_APP)) tasks.push({ name: "in-app", run: () => dispatchInApp(ctx) })
-    if (ctx.channels.includes(CHANNEL_CODE.EMAIL))  tasks.push({ name: "email",  run: () => dispatchEmail(ctx) })
-    if (ctx.channels.includes(CHANNEL_CODE.PUSH))   tasks.push({ name: "push",   run: () => dispatchPush(ctx) })
-    if (ctx.channels.includes(CHANNEL_CODE.SMS))    tasks.push({ name: "sms",    run: () => dispatchSms(ctx) })
-
-    const results = await Promise.allSettled(tasks.map((t) => t.run()))
+    const results = await Promise.allSettled(active.map(([, run]) => run(ctx)))
     results.forEach((r, i) => {
         if (r.status === "rejected") {
-            console.error(`[notifications] channel="${tasks[i].name}" failed:`, r.reason)
+            console.error(`[notifications] channel="${NOTIFICATION_CHANNEL[active[i][0]]}" failed:`, r.reason)
         }
     })
 }
