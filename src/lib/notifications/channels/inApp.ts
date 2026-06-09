@@ -1,5 +1,5 @@
 import Notification from "@/models/Notification"
-import type { DispatchContext } from "../types"
+import type { DispatchContext } from "../../../types/notification"
 
 export async function dispatchInApp(ctx: DispatchContext): Promise<void> {
     const { title, body, url, badge, imageUrl } = ctx.message

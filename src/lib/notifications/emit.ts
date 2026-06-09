@@ -1,9 +1,9 @@
 import mongoose from "mongoose"
-import { NOTIFICATION_CHANNEL } from "@/constants/notificationChannels"
+import { CHANNEL_CODE } from "@/constants/notificationChannels"
 import { resolveRecipients } from "./resolveRecipients"
 import { renderMessage } from "./render"
 import { dispatchNotification } from "./dispatch"
-import type { EmitInput, DispatchContext } from "./types"
+import type { EmitInput, DispatchContext } from "../../types/notification"
 
 const MAX_RECIPIENTS = 500
 
@@ -39,7 +39,7 @@ export async function emitNotification(input: EmitInput): Promise<void> {
             actorOid,
             recipients,
             message,
-            channels: input.channels ?? [NOTIFICATION_CHANNEL.IN_APP],
+            channels: input.channels ?? [CHANNEL_CODE.IN_APP],
             meta: input.meta,
         }
 

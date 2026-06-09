@@ -3,7 +3,7 @@ import { EVENT_TYPE, type EventType } from "@/constants/eventTypes"
 import { LEAD_STATUS_META } from "@/constants/leadStatus"
 import { CLIENT_STATUS_META } from "@/constants/clientStatus"
 import { PROJECT_STATUS_META } from "@/constants/projectStatus"
-import type { NotificationActor, RenderedMessage } from "./types"
+import type { NotificationActor, RenderedMessage } from "../../types/notification"
 
 function leadUrl(id: string): string {
     return `/admin/operations/leads/${id}`

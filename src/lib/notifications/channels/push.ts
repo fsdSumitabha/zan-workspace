@@ -1,5 +1,5 @@
 import { badgeIconUrl } from "../iconUrl"
-import type { DispatchContext } from "../types"
+import type { DispatchContext } from "../../../types/notification"
 
 export async function dispatchPush(ctx: DispatchContext): Promise<void> {
     const payload = {
