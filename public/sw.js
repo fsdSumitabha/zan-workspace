@@ -1,12 +1,22 @@
 const CACHE = "zan-crm-v1";
 const OFFLINE_URL = "/offline.html";
 
+const PRE_CACHE_ASSETS = [
+    OFFLINE_URL,
+    "/icon-192.png",
+    "/icon-512.png",
+    "/icons/target.svg",
+    "/icons/handshake.svg",
+    "/icons/folder-kanban.svg",
+    "/icons/calendar-clock.svg"
+];
+
 // Take control immediately on install/activate
 self.addEventListener("install", (event) => {
     event.waitUntil(
         (async () => {
             const cache = await caches.open(CACHE);
-            await cache.add(OFFLINE_URL);
+            await cache.addAll(PRE_CACHE_ASSETS);
             await self.skipWaiting();
         })()
     );

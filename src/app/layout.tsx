@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
@@ -19,6 +19,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
     title: "Zan Services",
     description: "Zan Services - leading web development, mobile app, AI & digital marketing company in Kolkata, India. 150+ projects delivered. Get a free consultation today.",
+};
+
+export const viewport: Viewport = {
+    themeColor: [
+        { media: "(prefers-color-scheme: light)", color: "#4A6FA5" },
+        { media: "(prefers-color-scheme: dark)", color: "#183668" },
+    ],
 };
 
 export default function RootLayout({
