@@ -13,7 +13,7 @@ import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-
 
 export async function POST(req: NextRequest) {
     try {
-        const authUser = await requireRole(req, [10, 60, 45, 70])
+        const authUser = await requireRole(req, [10, 60, 45, 50, 70])
 
         await dbConnect()
 
@@ -73,6 +73,8 @@ export async function POST(req: NextRequest) {
                     { status: 400 }
                 )
         }
+
+      
 
         return NextResponse.json(
             { success: true, data: note },
