@@ -230,6 +230,7 @@ export default function Page() {
                     entityType={2}
                     interactions={interactions}
                     loading={interactionLoading}
+                    onChanged={fetchInteractions}
                 />
             )}
         </div>
