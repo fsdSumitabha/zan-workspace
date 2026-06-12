@@ -273,7 +273,7 @@ export default function Page() {
                     )}
 
                     {!loading && client && (
-                        <InteractionTimeline entityType={1} interactions={interactions} loading={interactionLoading} onChanged={fetchInteractions} />
+                        <InteractionTimeline entityType={1} interactions={interactions} loading={interactionLoading} />
                     )}
 
                     {!loading && client && (

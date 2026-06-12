@@ -281,7 +281,7 @@ export default function Page() {
                         <InteractionModal type={activeType} open={isOpen} onClose={handleClose} entityType={0} entityId={leadId} onSuccess={fetchInteractions} />
 
                         {!loading && lead && (
-                            <InteractionTimeline entityType={0} interactions={interactions} loading={interactionLoading} onChanged={fetchInteractions} />
+                            <InteractionTimeline entityType={0} interactions={interactions} loading={interactionLoading} />
                         )}
 
                     </div>

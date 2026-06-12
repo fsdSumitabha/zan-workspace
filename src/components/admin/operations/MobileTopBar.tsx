@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LogOut, MoreVertical, User, UserCircle, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import NotificationBell from "@/components/admin/operations/NotificationBell";
 
 export default function OperationsMobileTopBar() {
     const { user, loading, logout } = useAuth();
@@ -83,8 +82,6 @@ export default function OperationsMobileTopBar() {
                 </Link>
 
                 <div ref={menuWrapRef} className="flex items-center gap-2">
-                    <NotificationBell />
-
                     {/* Profile menu */}
                     <div className="relative">
                         <button

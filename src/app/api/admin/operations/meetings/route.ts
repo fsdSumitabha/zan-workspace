@@ -14,9 +14,6 @@ import { AuthError, requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
 import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-log"
 import { escapeRegex } from "@/lib/search/escapeRegex"
-import { emitNotification } from "@/lib/notifications/emit"
-import { EVENT_CODE } from "@/constants/eventTypes"
-import { resolveParentName } from "@/lib/notifications/resolveParentName"
 
 export async function GET(req: NextRequest) {
     try {
@@ -296,17 +293,6 @@ export async function POST(req: NextRequest) {
                     { status: 400 }
                 )
         }
-
-        const parentName = await resolveParentName(meeting.entityType, String(meeting.entityId))
-        await emitNotification({
-            type: EVENT_CODE.MEETING_SCHEDULED,
-            entityType: ENTITY_TYPE.MEETING,
-            entityId: meeting._id,
-            actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
-            payload: { meeting: { _id: meeting._id, title: meeting.title, entityType: meeting.entityType, entityId: meeting.entityId, scheduledAt: meeting.scheduledAt }, parentName },
-            extraRecipients: Array.isArray(meeting.attendees) ? meeting.attendees.map((a: any) => String(a)) : undefined,
-            
-        })
 
         return NextResponse.json(
             { success: true, data: meeting },

@@ -1,13 +1,6 @@
-import mongoose, { Document } from "mongoose"
+import mongoose, { Schema, Document } from "mongoose"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
-
-export interface IInteractionEdit {
-    oldTitle?: string
-    oldDescription?: string
-    editedBy: mongoose.Types.ObjectId
-    editedAt: Date
-}
 
 export interface IInteraction extends Document {
     entityType: number
@@ -17,7 +10,6 @@ export interface IInteraction extends Document {
     description?: string
     refId?: mongoose.Types.ObjectId
     createdBy?: mongoose.Types.ObjectId
-    editHistory?: IInteractionEdit[]
 }
 
 const InteractionSchema = new mongoose.Schema<IInteraction>({
@@ -43,13 +35,6 @@ const InteractionSchema = new mongoose.Schema<IInteraction>({
     description: String,
 
     refId: mongoose.Schema.Types.ObjectId, // points to Meeting / Document
-
-    editHistory: [{
-        oldTitle: { type: String },
-        oldDescription: { type: String },
-        editedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        editedAt: { type: Date, default: Date.now }
-    }],
 
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,

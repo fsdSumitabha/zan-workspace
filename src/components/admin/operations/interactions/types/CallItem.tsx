@@ -9,6 +9,7 @@ import { CALL_DIRECTION_META, CALL_STATUS_META } from "@/constants/callStatus"
 
 
 export default function CallItem({ item }: { item: any }) {
+
     const call = item.call
 
     const direction  = CALL_DIRECTION_META[call?.direction] ?? CALL_DIRECTION_META[0]
@@ -30,8 +31,8 @@ export default function CallItem({ item }: { item: any }) {
             <div className="flex-1 space-y-2">
 
                 {/* Header */}
-                <div className="flex justify-between items-start gap-2">
-                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2 flex-wrap">
                         {item.title && (
                             <h3 className="font-semibold text-sm capitalize tracking-wide text-gray-700 dark:text-gray-300">
                                 {item.title}
@@ -40,7 +41,7 @@ export default function CallItem({ item }: { item: any }) {
                         <StatusBadge status={item.type} meta={INTERACTION_TYPE_META} />
                     </div>
 
-                    <span className="text-xs text-gray-500 whitespace-nowrap flex items-center gap-1 shrink-0">
+                    <span className="text-xs text-gray-500 whitespace-nowrap flex items-center gap-1">
                         <Icons.Calendar className="w-3 h-3" />
                         <TimeAgo date={item.createdAt} />
                     </span>
@@ -48,7 +49,7 @@ export default function CallItem({ item }: { item: any }) {
 
                 {/* Description */}
                 {item.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap break-words">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                         {item.description}
                     </p>
                 )}

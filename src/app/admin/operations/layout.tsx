@@ -7,7 +7,6 @@ import StatsPanel from "@/components/admin/operations/StatsPanel";
 import UpcomingMeetingsPanel from "@/components/admin/operations/UpcomingMeetingsPanel";
 import OperationsMobileNav from "@/components/admin/operations/MobileNav";
 import OperationsMobileTopBar from "@/components/admin/operations/MobileTopBar";
-import NotificationBell from "@/components/admin/operations/NotificationBell";
 
 export const metadata: Metadata = {
     title: "Zan Services CRM",
@@ -27,7 +26,7 @@ export default function OperationsLayout({
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-x-clip">
+            <div className="flex-1 flex flex-col overflow-x-hidden">
                 {/* Mobile top bar (logo + profile) */}
                 <OperationsMobileTopBar />
                 {/* Spacer for fixed mobile top bar */}
@@ -41,16 +40,14 @@ export default function OperationsLayout({
                                 <SearchBar />
                             </Suspense>
                         </div>
-                        <div className="hidden md:flex md:col-span-4 md:justify-end">
-                            <NotificationBell />
-                        </div>
+                        <div className="hidden md:col-span-4" />
                     </div>
                 </div>
 
                 {/* Page Content */}
-                <div className="w-full max-w-7xl mx-auto px-3 md:px-4 py-5 md:py-6 grid lg:grid-cols-3 gap-6 w-full">
+                <div className="w-full overflow-y-auto max-w-7xl mx-auto px-3 md:px-4 py-5 md:py-6 grid lg:grid-cols-3 gap-6 w-full">
                     <div className="lg:col-span-2 space-y-4">{children}</div>
-                    <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+                    <aside className="space-y-4">
                         <StatsPanel />
                         <UpcomingMeetingsPanel />
                     </aside>

@@ -12,9 +12,6 @@ import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedCreate, auditedFindByIdAndUpdate, auditedUpdateByNumericEntityType, } from "@/lib/activity-log"
-import { emitNotification } from "@/lib/notifications/emit"
-import { EVENT_CODE } from "@/constants/eventTypes"
-import { resolveParentName } from "@/lib/notifications/resolveParentName"
 
 export async function PATCH(
     req: NextRequest,
@@ -129,16 +126,6 @@ export async function PATCH(
                 authUser.id
             )
         }
-
-        const parentName = await resolveParentName(meeting.entityType, String(meeting.entityId))
-        await emitNotification({
-            type: status === MEETING_STATUS.COMPLETED ? EVENT_CODE.MEETING_COMPLETED : EVENT_CODE.MEETING_CANCELLED,
-            entityType: ENTITY_TYPE.MEETING,
-            entityId: meeting._id,
-            actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
-            payload: { meeting: { _id: meeting._id, title: meeting.title, entityType: meeting.entityType, entityId: meeting.entityId, scheduledAt: meeting.scheduledAt }, parentName, outcome: trimmedOutcome || undefined },
-            extraRecipients: Array.isArray(meeting.attendees) ? meeting.attendees.map((a: any) => String(a)) : undefined,
-        })
 
         return NextResponse.json({
             success: true,

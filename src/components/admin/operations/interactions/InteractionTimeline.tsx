@@ -7,14 +7,12 @@ interface Props {
     entityType: number
     interactions: Interaction[]
     loading: boolean
-    onChanged?: () => void
 }
 
 export default function InteractionTimeline({
     entityType,
     interactions,
-    loading,
-    onChanged,
+    loading
 }: Props) {
     if (loading) {
         return <div>Loading timeline...</div> // later skeleton
@@ -36,7 +34,7 @@ export default function InteractionTimeline({
             <div className="space-y-4">
                 {interactions.map((item, index) => (
                     <AnimatedItem key={item._id} index={index}>
-                        <InteractionItem entityType={entityType} item={item} onChanged={onChanged} />
+                        <InteractionItem entityType={entityType} item={item} />
                     </AnimatedItem>
                 ))}
             </div>
