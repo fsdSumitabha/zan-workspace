@@ -5,6 +5,7 @@ import Meeting from "@/models/Meeting"
 import Document from "@/models/Document"
 import Quotation from "@/models/Quotation"
 import Call from "@/models/Call"
+import User from "@/models/User"
 
 export async function GET(
     req: NextRequest,
@@ -27,6 +28,7 @@ export async function GET(
             entityId: projectId
         })
             .populate("createdBy", "name email role")
+            .populate({ path: "editHistory.editedBy", model: User, select: "_id name email role avatar" })
             .sort({ createdAt: -1 })
             .lean()
 
@@ -102,7 +104,9 @@ export async function GET(
                 title: i.title,
                 description: i.description,
                 createdAt: i.createdAt,
+                updatedAt: i.updatedAt,
                 createdBy: i.createdBy,
+                editHistory: i.editHistory ?? [],
                 meeting,
                 document,
                 quotation,

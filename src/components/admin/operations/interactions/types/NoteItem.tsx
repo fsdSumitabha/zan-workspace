@@ -1,11 +1,20 @@
 "use client"
 
+import { useState } from "react"
 import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { INTERACTION_TYPE_META } from "@/constants/interactionTypes"
 import * as Icons from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import { canEditInteraction } from "../canEdit"
+import EditHistory from "../EditHistory"
+import InteractionEditor from "../InteractionEditor"
 
-export default function NoteItem({ item }: { item: any }) {
+export default function NoteItem({ item, onChanged }: { item: any; onChanged?: () => void }) {
+    const { role } = useAuth()
+    const [editing, setEditing] = useState(false)
+    const allowed = canEditInteraction(role)
+
     const Icon =
         (Icons as any)[
             item.icon?.charAt(0).toUpperCase() + item.icon?.slice(1)
@@ -22,39 +31,64 @@ export default function NoteItem({ item }: { item: any }) {
             </div>
 
             {/* Content */}
-            <div className="flex-1 space-y-2">
+            <div className="flex-1 space-y-2 min-w-0">
 
                 {/* Header */}
-                <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2 flex-wrap">
-
-                        {item.title && (
+                <div className="flex justify-between items-start gap-2">
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                        {item.title && !editing && (
                             <h3 className="font-semibold text-sm capitalize tracking-wide text-neutral-800 dark:text-neutral-200">
                                 {item.title}
                             </h3>
                         )}
-
                         <StatusBadge status={item.type} meta={INTERACTION_TYPE_META} />
                     </div>
 
-                    <span className="text-xs text-gray-500 whitespace-nowrap flex items-center gap-1">
-                        <Icons.Calendar className="w-3 h-3" />
-                        <TimeAgo date={item.createdAt} />
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs text-gray-500 whitespace-nowrap flex items-center gap-1">
+                            <Icons.Calendar className="w-3 h-3" />
+                            <TimeAgo date={item.createdAt} />
+                        </span>
+                        {allowed && !editing && (
+                            <button
+                                type="button"
+                                onClick={() => setEditing(true)}
+                                className="text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400"
+                                title="Edit note"
+                                aria-label="Edit note"
+                            >
+                                <Icons.Pencil className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                {/* Description */}
-                {item.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                        {item.description}
-                    </p>
+                {editing ? (
+                    <InteractionEditor
+                        interactionId={String(item._id)}
+                        initialTitle={item.title ?? ""}
+                        initialDescription={item.description ?? ""}
+                        showTitle
+                        onCancel={() => setEditing(false)}
+                        onSaved={() => {
+                            setEditing(false)
+                            onChanged?.()
+                        }}
+                    />
+                ) : (
+                    item.description && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap break-words">
+                            {item.description}
+                        </p>
+                    )
                 )}
 
-                {/* Optional Footer Meta */}
-                {item.updatedAt && (
-                    <div className="text-xs text-gray-500 pt-1">
-                        Updated: <TimeAgo date={item.updatedAt} />
-                    </div>
+                {!editing && (
+                    <EditHistory
+                        history={item.editHistory}
+                        createdBy={item.createdBy}
+                        createdAt={item.createdAt}
+                    />
                 )}
             </div>
         </div>

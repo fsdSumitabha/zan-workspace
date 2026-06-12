@@ -6,7 +6,6 @@ import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { INTERACTION_TYPE_META } from "@/constants/interactionTypes"
 
 export default function QuotationItem({ item }: { item: any }) {
-
     const quotation = item.quotation
 
     return (
@@ -20,33 +19,27 @@ export default function QuotationItem({ item }: { item: any }) {
             </div>
 
             {/* Content */}
-            <div className="flex-1 space-y-2">
+            <div className="flex-1 space-y-2 min-w-0">
 
                 {/* Header */}
-                <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2 flex-wrap">
-
+                <div className="flex justify-between items-start gap-2">
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
                         {item.title && (
                             <h3 className="font-semibold text-sm capitalize tracking-wide text-neutral-800 dark:text-neutral-200">
                                 {item.title}
                             </h3>
                         )}
-
-                        <StatusBadge
-                            status={item.type}
-                            meta={INTERACTION_TYPE_META}
-                        />
+                        <StatusBadge status={item.type} meta={INTERACTION_TYPE_META} />
                     </div>
 
-                    <span className="text-xs text-gray-500 whitespace-nowrap flex items-center gap-1">
+                    <span className="text-xs text-gray-500 whitespace-nowrap flex items-center gap-1 shrink-0">
                         <Icons.Calendar className="w-3 h-3" />
                         <TimeAgo date={item.createdAt} />
                     </span>
                 </div>
 
-                {/* Description */}
                 {item.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap break-words">
                         {item.description}
                     </p>
                 )}
@@ -54,13 +47,10 @@ export default function QuotationItem({ item }: { item: any }) {
                 {/*  Quotation Details */}
                 {quotation && (
                     <div className="mt-2 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-neutral-50 dark:bg-neutral-800 flex items-center justify-between">
-
-                        {/* Left Info */}
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
                                 ₹{quotation.amount.toLocaleString()} <small className="text-xs text-gray-500" > + {quotation.gst_percentage}% GST </small>
                             </p>
-
                             {quotation.gst_percentage && (
                                 <p className="text-xs text-gray-500">
                                     Amount Inclusive GST : ₹{(quotation.amount * (1 + quotation.gst_percentage / 100)).toLocaleString()}
@@ -68,7 +58,6 @@ export default function QuotationItem({ item }: { item: any }) {
                             )}
                         </div>
 
-                        {/* Actions */}
                         {quotation.url && (
                             <a
                                 href={quotation.url}

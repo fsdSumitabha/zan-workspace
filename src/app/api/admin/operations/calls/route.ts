@@ -10,6 +10,16 @@ import { writeFile, mkdir } from "fs/promises"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-log"
+import { emitNotification } from "@/lib/notifications/emit"
+import { EVENT_CODE } from "@/constants/eventTypes"
+import { resolveParentName } from "@/lib/notifications/resolveParentName"
+
+function parentUrlFor(et: number, eid: string): string | undefined {
+    if (et === ENTITY_TYPE.LEAD) return `/admin/operations/leads/${eid}`
+    if (et === ENTITY_TYPE.CLIENT) return `/admin/operations/clients/${eid}`
+    if (et === ENTITY_TYPE.PROJECT) return `/admin/operations/projects/${eid}`
+    return undefined
+}
 
 
 export async function POST(req: NextRequest) {
@@ -123,6 +133,15 @@ export async function POST(req: NextRequest) {
                     { status: 400 }
                 )
         }
+
+        const parentName = await resolveParentName(entityType, String(entityId))
+        await emitNotification({
+            type: EVENT_CODE.CALL_MADE,
+            entityType,
+            entityId,
+            actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
+            payload: { parentUrl: parentUrlFor(entityType, String(entityId)), parentName, contactPersonName, title, status, duration },
+        })
 
         return NextResponse.json(
             { success: true, data: { call, interaction } },

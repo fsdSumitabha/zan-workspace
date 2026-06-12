@@ -11,6 +11,9 @@ import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedCreate, auditedFindByIdAndUpdate } from "@/lib/activity-log"
+import { emitNotification } from "@/lib/notifications/emit"
+import { EVENT_CODE } from "@/constants/eventTypes"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 export async function PATCH(
     req: NextRequest,
@@ -137,6 +140,14 @@ export async function PATCH(
             {},
             authUser.id
         )
+
+        await emitNotification({
+            type: EVENT_CODE.CLIENT_STATUS_CHANGED,
+            entityType: ENTITY_TYPE.CLIENT,
+            entityId: client._id,
+            actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
+            payload: { client: { _id: client._id, name: client.name }, oldStatus, newStatus: status, remarks },
+        })
 
         return NextResponse.json(
             {
