@@ -1,198 +1,118 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
-import Client from "@/models/Client"
-import Project from "@/models/Project"
-import Lead from "@/models/Lead"
-import { Types } from "mongoose"
-import { requireAuth } from "@/lib/auth/requireAuth"
-import { requireRole } from "@/lib/auth/requireRole"
-import { AuthError } from "@/lib/auth/requireAuth"
-import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
+import Interaction from "@/models/Interaction"
+import Meeting from "@/models/Meeting"
+import Document from "@/models/Document"
+import Quotation from "@/models/Quotation"
+import Call from "@/models/Call"
+import User from "@/models/User"
 
 export async function GET(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireRole(req, [10, 60, 70, 45, 50])
-
         await dbConnect()
 
-        const { id } = await context.params
+        const params = await context.params
+        const clientId = params.id
 
-        // Fetch client
-        const client = await Client.findById(id)
+        const MEETING_TYPES = [2010, 2020, 2030, 2040]
+        const DOCUMENT_TYPES = [2310]
+        const QUOTATION_TYPES = [2410]
+        const CALL_TYPES = [2210]
 
-        if (!client) {
-            return NextResponse.json(
-                { success: false, message: "Client not found" },
-                { status: 404 }
-            )
+        // 1. Fetch interactions
+        const interactions = await Interaction.find({
+            entityType: 1,
+            entityId: clientId,
+        })
+            .populate("createdBy", "name email role")
+            .populate({ path: "editHistory.editedBy", model: User, select: "_id name email role avatar" })
+            .sort({ createdAt: -1 })
+            .lean()
+
+        // 2. Collect IDs
+        const meetingIds: string[] = []
+        const documentIds: string[] = []
+        const quotationIds: string[] = []
+        const callIds: string[] = []
+
+        for (const i of interactions) {
+            if (MEETING_TYPES.includes(i.type) && i.refId) {
+                meetingIds.push(i.refId.toString())
+            }
+
+            if (DOCUMENT_TYPES.includes(i.type) && i.refId) {
+                documentIds.push(i.refId.toString())
+            }
+
+            if (QUOTATION_TYPES.includes(i.type) && i.refId) {
+                quotationIds.push(i.refId.toString())
+            }
+            if (CALL_TYPES.includes(i.type) && i.refId) {
+                callIds.push(i.refId.toString())
+            }
         }
 
-        // Fetch projects linked to this client
-        const projects = await Project.find({ clientId: id })
-            .sort({ createdAt: -1 }) // optional: latest first
+        // 3. Fetch related data
+        const [meetings, documents, quotations, calls] = await Promise.all([
+            Meeting.find({ _id: { $in: meetingIds } }).lean(),
+            Document.find({ _id: { $in: documentIds } }).lean(),
+            Quotation.find({ _id: { $in: quotationIds } }).lean(),
+            Call.find({ _id: { $in: callIds } }).lean()
+        ])
 
-        // Fetch lead linked to this client
-        const lead = await Lead.findById(client.leadId)
+        const meetingMap = new Map(meetings.map(m => [m._id.toString(), m]))
+        const documentMap = new Map(documents.map(d => [d._id.toString(), d]))
+        const quotationMap = new Map(quotations.map(q => [q._id.toString(), q]))
+        const callMap = new Map(calls.map(c => [c._id.toString(), c]))
 
-        return NextResponse.json({
-            success: true,
-            data: {
-                client,
-                lead: lead || null,
-                projects
+        // 4. Structure response
+        const enriched = interactions.map(i => {
+            let meeting = null
+            let document = null
+            let quotation = null
+            let call = null
+
+            if (MEETING_TYPES.includes(i.type) && i.refId) {
+                meeting = meetingMap.get(i.refId.toString()) || null
+            }
+
+            if (DOCUMENT_TYPES.includes(i.type) && i.refId) {
+                document = documentMap.get(i.refId.toString()) || null
+            }
+
+            if (QUOTATION_TYPES.includes(i.type) && i.refId) {
+                quotation = quotationMap.get(i.refId.toString()) || null
+            }
+            if (CALL_TYPES.includes(i.type) && i.refId) {
+                call = callMap.get(i.refId.toString()) || null
+            }
+
+            return {
+                _id: i._id,
+                type: i.type,
+                title: i.title,
+                description: i.description,
+                createdAt: i.createdAt,
+                updatedAt: i.updatedAt,
+                createdBy: i.createdBy,
+                editHistory: i.editHistory ?? [],
+
+                meeting,
+                document,
+                quotation,
+                call
             }
         })
-    } catch (error : any) {
-        if (error instanceof AuthError) {
-            return NextResponse.json(
-                { success: false, message: error.message },
-                { status: 401 }
-            )
-        }
-        return NextResponse.json(
-            {
-                success: false,
-                message: "Invalid ID",
-                error: (error as Error).message
-            },
-            { status: 400 }
-        )
-    }
-}
 
-export async function PATCH(
-    req: NextRequest,
-    context: { params: Promise<{ id: string }> }
-) {
-    try {
-        const { id } = await context.params
-
-        if (!id || !Types.ObjectId.isValid(id)) {
-            return NextResponse.json(
-                { success: false, message: "Invalid client ID" },
-                { status: 400 }
-            )
-        }
-
-        const body = await req.json()
-
-        if (!body.name || !body.company || !body.phone) {
-            return NextResponse.json(
-                { success: false, message: "Missing required fields" },
-                { status: 400 }
-            )
-        }
-
-        await dbConnect()
-
-        const user = await requireRole(req, [10, 60, 70, 45])
-
-        const existing = await Client.findOne({
-            phone: body.phone,
-            _id: { $ne: id }
-        })
-
-        if (existing) {
-            return NextResponse.json(
-                { success: false, message: "Phone already exists" },
-                { status: 409 }
-            )
-        }
-
-        const { name, company, email, phone } = body
-
-        const client = await auditedFindByIdAndUpdate(
-            Client,
-            2,
-            id,
-            { name, company, email, phone },
-            {},
-            user.id
-        )
-
-        if (!client) {
-            return NextResponse.json(
-                { success: false, message: "Client not found" },
-                { status: 404 }
-            )
-        }
-
-        return NextResponse.json({
-            success: true,
-            data: client
-        })
-    } catch (error: any) {
-        if (error instanceof AuthError) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: error.message
-                },
-                { status: error.statusCode }
-            )
-        }
-
-        return NextResponse.json(
-            { success: false, message: "Failed to update client" },
-            { status: 500 }
-        )
-    }
-}
-
-export async function DELETE(
-    req: NextRequest,
-    context: { params: Promise<{ id: string }> }
-) {
-    try {
-        const { id } = await context.params
-
-        // 1. Validate ID
-        if (!id || !Types.ObjectId.isValid(id)) {
-            return NextResponse.json(
-                { success: false, message: "Invalid client ID" },
-                { status: 400 }
-            )
-        }
-
-        await dbConnect()
-
-        await requireRole(req, [10, 45])
-
-        // 2. Delete lead
-        const lead = await Client.findByIdAndDelete(id)
-
-        // 3. Not found
-        if (!lead) {
-            return NextResponse.json(
-                { success: false, message: "Client not found" },
-                { status: 404 }
-            )
-        }
-
-        // 4. Success
-        return NextResponse.json(
-            {
-                success: true,
-                message: "Client deleted successfully"
-            },
-            { status: 200 }
-        )
+        return NextResponse.json({ success: true, interactions: enriched })
 
     } catch (error) {
-        console.error("DELETE CLIENT ERROR:", error)
-
-        if (error instanceof AuthError) {
-            return NextResponse.json(
-                { success: false, message: error.message },
-                { status: error.statusCode }
-            )
-        }
-        
+        console.error(error)
         return NextResponse.json(
-            { success: false, message: "Internal server error" },
+            { success: false, message: "Failed to fetch interactions" },
             { status: 500 }
         )
     }
