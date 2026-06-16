@@ -6,6 +6,8 @@ import { MEETING_STATUS_META } from "@/constants/meetingStatus"
 import { MEETING_TYPE_META, MEETING_TYPE } from "@/constants/meetingTypes"
 import MeetingLinkButton from "@/components/admin/operations/MeetingLinkButton"
 import * as Icons from "lucide-react"
+import Tooltip from "@/components/admin/operations/tooltip/Tooltip"
+
 
 export default function MeetingItem({ item }: { item: any }) {
     const meeting = item.meeting
@@ -80,6 +82,10 @@ export default function MeetingItem({ item }: { item: any }) {
                     </div>
                 )}
             </div>
+
+            {item.createdBy && (
+                <Tooltip content={`Created by ${item.createdBy.name} `} />
+            )}
         </div>
     )
 }
