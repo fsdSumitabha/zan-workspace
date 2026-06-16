@@ -1,4 +1,3 @@
-// src/components/admin/operations/interactions/types/CallItem.tsx
 "use client"
 
 import * as Icons from "lucide-react"
@@ -6,13 +5,14 @@ import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { INTERACTION_TYPE_META } from "@/constants/interactionTypes"
 import { CALL_DIRECTION_META, CALL_STATUS_META } from "@/constants/callStatus"
+import Tooltip from "@/components/admin/operations/tooltip/Tooltip"
 
 
 export default function CallItem({ item }: { item: any }) {
     const call = item.call
 
-    const direction  = CALL_DIRECTION_META[call?.direction] ?? CALL_DIRECTION_META[0]
-    const callStatus = CALL_STATUS_META[call?.status]       ?? CALL_STATUS_META[0]
+    const direction = CALL_DIRECTION_META[call?.direction] ?? CALL_DIRECTION_META[0]
+    const callStatus = CALL_STATUS_META[call?.status] ?? CALL_STATUS_META[0]
 
     const DirectionIcon = Icons[direction.icon] as React.ElementType
 
@@ -147,6 +147,10 @@ export default function CallItem({ item }: { item: any }) {
                     </div>
                 )}
             </div>
+
+            {item.createdBy && (
+                <Tooltip content={`Created by ${item.createdBy.name} `} />
+            )}
         </div>
     )
 }

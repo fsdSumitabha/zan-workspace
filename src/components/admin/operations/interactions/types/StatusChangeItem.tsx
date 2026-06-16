@@ -10,6 +10,8 @@ import { useAuth } from "@/contexts/AuthContext"
 import type { UserRole } from "@/constants/userRoles"
 import EditHistory from "../EditHistory"
 import InteractionEditor from "../InteractionEditor"
+import Tooltip from "@/components/admin/operations/tooltip/Tooltip"
+
 
 export default function StatusChangeItem({
     entityType,
@@ -118,6 +120,10 @@ export default function StatusChangeItem({
                     />
                 )}
             </div>
+            
+            {item.createdBy && (
+                <Tooltip content={`Created by ${item.createdBy.name} `} />
+            )}
         </div>
     )
 }
