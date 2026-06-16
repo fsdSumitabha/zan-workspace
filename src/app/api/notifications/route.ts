@@ -4,9 +4,7 @@ import dbConnect from "@/lib/db/dbConnect"
 import Notification from "@/models/Notification"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 
-
-// just added a comment
-
+// just added a commit
 const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 50
 
