@@ -15,6 +15,8 @@ export interface INotification extends Document {
     title: string;
     body?: string;
     url?: string;
+    badge: string;
+    imageUrl?: string;
 
     seenAt: Date | null;
     readAt: Date | null;
@@ -41,6 +43,8 @@ const NotificationSchema = new Schema<INotification>({
     title:      { type: String, required: true },
     body:       { type: String },
     url:        { type: String },                   // deep link to the entity
+    badge:      { type: String, required: true },    // short text for badge counts, e.g. "5"
+    imageUrl:   { type: String },                   // optional thumbnail
 
     // per-user state (split so you can clear the badge without marking read)
     seenAt:     { type: Date, default: null },
@@ -52,6 +56,7 @@ const NotificationSchema = new Schema<INotification>({
 
 NotificationSchema.index({ recipient: 1, createdAt: -1 });  // the poll feed
 NotificationSchema.index({ recipient: 1, readAt: 1 });      // unread count
+NotificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 30 }); // 30-day TTL
 
 
 export default mongoose.models.Notification ||
