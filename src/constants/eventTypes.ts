@@ -20,3 +20,12 @@ export const EVENT_TYPE = {
 
 export type EventType = keyof typeof EVENT_TYPE;
 export type EventName = (typeof EVENT_TYPE)[EventType];
+
+/**
+ * Name → code lookup. Built manually because `invert(EVENT_TYPE)` would
+ * stringify numeric keys ("1000") which then breaks `switch (type)` in
+ * the renderer (strict equality against number literals).
+ */
+export const EVENT_CODE = Object.fromEntries(
+    Object.entries(EVENT_TYPE).map(([k, v]) => [v, Number(k)])
+) as Record<EventName, EventType>;
