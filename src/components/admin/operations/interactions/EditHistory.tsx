@@ -25,6 +25,19 @@ function personName(p: Person): string {
     return p.name || p.email || "User"
 }
 
+function formatEditCount(count: number): string {
+  switch (count) {
+    case 1:
+      return "once";
+    case 2:
+      return "twice";
+    case 3:
+      return "thrice";
+    default:
+      return `${count} times`;
+  }
+}
+
 export default function EditHistory({ history, createdBy, createdAt }: Props) {
     const [open, setOpen] = useState(false)
 
@@ -33,6 +46,9 @@ export default function EditHistory({ history, createdBy, createdAt }: Props) {
     // Most recent first; every entry carries the value it had *before* that edit.
     const entries = [...history].reverse()
     const latest = entries[0]
+
+
+    
 
     return (
         <div className="mt-3 pt-2 border-t border-neutral-200 dark:border-neutral-800">
@@ -47,9 +63,9 @@ export default function EditHistory({ history, createdBy, createdAt }: Props) {
                 <button
                     type="button"
                     onClick={() => setOpen((v) => !v)}
-                    className="inline-flex items-center gap-1 text-[10px] text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
-                >
-                    <span className="font-medium">{entries.length}</span>
+                    className="inline-flex items-center gap-1 text-[10px] text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200">
+
+                    <span className="font-medium">Edited {formatEditCount(entries.length)}</span>
                     {open ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                     {open ? "Hide history" : "Show history"}
                 </button>
