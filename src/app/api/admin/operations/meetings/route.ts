@@ -16,6 +16,7 @@ import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-
 import { escapeRegex } from "@/lib/search/escapeRegex"
 import { createMeetEvent, isGoogleCalendarConfigured } from "@/lib/google/calendar/calendar"
 import { resolveAttendeeEmails } from "@/lib/google/calendar/attendees"
+import { resolveEntityEmail } from "@/lib/google/calendar/resolveEntityEmail"
 
 
 export async function GET(req: NextRequest) {
@@ -251,11 +252,20 @@ export async function POST(req: NextRequest) {
             isGoogleCalendarConfigured()
         ) {
             try {
+                const attendeeEmails = await resolveAttendeeEmails(attendeeIds)
+
+                const entityEmail = await resolveEntityEmail(entityType, entityId)
+                console.log("Resolved entity email:", entityEmail)
+                
+                if (entityEmail) {
+                    attendeeEmails.push(entityEmail)
+                }
+
                 const event = await createMeetEvent({
                     summary: title,
                     description,
                     startISO: new Date(scheduledAt).toISOString(),
-                    attendeeEmails: await resolveAttendeeEmails(attendeeIds),
+                    attendeeEmails: [...new Set(attendeeEmails)],
                     requestId: meetingId.toString(),
                     sendUpdates: "all",
                 })
@@ -271,7 +281,7 @@ export async function POST(req: NextRequest) {
                         : "Unknown error while creating the Google Meet event."
             }
         }
- 
+
         // 1. Create Meeting
         const meeting = await auditedCreate(
             Meeting,
