@@ -36,7 +36,6 @@ export default function MeetingForm({
     const [date, setDate] = useState("")
     const [status, setStatus] = useState(2010) // MEETING_STATUS.SCHEDULED
     const [meetingType, setMeetingType] = useState(0) // ONLINE
-    const [meetingLink, setMeetingLink] = useState("")
     const [loading, setLoading] = useState(false)
 
     // Attendees: load all active users once on mount and let the user
@@ -101,7 +100,6 @@ export default function MeetingForm({
                 agenda,
                 description,
                 meetingType,
-                meetingLink,
                 status,
                 scheduledAt: date,
                 attendees: [...selectedIds],
@@ -191,20 +189,6 @@ export default function MeetingForm({
                 </select>
             </div>
 
-            {/* Meeting Link (only for online) */}
-            {meetingType === 0 && (
-                <div className="space-y-2">
-                    <label className="text-sm text-neutral-800 dark:text-neutral-200">
-                        Meeting Link
-                    </label>
-                    <input
-                        value={meetingLink}
-                        onChange={(e) => setMeetingLink(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
-                        placeholder="https://..."
-                    />
-                </div>
-            )}
 
             {/* Attendees — inline checkbox list, always visible */}
             <div className="space-y-2">

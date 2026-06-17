@@ -14,6 +14,10 @@ import { AuthError, requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
 import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-log"
 import { escapeRegex } from "@/lib/search/escapeRegex"
+import { createMeetEvent, isGoogleCalendarConfigured } from "@/lib/google/calendar/calendar"
+import { resolveAttendeeEmails } from "@/lib/google/calendar/attendees"
+import { resolveEntityEmail } from "@/lib/google/calendar/resolveEntityEmail"
+
 import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { resolveParentName } from "@/lib/notifications/resolveParentName"
@@ -195,14 +199,17 @@ export async function GET(req: NextRequest) {
     }
 }
 
+export const runtime = "nodejs"
+const GOOGLE_MEET_TYPE = 0
+
 export async function POST(req: NextRequest) {
     try {
         const authUser = await requireRole(req, [10, 60, 45, 70])
-
+ 
         await dbConnect()
-
+ 
         const body = await req.json()
-
+ 
         const {
             entityType,
             entityId,
@@ -210,19 +217,18 @@ export async function POST(req: NextRequest) {
             agenda,
             description,
             meetingType,
-            meetingLink,
             scheduledAt,
             status,
             attendees,
         } = body
-
+ 
         if (entityType === undefined || entityType === null || !entityId) {
             return NextResponse.json(
                 { success: false, error: "entityType and entityId are required" },
                 { status: 400 }
             )
         }
-
+ 
         // Normalize attendees: keep only valid ObjectId strings, dedupe.
         const attendeeIds: string[] = Array.isArray(attendees)
             ? [
@@ -235,12 +241,56 @@ export async function POST(req: NextRequest) {
                   ),
               ]
             : []
+ 
+        const meetingId = new mongoose.Types.ObjectId()
+ 
+        let meetingLink: string | null = null
+        let googleEventId: string | null = null
+        let conferenceStatus: string | null = null
+        let googleError: string | null = null
+ 
+        if (
+            meetingType === GOOGLE_MEET_TYPE &&
+            scheduledAt &&
+            isGoogleCalendarConfigured()
+        ) {
+            try {
+                const attendeeEmails = await resolveAttendeeEmails(attendeeIds)
+
+                const entityEmail = await resolveEntityEmail(entityType, entityId)
+                console.log("Resolved entity email:", entityEmail)
+                
+                if (entityEmail) {
+                    attendeeEmails.push(entityEmail)
+                }
+
+                const event = await createMeetEvent({
+                    summary: title,
+                    description,
+                    startISO: new Date(scheduledAt).toISOString(),
+                    attendeeEmails: [...new Set(attendeeEmails)],
+                    requestId: meetingId.toString(),
+                    sendUpdates: "all",
+                })
+ 
+                meetingLink = event.meetingLink
+                googleEventId = event.googleEventId
+                conferenceStatus = event.conferenceStatus
+            } catch (err) {
+                console.error("Google Calendar event creation failed:", err)
+                googleError =
+                    err instanceof Error
+                        ? err.message
+                        : "Unknown error while creating the Google Meet event."
+            }
+        }
 
         // 1. Create Meeting
         const meeting = await auditedCreate(
             Meeting,
             ENTITY_TYPE.MEETING,
             {
+                _id: meetingId,
                 entityType,
                 entityId,
                 title,
@@ -251,11 +301,13 @@ export async function POST(req: NextRequest) {
                 scheduledAt,
                 status,
                 attendees: attendeeIds,
-                createdBy: authUser.id
+                googleEventId,
+                conferenceStatus,
+                createdBy: authUser.id,
             },
             authUser.id
         )
-
+ 
         // 2. Create Interaction (timeline entry)
         const interaction = await auditedCreate(
             Interaction,
@@ -267,17 +319,17 @@ export async function POST(req: NextRequest) {
                 title: title,
                 description: agenda,
                 createdBy: authUser.id,
-                refId: meeting._id
+                refId: meeting._id,
             },
             authUser.id
         )
-
+ 
         // 2. Prepare update payload
         const updatePayload = {
             lastInteractionAt: new Date(),
-            lastInteractionId: interaction._id
+            lastInteractionId: interaction._id,
         }
-
+ 
         switch (entityType) {
             case ENTITY_TYPE.LEAD:
             case ENTITY_TYPE.CLIENT:
@@ -289,13 +341,14 @@ export async function POST(req: NextRequest) {
                     authUser.id
                 )
                 break
-
+ 
             default:
                 return NextResponse.json(
                     { success: false, error: "Invalid entityType" },
                     { status: 400 }
                 )
         }
+ 
 
         const parentName = await resolveParentName(meeting.entityType, String(meeting.entityId))
         await emitNotification({
@@ -309,19 +362,19 @@ export async function POST(req: NextRequest) {
         })
 
         return NextResponse.json(
-            { success: true, data: meeting },
+            { success: true, data: meeting, googleError },
             { status: 201 }
         )
-    } catch (error : any) {
+    } catch (error: any) {
         console.error(error)
-
+ 
         if (error instanceof AuthError) {
             return NextResponse.json(
                 { success: false, error: error.message },
                 { status: error.statusCode }
             )
         }
-
+ 
         return NextResponse.json(
             { success: false, error: "Failed to create meeting" },
             { status: 500 }
