@@ -205,11 +205,11 @@ const GOOGLE_MEET_TYPE = 0
 export async function POST(req: NextRequest) {
     try {
         const authUser = await requireRole(req, [10, 60, 45, 70])
- 
+
         await dbConnect()
- 
+
         const body = await req.json()
- 
+
         const {
             entityType,
             entityId,
@@ -221,14 +221,14 @@ export async function POST(req: NextRequest) {
             status,
             attendees,
         } = body
- 
+
         if (entityType === undefined || entityType === null || !entityId) {
             return NextResponse.json(
                 { success: false, error: "entityType and entityId are required" },
                 { status: 400 }
             )
         }
- 
+
         // Normalize attendees: keep only valid ObjectId strings, dedupe.
         const attendeeIds: string[] = Array.isArray(attendees)
             ? [
@@ -241,14 +241,14 @@ export async function POST(req: NextRequest) {
                   ),
               ]
             : []
- 
+
         const meetingId = new mongoose.Types.ObjectId()
- 
+
         let meetingLink: string | null = null
         let googleEventId: string | null = null
         let conferenceStatus: string | null = null
         let googleError: string | null = null
- 
+
         if (
             meetingType === GOOGLE_MEET_TYPE &&
             scheduledAt &&
@@ -258,8 +258,6 @@ export async function POST(req: NextRequest) {
                 const attendeeEmails = await resolveAttendeeEmails(attendeeIds)
 
                 const entityEmail = await resolveEntityEmail(entityType, entityId)
-                console.log("Resolved entity email:", entityEmail)
-                
                 if (entityEmail) {
                     attendeeEmails.push(entityEmail)
                 }
@@ -272,7 +270,7 @@ export async function POST(req: NextRequest) {
                     requestId: meetingId.toString(),
                     sendUpdates: "all",
                 })
- 
+
                 meetingLink = event.meetingLink
                 googleEventId = event.googleEventId
                 conferenceStatus = event.conferenceStatus
@@ -307,7 +305,7 @@ export async function POST(req: NextRequest) {
             },
             authUser.id
         )
- 
+
         // 2. Create Interaction (timeline entry)
         const interaction = await auditedCreate(
             Interaction,
@@ -323,13 +321,13 @@ export async function POST(req: NextRequest) {
             },
             authUser.id
         )
- 
-        // 2. Prepare update payload
+
+        // 3. Prepare update payload
         const updatePayload = {
             lastInteractionAt: new Date(),
             lastInteractionId: interaction._id,
         }
- 
+
         switch (entityType) {
             case ENTITY_TYPE.LEAD:
             case ENTITY_TYPE.CLIENT:
@@ -341,24 +339,37 @@ export async function POST(req: NextRequest) {
                     authUser.id
                 )
                 break
- 
+
             default:
                 return NextResponse.json(
                     { success: false, error: "Invalid entityType" },
                     { status: 400 }
                 )
         }
- 
 
-        const parentName = await resolveParentName(meeting.entityType, String(meeting.entityId))
+        // 4. Emit notification
+        const parentName = await resolveParentName(
+            meeting.entityType,
+            String(meeting.entityId)
+        )
         await emitNotification({
             type: EVENT_CODE.MEETING_SCHEDULED,
             entityType: ENTITY_TYPE.MEETING,
             entityId: meeting._id,
             actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
-            payload: { meeting: { _id: meeting._id, title: meeting.title, entityType: meeting.entityType, entityId: meeting.entityId, scheduledAt: meeting.scheduledAt }, parentName },
-            extraRecipients: Array.isArray(meeting.attendees) ? meeting.attendees.map((a: any) => String(a)) : undefined,
-            
+            payload: {
+                meeting: {
+                    _id: meeting._id,
+                    title: meeting.title,
+                    entityType: meeting.entityType,
+                    entityId: meeting.entityId,
+                    scheduledAt: meeting.scheduledAt,
+                },
+                parentName,
+            },
+            extraRecipients: Array.isArray(meeting.attendees)
+                ? meeting.attendees.map((a: any) => String(a))
+                : undefined,
         })
 
         return NextResponse.json(
@@ -367,14 +378,14 @@ export async function POST(req: NextRequest) {
         )
     } catch (error: any) {
         console.error(error)
- 
+
         if (error instanceof AuthError) {
             return NextResponse.json(
                 { success: false, error: error.message },
                 { status: error.statusCode }
             )
         }
- 
+
         return NextResponse.json(
             { success: false, error: "Failed to create meeting" },
             { status: 500 }
