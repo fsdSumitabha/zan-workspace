@@ -1,4 +1,3 @@
-// src/components/admin/operations/interactions/types/CallItem.tsx
 "use client"
 
 import * as Icons from "lucide-react"
@@ -6,14 +5,14 @@ import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { INTERACTION_TYPE_META } from "@/constants/interactionTypes"
 import { CALL_DIRECTION_META, CALL_STATUS_META } from "@/constants/callStatus"
+import Tooltip from "@/components/admin/operations/tooltip/Tooltip"
 
 
 export default function CallItem({ item }: { item: any }) {
-
     const call = item.call
 
-    const direction  = CALL_DIRECTION_META[call?.direction] ?? CALL_DIRECTION_META[0]
-    const callStatus = CALL_STATUS_META[call?.status]       ?? CALL_STATUS_META[0]
+    const direction = CALL_DIRECTION_META[call?.direction] ?? CALL_DIRECTION_META[0]
+    const callStatus = CALL_STATUS_META[call?.status] ?? CALL_STATUS_META[0]
 
     const DirectionIcon = Icons[direction.icon] as React.ElementType
 
@@ -31,8 +30,8 @@ export default function CallItem({ item }: { item: any }) {
             <div className="flex-1 space-y-2">
 
                 {/* Header */}
-                <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex justify-between items-start gap-2">
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
                         {item.title && (
                             <h3 className="font-semibold text-sm capitalize tracking-wide text-gray-700 dark:text-gray-300">
                                 {item.title}
@@ -41,7 +40,7 @@ export default function CallItem({ item }: { item: any }) {
                         <StatusBadge status={item.type} meta={INTERACTION_TYPE_META} />
                     </div>
 
-                    <span className="text-xs text-gray-500 whitespace-nowrap flex items-center gap-1">
+                    <span className="text-xs text-gray-500 whitespace-nowrap flex items-center gap-1 shrink-0">
                         <Icons.Calendar className="w-3 h-3" />
                         <TimeAgo date={item.createdAt} />
                     </span>
@@ -49,7 +48,7 @@ export default function CallItem({ item }: { item: any }) {
 
                 {/* Description */}
                 {item.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap break-words">
                         {item.description}
                     </p>
                 )}
@@ -148,6 +147,10 @@ export default function CallItem({ item }: { item: any }) {
                     </div>
                 )}
             </div>
+
+            {item.createdBy && (
+                <Tooltip content={`Created by ${item.createdBy.name} `} />
+            )}
         </div>
     )
 }

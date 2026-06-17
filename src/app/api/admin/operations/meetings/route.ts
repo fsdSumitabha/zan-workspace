@@ -18,6 +18,9 @@ import { createMeetEvent, isGoogleCalendarConfigured } from "@/lib/google/calend
 import { resolveAttendeeEmails } from "@/lib/google/calendar/attendees"
 import { resolveEntityEmail } from "@/lib/google/calendar/resolveEntityEmail"
 
+import { emitNotification } from "@/lib/notifications/emit"
+import { EVENT_CODE } from "@/constants/eventTypes"
+import { resolveParentName } from "@/lib/notifications/resolveParentName"
 
 export async function GET(req: NextRequest) {
     try {
@@ -346,6 +349,18 @@ export async function POST(req: NextRequest) {
                 )
         }
  
+
+        const parentName = await resolveParentName(meeting.entityType, String(meeting.entityId))
+        await emitNotification({
+            type: EVENT_CODE.MEETING_SCHEDULED,
+            entityType: ENTITY_TYPE.MEETING,
+            entityId: meeting._id,
+            actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
+            payload: { meeting: { _id: meeting._id, title: meeting.title, entityType: meeting.entityType, entityId: meeting.entityId, scheduledAt: meeting.scheduledAt }, parentName },
+            extraRecipients: Array.isArray(meeting.attendees) ? meeting.attendees.map((a: any) => String(a)) : undefined,
+            
+        })
+
         return NextResponse.json(
             { success: true, data: meeting, googleError },
             { status: 201 }
