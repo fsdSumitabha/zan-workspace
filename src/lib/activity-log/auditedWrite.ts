@@ -1,4 +1,5 @@
 import type { Document, Model, QueryOptions, Schema, Types, UpdateQuery } from "mongoose"
+import mongoose from "mongoose"
 
 import { getAuditContext } from "./auditContext"
 import { logEntityChanges } from "./logEntityChanges"
@@ -97,7 +98,7 @@ export async function auditedCreate<T extends Document>(
     model: Model<T>,
     _entityType: EntityType,
     data: UpdateQuery<T>,
-    actorId?: string | null
+    actorId?: string | mongoose.Types.ObjectId | null
 ): Promise<T> {
     const userId = actorId ?? getAuditContext()?.userId ?? null
 

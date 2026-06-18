@@ -4,6 +4,7 @@ import MetaLeadEvent from "@/models/MetaLeadEvent"
 import { fetchFacebookLead } from "@/lib/webhooks/facebook/fetch-lead"
 import { auditedCreate } from "@/lib/activity-log"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import mongoose from "mongoose"
 
 export async function processLeadEvent(eventId: string) {
     await dbConnect()
@@ -34,11 +35,15 @@ export async function processLeadEvent(eventId: string) {
             return
         }
 
+        //use mongo id minting to cast the id
+
+        const botUserId = process.env.FACEBOOK_LEAD_BOT_ID ? new mongoose.Types.ObjectId(process.env.FACEBOOK_LEAD_BOT_ID) : null
+        
         const created = await auditedCreate(
             Lead,
             ENTITY_TYPE.LEAD,
-            { name, email, phone, source: "facebook", createdBy: process.env.FACEBOOK_LEAD_BOT_ID ?? null },
-            process.env.FACEBOOK_LEAD_BOT_ID ?? null,
+            { name, email, phone, source: "facebook", createdBy: botUserId },
+            botUserId,
         )
 
         event.status = "enriched"
