@@ -13,6 +13,7 @@ const MODEL_ENTITY_MAP: Array<{ modelName: string; entityType: EntityType }> = [
     { modelName: "Document", entityType: ENTITY_TYPE.DOCUMENT },
     { modelName: "Call", entityType: ENTITY_TYPE.CALL },
     { modelName: "Quotation", entityType: ENTITY_TYPE.QUOTATION },
+    { modelName: "MetaLeadEvent", entityType: ENTITY_TYPE.META_LEAD_EVENT },
 ]
 
 /** Ensure audit hooks exist on compiled models (fixes Next.js hot-reload). */

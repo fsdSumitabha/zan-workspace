@@ -8,6 +8,7 @@ export const ENTITY_TYPE = {
     DOCUMENT: 6,
     CALL: 7,
     QUOTATION: 8,
+    META_LEAD_EVENT: 9,
 } as const
 
 export type EntityType = (typeof ENTITY_TYPE)[keyof typeof ENTITY_TYPE]
@@ -22,4 +23,5 @@ export const ENTITY_TYPE_META: Record<EntityType, { label: string }> = {
     6: { label: "Document" },
     7: { label: "Call" },
     8: { label: "Quotation" },
+    9: { label: "MetaLeadEvent" },
 }
