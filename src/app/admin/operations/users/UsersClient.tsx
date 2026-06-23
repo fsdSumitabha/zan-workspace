@@ -26,10 +26,11 @@ interface ApiResponse {
         pages: number
     }
 }
-const { role } = useAuth()
+
 const PAGE_SIZE = 5
 
 export default function UsersClient() {
+    const { role } = useAuth()
     const [users, setUsers] = useState<User[]>([])
     const [loading, setLoading] = useState(true)
     const [totalPages, setTotalPages] = useState(1)
