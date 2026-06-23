@@ -16,31 +16,31 @@ const navItems: Array<{
     {
         name: "Dashboard",
         href: "/admin/operations",
-        roles: [10, 20, 30, 40, 42, 45, 50, 60, 70, 80],
+        roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 70, 80],
         icon: Home,
     },
     {
         name: "Leads",
         href: "/admin/operations/leads",
-        roles: [10, 20, 30, 40, 42, 45, 50, 60, 70, 80],
+        roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 70, 80],
         icon: Target,
     },
     {
         name: "Clients",
         href: "/admin/operations/clients",
-        roles: [10, 20, 30, 40, 42, 45, 50, 60, 70, 80],
+        roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 70, 80],
         icon: Handshake,
     },
     {
         name: "Projects",
         href: "/admin/operations/projects",
-        roles: [10, 20, 30, 40, 42, 45, 50, 60, 70, 80],
+        roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 70, 80],
         icon: FolderKanban,
     },
     {
         name: "Users",
         href: "/admin/operations/users",
-        roles: [10, 20],
+        roles: [10, 15, 20],
         icon: UserRoundCog,
     },
 ];

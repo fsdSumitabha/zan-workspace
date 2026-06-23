@@ -11,7 +11,7 @@
 Today, every API route protects itself with a hard-coded list of role numbers:
 
 ```ts
-await requireRole(req, [10, 60, 70, 45, 50])
+await requireRole(req, [10, 15, 60, 70, 45, 50])
 ```
 
 This breaks down the moment any of the following happen:
@@ -236,7 +236,7 @@ Route usage:
 
 ```ts
 // Before
-const authUser = await requireRole(req, [10, 60, 70, 45])
+const authUser = await requireRole(req, [10, 15, 60, 70, 45])
 
 // After
 const authUser = await requirePermission(req, PERMISSIONS.LEADS.CREATE)

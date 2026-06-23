@@ -1,5 +1,6 @@
 export const USER_ROLE_META = {
     10: { label: "Admin", description: "Full system access" },
+    15: { label: "Operations Manager", description: "Manages operations" },
     20: { label: "HR", description: "Manages employees" },
     30: { label: "Project Manager", description: "Oversees projects" },
     40: { label: "Full Stack Developer", description: "Builds product" },

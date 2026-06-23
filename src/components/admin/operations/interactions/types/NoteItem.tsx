@@ -14,7 +14,7 @@ import Tooltip from "@/components/admin/operations/tooltip/Tooltip"
 export default function NoteItem({ item, onChanged }: { item: any; onChanged?: () => void }) {
     const { role } = useAuth()
     const [editing, setEditing] = useState(false)
-    const INTERACTION_EDIT_ROLES: UserRole[] = [10, 60, 45, 50, 70]
+    const INTERACTION_EDIT_ROLES: UserRole[] = [10, 15, 60, 45, 50, 70]
     const allowed = role !== null && role !== undefined && (INTERACTION_EDIT_ROLES as number[]).includes(role)
     const Icon =
         (Icons as any)[

@@ -133,7 +133,7 @@ import { requireRole } from "@/lib/auth/requireRole"
 import Client from "@/models/Client"
 
 export const PATCH = withAuditHandler(async (req, context) => {
-  await requireRole(req, [10, 60])
+  await requireRole(req, [10, 15, 60])
   await dbConnect()
 
   const { id } = await context.params

@@ -17,7 +17,7 @@ import { sendRegistrationMail } from "@/services/registrationMail"
 
 export async function GET(req: NextRequest) {
     try {
-        await requireRole(req, [10, 20])
+        await requireRole(req, [10, 15, 20])
 
         await dbConnect()
 

@@ -14,7 +14,7 @@ import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
 
 /** Roles allowed to edit a Project. Mirrors the backend PATCH role list. */
-const PROJECT_EDIT_ROLES = [10, 60, 45, 70]
+const PROJECT_EDIT_ROLES = [10, 15, 60, 45, 70]
 
 
 type Props = {

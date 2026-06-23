@@ -13,6 +13,7 @@ import AccessDenied from "@/components/admin/operations/AccessDenied"
 import { usePagination } from "@/hooks/usePagination"
 import { useSearch } from "@/hooks/useSearch"
 import { handleAuthError } from "@/lib/auth/handleAuthError"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface ApiResponse {
     success: boolean
@@ -25,7 +26,7 @@ interface ApiResponse {
         pages: number
     }
 }
-
+const { role } = useAuth()
 const PAGE_SIZE = 5
 
 export default function UsersClient() {
@@ -84,7 +85,9 @@ export default function UsersClient() {
 
     return (
         <div className="space-y-4">
-            <CreateActionButton href="users/create" label="Create New User" />
+            {role === 10 || role === 20 && (
+                <CreateActionButton href="users/create" label="Create New User" />
+            )}
 
             {loading && (
                 <div className="space-y-4">

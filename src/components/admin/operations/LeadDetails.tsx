@@ -9,7 +9,7 @@ import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
 
 /** Roles allowed to edit a Lead. Mirrors the backend PATCH role list. */
-const LEAD_EDIT_ROLES = [10, 60, 45, 70]
+const LEAD_EDIT_ROLES = [10, 15, 60, 45, 70]
 
 type Props = {
     lead: Lead

@@ -253,7 +253,7 @@ npx tsx src/scripts/test-lead-patch-audit.ts
 import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
 
 await dbConnect()
-const user = await requireRole(req, [10, 60])
+const user = await requireRole(req, [10, 15, 60])
 
 const lead = await auditedFindByIdAndUpdate(
   Lead,

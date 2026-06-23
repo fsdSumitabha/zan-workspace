@@ -15,7 +15,7 @@ export async function GET(
         const { id } = await context.params
 
         await dbConnect()
-        await requireRole(req, [10, 60, 70, 45])
+        await requireRole(req, [10, 15, 60, 70, 45])
 
         const lead = await Lead.findById(id)
 
@@ -81,7 +81,7 @@ export async function PATCH(
         }
 
         await dbConnect()
-        const user = await requireRole(req, [10, 60, 70, 45])
+        const user = await requireRole(req, [10, 15, 60, 70, 45])
 
         const existing = await Lead.findOne({
             phone: body.phone,
@@ -151,7 +151,7 @@ export async function DELETE(
         }
 
         await dbConnect()
-        const authUser = await requireRole(req, [10, 45])
+        const authUser = await requireRole(req, [10, 15, 45])
 
         const lead = await auditedFindByIdAndUpdate(
             Lead,

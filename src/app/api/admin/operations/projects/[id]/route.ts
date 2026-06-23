@@ -12,7 +12,7 @@ export async function GET(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireRole(req, [10, 60, 70, 45, 50])
+        await requireRole(req, [10, 15, 60, 70, 45, 50])
 
         await dbConnect()
 
@@ -78,7 +78,7 @@ export async function PATCH(
         }
 
         await dbConnect()
-        const user = await requireRole(req, [10, 60, 45, 70])
+        const user = await requireRole(req, [10, 15, 60, 45, 70])
 
         const { clientId, title, description, serviceType, status, companyName, budget } =
             body
@@ -143,7 +143,7 @@ export async function DELETE(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireRole(req, [10, 60, 45, 70])
+        await requireRole(req, [10, 15, 60, 45, 70])
 
         const { id } = await context.params
 

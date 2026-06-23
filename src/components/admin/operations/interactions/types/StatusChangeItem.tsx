@@ -23,7 +23,7 @@ export default function StatusChangeItem({
     onChanged?: () => void
 }) {
     const { role } = useAuth()
-    const INTERACTION_EDIT_ROLES: UserRole[] = [10, 60, 45, 50, 70]
+    const INTERACTION_EDIT_ROLES: UserRole[] = [10, 15, 60, 45, 50, 70]
     const allowed = role !== null && role !== undefined && (INTERACTION_EDIT_ROLES as number[]).includes(role)
     const [editing, setEditing] = useState(false)
 

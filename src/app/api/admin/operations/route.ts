@@ -13,7 +13,7 @@ import { AuthError } from "@/lib/auth/requireAuth"
 
 export async function GET(req: NextRequest) {
     try {
-        await requireRole(req, [10, 60, 70, 45, 50])
+        await requireRole(req, [10, 15, 60, 70, 45, 50])
         await dbConnect()
 
         // fetch all in parallel

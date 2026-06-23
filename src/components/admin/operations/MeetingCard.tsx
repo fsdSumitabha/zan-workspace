@@ -19,7 +19,7 @@ import TemporalBadge from "./TemporalBadge "
  * Roles allowed to reschedule / close (mark missed/completed) a meeting.
  * Mirrors the backend PATCH roles on both reschedule and status routes.
  */
-const RESCHEDULE_ROLES = [10, 60, 45, 70]
+const RESCHEDULE_ROLES = [10, 15, 60, 45, 70]
 const CLOSE_ROLES = RESCHEDULE_ROLES
 
 /** Friendly local-time date for the reschedule history rows. */
