@@ -31,7 +31,7 @@ export default function ConvertLeadPage() {
                     return
                 }
 
-                setLead(data.data)
+                setLead(data.data.lead)
             } catch {
                 toast.error("Something went wrong")
             } finally {

@@ -38,6 +38,7 @@ export default function Page() {
 
     const { role } = useAuth()
     const router = useRouter()
+    console.log("role", role)
 
     useEffect(() => {
         const fetchLead = async () => {

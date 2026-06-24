@@ -18,9 +18,9 @@ export default function LeadInfoCard({ lead }: Props) {
                 </h2>
 
                 <span
-                    className={`text-xs px-2 py-1 rounded-md ${statusMeta.color} text-white`}
+                    className={`text-xs px-2 py-1 rounded-md ${statusMeta.color ?? "bg-gray-500"} text-white`}
                 >
-                    {statusMeta.label}
+                    {statusMeta.label ?? lead.status}
                 </span>
             </div>
 

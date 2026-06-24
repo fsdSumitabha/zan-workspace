@@ -26,11 +26,16 @@ export default function UserForm({
     loading = false,
     defaultValues
 }: Props) {
+
+    const SELECTABLE_ROLES = Object.keys(USER_ROLE_META)
+        .filter((k) => k !== "10")
+        .map(Number) as UserRole[]
+
     const [form, setForm] = useState<UserFormValues>({
         name: defaultValues?.name || "",
         email: defaultValues?.email || "",
         password: "",
-        role: defaultValues?.role || 10,
+        role: defaultValues?.role ?? SELECTABLE_ROLES[0],
         isActive: defaultValues?.isActive ?? true,
         avatar: defaultValues?.avatar || "",
         avatarFile: null as File | null
