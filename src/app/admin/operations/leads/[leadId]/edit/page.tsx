@@ -30,10 +30,10 @@ export default function Page() {
                 }
 
                 setLead({
-                    name: data.data.name || "",
-                    email: data.data.email || "",
-                    phone: data.data.phone || "",
-                    source: data.data.source || ""
+                    name: data.data.lead.name || "",
+                    email: data.data.lead.email || "",
+                    phone: data.data.lead.phone || "",
+                    source: data.data.lead.source || ""
                 })
             } catch (error: any) {
                 toast.error(error.message || "Failed to load lead")
