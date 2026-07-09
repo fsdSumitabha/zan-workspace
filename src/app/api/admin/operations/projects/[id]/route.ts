@@ -32,7 +32,7 @@ export async function GET(
             success: true,
             data: project
         })
-    } catch(error : any) {
+    } catch (error: any) {
         if (error instanceof AuthError) {
             return NextResponse.json(
                 { success: false, message: error.message },
@@ -123,7 +123,7 @@ export async function PATCH(
             success: true,
             data: project
         })
-    } catch(error : any) {
+    } catch (error: any) {
         if (error instanceof AuthError) {
             return NextResponse.json(
                 { success: false, message: error.message },
@@ -143,7 +143,7 @@ export async function DELETE(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireRole(req, [10, 15, 60, 45, 70])
+        const authUser = await requireRole(req, [10, 15, 60, 45, 70])
 
         const { id } = await context.params
 
@@ -158,12 +158,22 @@ export async function DELETE(
         await dbConnect()
 
         // 2. Delete lead
-        const lead = await Project.findByIdAndDelete(id)
+        const project = await auditedFindByIdAndUpdate(
+            Project,
+            0,
+            id,
+            {
+                deletedAt: new Date(),
+                deletedBy: authUser.id,
+            },
+            {},
+            authUser.id
+        )
 
-        // 3. Not found
-        if (!lead) {
+        // 3. Not found (or already deleted)
+        if (!project) {
             return NextResponse.json(
-                { success: false, message: "Project not found" },
+                { success: false, message: "Project not found or already deleted" },
                 { status: 404 }
             )
         }
@@ -177,9 +187,9 @@ export async function DELETE(
             { status: 200 }
         )
 
-    } catch (error : any) {
+    } catch (error: any) {
         console.error("DELETE PROJECT ERROR:", error)
-        
+
         if (error instanceof AuthError) {
             return NextResponse.json(
                 { success: false, message: error.message },

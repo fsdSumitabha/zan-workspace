@@ -40,7 +40,7 @@ export async function computeStats(): Promise<StatsCounts> {
                 deletedAt: null,
             }),
             Client.countDocuments({ deletedAt: null }),
-            Project.countDocuments(),
+            Project.countDocuments({ deletedAt: null }),
             Meeting.countDocuments({
                 scheduledAt: { $gte: now, $lt: weekFromNow },
                 status: { $ne: MEETING_STATUS.CANCELLED },

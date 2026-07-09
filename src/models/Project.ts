@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose"
+import mongoose, { Schema, Document, Query } from "mongoose"
 import { PROJECT_STATUS } from "@/constants/projectStatus"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
@@ -18,6 +18,8 @@ export interface IProject extends Document {
     lastInteractionAt?: Date
     lastInteractionId?: mongoose.Types.ObjectId
     createdBy?: mongoose.Types.ObjectId
+    deletedAt: Date | null
+    deletedBy?: mongoose.Types.ObjectId
 }
 
 const ProjectSchema = new Schema<IProject>(
@@ -49,9 +51,18 @@ const ProjectSchema = new Schema<IProject>(
             type: Schema.Types.ObjectId,
             ref: "User"
         },
+        deletedAt: { type: Date, default: null },
+        deletedBy: {
+            type: Schema.Types.ObjectId,
+            ref: "User"
+        },
     },
     { timestamps: true }
 )
+
+ProjectSchema.pre(/^find/, function (this: Query<any, IProject>) {
+    this.where({ deletedAt: null })
+})
 
 ensureAuditPlugin(ProjectSchema, ENTITY_TYPE.PROJECT)
 statsInvalidatePlugin(ProjectSchema)
