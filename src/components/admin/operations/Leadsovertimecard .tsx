@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { ChevronRight, TrendingUp } from "lucide-react"
+import LeadsMonthlyChart from "./statistics/LeadsMonthlyChart "
 
 /* ------------------------------------------------------------------ */
 /* Types — mirror the `leads.overTime` slice of the stats payload      */
@@ -150,8 +151,9 @@ function YearBlock({
             </button>
 
             {isOpen && (
-                <div className="border-t border-slate-100 dark:border-neutral-800/70 p-3">
+                <div className="border-t border-slate-100 dark:border-neutral-800/70 p-3 space-y-4">
                     <MonthTable months={months} />
+                    <LeadsMonthlyChart months={months} />
                 </div>
             )}
         </div>
