@@ -33,6 +33,7 @@ const PAGE_SIZE = 10
 export default function LeadsClient() {
     const [leads, setLeads] = useState<Lead[]>([])
     const [loading, setLoading] = useState(true)
+    const [total, setTotal] = useState(0)
     const [totalPages, setTotalPages] = useState(1)
     const [accessError, setAccessError] = useState<string | null>(null)
     const router = useRouter()
@@ -68,6 +69,7 @@ export default function LeadsClient() {
                 handleAuthError(res, json, router, (msg) => {
                     setAccessError(msg)
                     setLeads([])
+                    setTotal(0)
                 })
             ) {
                 return
@@ -76,6 +78,7 @@ export default function LeadsClient() {
             if (json.success) {
                 setLeads(json.data)
                 setTotalPages(json.pagination?.pages ?? 1)
+                setTotal(json.pagination?.total ?? 0)
             }
         } catch (error) {
             console.error("Failed to fetch leads", error)
@@ -97,6 +100,12 @@ export default function LeadsClient() {
             <CreateActionButton href="leads/create" label="Create New Lead" />
 
             <ListFilters statusMeta={LEAD_STATUS_META} />
+
+            {!loading && !accessError && (
+                <div className="text-sm text-gray-500">
+                    {total} {total === 1 ? "lead" : "leads"} found
+                </div>
+            )}
 
             {loading && (
                 <div className="space-y-4">

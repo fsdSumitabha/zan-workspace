@@ -2,9 +2,6 @@ import Lead from "@/models/Lead"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
 import Meeting from "@/models/Meeting"
-import { LEAD_STATUS } from "@/constants/leadStatus"
-import { CLIENT_STATUS } from "@/constants/clientStatus"
-import { PROJECT_STATUS } from "@/constants/projectStatus"
 import { MEETING_STATUS } from "@/constants/meetingStatus"
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
@@ -41,21 +38,9 @@ export async function computeStats(): Promise<StatsCounts> {
         await Promise.all([
             Lead.countDocuments({
                 deletedAt: null,
-                status: {
-                    $nin: [LEAD_STATUS.CONVERTED, LEAD_STATUS.LOST],
-                },
             }),
-            Client.countDocuments({ status: CLIENT_STATUS.ACTIVE }),
-            Project.countDocuments({
-                status: {
-                    $in: [
-                        PROJECT_STATUS.CONFIRMED,
-                        PROJECT_STATUS.IN_PROGRESS,
-                        PROJECT_STATUS.DEPLOYED,
-                        PROJECT_STATUS.MAINTENANCE,
-                    ],
-                },
-            }),
+            Client.countDocuments(),
+            Project.countDocuments(),
             Meeting.countDocuments({
                 scheduledAt: { $gte: now, $lt: weekFromNow },
                 status: { $ne: MEETING_STATUS.CANCELLED },
