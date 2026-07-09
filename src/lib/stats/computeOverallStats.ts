@@ -21,6 +21,25 @@ interface StatusRow {
     count: number
 }
 
+interface LeadMonthlyRow {
+    _id: { year: number; month: number }
+    leads: number
+    converted: number
+}
+
+interface MonthBucket {
+    month: number      // 1–12
+    leads: number
+    converted: number
+}
+
+interface YearBucket {
+    year: number
+    leads: number
+    converted: number
+    months: MonthBucket[]
+}
+
 function lookupCount(rows: StatusRow[], status: number): number {
     return rows.find((r) => r._id === status)?.count ?? 0
 }
@@ -52,7 +71,7 @@ export async function computeOverallStats() {
     const weekFromNow = new Date(now)
     weekFromNow.setDate(weekFromNow.getDate() + 7)
 
-    const [leadAgg, clientAgg, projectAgg, meetingAgg, userAgg] =
+    const [leadAgg, clientAgg, projectAgg, meetingAgg, userAgg, leadMonthlyRows] =
         await Promise.all([
             Lead.aggregate([
                 { $match: { deletedAt: null } },
@@ -166,6 +185,29 @@ export async function computeOverallStats() {
                     },
                 },
             ]),
+
+            Lead.aggregate<LeadMonthlyRow>([
+                { $match: { deletedAt: null } },
+                {
+                    $group: {
+                        _id: {
+                            year: { $year: "$createdAt" },
+                            month: { $month: "$createdAt" },
+                        },
+                        leads: { $sum: 1 },
+                        converted: {
+                            $sum: {
+                                $cond: [
+                                    { $eq: ["$status", LEAD_STATUS.CONVERTED] },
+                                    1,
+                                    0,
+                                ],
+                            },
+                        },
+                    },
+                },
+                { $sort: { "_id.year": 1, "_id.month": 1 } },
+            ]),
         ])
 
     // ── Leads ──────────────────────────────────────────────────────
@@ -185,6 +227,27 @@ export async function computeOverallStats() {
     const terminal = leadsByStatus.converted + leadsByStatus.lost
     const conversionRate =
         terminal > 0 ? leadsByStatus.converted / terminal : null
+
+    // ── Leads over time (year → months) ────────────────────────────
+    const yearMap = new Map<number, YearBucket>()
+    for (const row of leadMonthlyRows as LeadMonthlyRow[]) {
+        const { year, month } = row._id
+        let yearBucket = yearMap.get(year)
+        if (!yearBucket) {
+            yearBucket = { year, leads: 0, converted: 0, months: [] }
+            yearMap.set(year, yearBucket)
+        }
+        yearBucket.months.push({
+            month,
+            leads: row.leads,
+            converted: row.converted,
+        })
+        yearBucket.leads += row.leads
+        yearBucket.converted += row.converted
+    }
+    const leadsOverTime = Array.from(yearMap.values()).sort(
+        (a, b) => a.year - b.year
+    )
 
     // ── Clients ────────────────────────────────────────────────────
     const clientRows = (clientAgg[0]?.byStatus ?? []) as StatusRow[]
@@ -242,6 +305,7 @@ export async function computeOverallStats() {
             converted: leadsByStatus.converted,
             lost: leadsByStatus.lost,
             conversionRate,
+            overTime: leadsOverTime,
         },
         clients: {
             total: firstValue(clientAgg[0]?.total),

@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 
 import TimeAgo from "./dayjs/TimeAgo"
+import LeadsOverTimeCard from "./Leadsovertimecard "
 
 ChartJS.register(ArcElement, Tooltip)
 
@@ -34,6 +35,12 @@ interface OverallStats {
         converted: number
         lost: number
         conversionRate: number
+                overTime: {
+            year: number
+            leads: number
+            converted: number
+            months: { month: number; leads: number; converted: number }[]
+        }[]
     }
     clients: {
         total: number
@@ -246,6 +253,8 @@ export default function OverallStatsPanel() {
                     chartType="pie"
                 />
             </div>
+
+            <LeadsOverTimeCard data={data.leads.overTime} />
         </div>
     )
 }
