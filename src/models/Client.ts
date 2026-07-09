@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose"
+import mongoose, { Schema, Document, Query } from "mongoose"
 import { CLIENT_STATUS } from "@/constants/clientStatus"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
@@ -16,7 +16,8 @@ export interface IClient extends Document {
     lastInteractionId?: mongoose.Types.ObjectId
     leadId?: mongoose.Types.ObjectId
     createdBy?: mongoose.Types.ObjectId
-
+    deletedAt: Date | null
+    deletedBy?: mongoose.Types.ObjectId
 }
 
 const ClientSchema = new Schema<IClient>(
@@ -43,11 +44,21 @@ const ClientSchema = new Schema<IClient>(
         leadId: {
             type: Schema.Types.ObjectId,
             ref: "Lead"
-        }
+        },
 
+        deletedAt: { type: Date, default: null },
+
+        deletedBy: {
+            type: Schema.Types.ObjectId,
+            ref: "User"
+        }
     },
     { timestamps: true }
 )
+
+ClientSchema.pre(/^find/, function (this: Query<any, IClient>) {
+    this.where({ deletedAt: null })
+})
 
 ensureAuditPlugin(ClientSchema, ENTITY_TYPE.CLIENT)
 statsInvalidatePlugin(ClientSchema)

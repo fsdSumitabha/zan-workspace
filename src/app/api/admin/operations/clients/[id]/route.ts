@@ -45,7 +45,7 @@ export async function GET(
                 projects
             }
         })
-    } catch (error : any) {
+    } catch (error: any) {
         if (error instanceof AuthError) {
             return NextResponse.json(
                 { success: false, message: error.message },
@@ -159,15 +159,25 @@ export async function DELETE(
 
         await dbConnect()
 
-        await requireRole(req, [10, 15, 45])
+        const authUser = await requireRole(req, [10, 15, 45])
 
-        // 2. Delete lead
-        const lead = await Client.findByIdAndDelete(id)
+        // 2. Soft delete client
+        const client = await auditedFindByIdAndUpdate(
+            Client,
+            0,
+            id,
+            {
+                deletedAt: new Date(),
+                deletedBy: authUser.id,
+            },
+            {},
+            authUser.id
+        )
 
-        // 3. Not found
-        if (!lead) {
+        // 3. Not found (or already deleted)
+        if (!client) {
             return NextResponse.json(
-                { success: false, message: "Client not found" },
+                { success: false, message: "Client not found or already deleted" },
                 { status: 404 }
             )
         }
@@ -190,7 +200,7 @@ export async function DELETE(
                 { status: error.statusCode }
             )
         }
-        
+
         return NextResponse.json(
             { success: false, message: "Internal server error" },
             { status: 500 }

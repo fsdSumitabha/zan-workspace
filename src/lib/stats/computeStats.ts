@@ -39,7 +39,7 @@ export async function computeStats(): Promise<StatsCounts> {
             Lead.countDocuments({
                 deletedAt: null,
             }),
-            Client.countDocuments(),
+            Client.countDocuments({ deletedAt: null }),
             Project.countDocuments(),
             Meeting.countDocuments({
                 scheduledAt: { $gte: now, $lt: weekFromNow },
