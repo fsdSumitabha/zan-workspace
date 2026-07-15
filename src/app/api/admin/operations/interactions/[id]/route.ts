@@ -7,7 +7,7 @@ import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 
-const EDIT_ROLES = [10, 15, 60, 45, 50, 70]
+const EDIT_ROLES = [10, 15, 50, 60, 45, 70]
 
 export async function PATCH(
     req: NextRequest,

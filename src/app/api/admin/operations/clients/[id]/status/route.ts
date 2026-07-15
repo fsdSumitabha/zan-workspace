@@ -20,7 +20,7 @@ export async function PATCH(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        const authUser = await requireRole(req, [10, 15, 60, 45, 70])
+        const authUser = await requireRole(req, [10, 15, 50, 60, 45, 70])
         
         await dbConnect()
 
