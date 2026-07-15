@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Interaction from "@/models/Interaction"
-import Lead from "@/models/Lead"
-import Client from "@/models/Client"
-import Project from "@/models/Project"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { requireRole } from "@/lib/auth/requireRole"
@@ -23,7 +20,7 @@ function parentUrl(et: number, eid: string): string | undefined {
 
 export async function POST(req: NextRequest) {
     try {
-        const authUser = await requireRole(req, [10, 15, 60, 45, 70])
+        const authUser = await requireRole(req, [10, 15, 45, 50, 60, 70])
 
         await dbConnect()
 

@@ -12,7 +12,7 @@ export async function GET(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireRole(req, [10, 15, 60, 70, 45, 50])
+        await requireRole(req, [10, 15, 45, 50, 60, 70])
 
         await dbConnect()
 
@@ -78,7 +78,7 @@ export async function PATCH(
         }
 
         await dbConnect()
-        const user = await requireRole(req, [10, 15, 60, 45, 70])
+        const user = await requireRole(req, [10, 15, 45, 50, 60, 70])
 
         const { clientId, title, description, serviceType, status, companyName, budget } =
             body

@@ -14,7 +14,7 @@ export async function GET(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireRole(req, [10, 15, 60, 70, 45, 50])
+        await requireRole(req, [10, 15, 50, 60, 70, 45])
 
         await dbConnect()
 

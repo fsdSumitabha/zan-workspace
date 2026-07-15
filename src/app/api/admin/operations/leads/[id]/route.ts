@@ -15,7 +15,7 @@ export async function GET(
         const { id } = await context.params
 
         await dbConnect()
-        await requireRole(req, [10, 15, 60, 70, 45, 50])
+        await requireRole(req, [10, 15, 50, 60, 70, 45])
 
         const lead = await Lead.findById(id)
 
@@ -81,7 +81,7 @@ export async function PATCH(
         }
 
         await dbConnect()
-        const user = await requireRole(req, [10, 15, 60, 70, 45])
+        const user = await requireRole(req, [10, 15, 50, 60, 70, 45])
 
         const existing = await Lead.findOne({
             phone: body.phone,

@@ -14,7 +14,7 @@ import { ENTITY_TYPE } from "@/constants/entityTypes"
 export async function GET(req: NextRequest) {
     try {
 
-        await requireRole(req, [10, 15, 60, 70, 45, 50])
+        await requireRole(req, [10, 15, 50, 60, 70, 45])
 
         await dbConnect()
 
