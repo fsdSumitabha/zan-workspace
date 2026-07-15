@@ -20,7 +20,7 @@ export async function POST(
     const session = await mongoose.startSession()
 
     try {
-        const authUser = await requireRole(req, [10, 15, 60, 70, 45])
+        const authUser = await requireRole(req, [10, 15, 50, 60, 70, 45])
         await dbConnect()
 
         const { id } = await context.params
