@@ -86,7 +86,7 @@ export default function UsersClient() {
 
     return (
         <div className="space-y-4">
-            {role === 10 || role === 20 && (
+            {(role === 10 || role === 20) && (
                 <CreateActionButton href="users/create" label="Create New User" />
             )}
 
