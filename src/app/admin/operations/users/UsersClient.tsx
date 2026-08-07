@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Plus } from "lucide-react"
+import { Plus, Pencil } from "lucide-react"
 import { User } from "@/types/user"
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -105,7 +105,28 @@ export default function UsersClient() {
             )}
 
             {!loading &&
-                users.map((user) => <UserCard key={user._id} user={user} />)}
+                users.map((user) => (
+                    <div key={user._id} className="relative">
+                        <UserCard user={user} />
+
+                        <Link
+                            href={`/admin/operations/users/${user._id}/edit`}
+                            aria-label="Edit user"
+                            className="
+                                absolute bottom-4 right-4
+                                h-8 w-8 rounded-lg
+                                flex items-center justify-center
+                                border border-gray-300 dark:border-neutral-700
+                                text-gray-500 dark:text-neutral-400
+                                hover:text-blue-600 dark:hover:text-blue-400
+                                hover:border-blue-600 dark:hover:border-blue-400
+                                transition
+                            "
+                        >
+                            <Pencil size={14} />
+                        </Link>
+                    </div>
+                ))}
 
             {!loading && (
                 <Pagination

@@ -19,17 +19,24 @@ interface Props {
     onSubmit: (data: UserFormValues) => Promise<void>
     loading?: boolean
     defaultValues?: Partial<UserFormValues>
+    mode?: "create" | "edit"
 }
 
 export default function UserForm({
     onSubmit,
     loading = false,
-    defaultValues
+    defaultValues,
+    mode = "create"
 }: Props) {
 
-    const SELECTABLE_ROLES = Object.keys(USER_ROLE_META)
-        .filter((k) => k !== "10")
-        .map(Number) as UserRole[]
+    const isEdit = mode === "edit"
+
+    // Role 10 is never assignable, but keep it visible when the user already holds it
+    const ROLE_ENTRIES = Object.entries(USER_ROLE_META).filter(
+        ([key]) => key !== "10" || defaultValues?.role === 10
+    )
+
+    const SELECTABLE_ROLES = ROLE_ENTRIES.map(([key]) => Number(key)) as UserRole[]
 
     const [form, setForm] = useState<UserFormValues>({
         name: defaultValues?.name || "",
@@ -73,7 +80,7 @@ export default function UserForm({
         "
         >
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                Create User
+                {isEdit ? "Edit User" : "Create User"}
             </h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -113,17 +120,27 @@ export default function UserForm({
                     {/* Password */}
                     <div>
                         <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
-                            Password *
+                            {isEdit ? "New password" : "Password *"}
                         </label>
                         <input
                             name="password"
                             type="password"
                             value={form.password}
                             onChange={handleChange}
-                            placeholder="Enter password"
-                            required
+                            placeholder={
+                                isEdit
+                                    ? "Leave blank to keep the current password"
+                                    : "Enter password"
+                            }
+                            required={!isEdit}
+                            minLength={6}
                             className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
                         />
+                        {isEdit && (
+                            <p className="text-xs mt-1 text-gray-500 dark:text-neutral-400">
+                                Setting a password here replaces the current one immediately.
+                            </p>
+                        )}
                     </div>
 
                     {/* Role */}
@@ -137,13 +154,11 @@ export default function UserForm({
                             onChange={handleChange}
                             className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
                         >
-                            {Object.entries(USER_ROLE_META)
-                                .filter(([key]) => key !== "10")
-                                .map(([key, meta]) => (
-                                    <option key={key} value={key}>
-                                        {meta.label}
-                                    </option>
-                                ))}
+                            {ROLE_ENTRIES.map(([key, meta]) => (
+                                <option key={key} value={key}>
+                                    {meta.label}
+                                </option>
+                            ))}
                         </select>
 
                         {/* Role description */}
@@ -212,7 +227,9 @@ export default function UserForm({
                     dark:bg-white dark:text-black
                 "
                 >
-                    {loading ? "Creating..." : "Create User"}
+                    {isEdit
+                        ? loading ? "Saving..." : "Save changes"
+                        : loading ? "Creating..." : "Create User"}
                 </button>
             </div>
         </form>
