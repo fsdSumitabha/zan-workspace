@@ -59,10 +59,10 @@ function getCalendarClient(): calendar_v3.Calendar {
 // Which calendar to write to, and the timezone used for display/recurrence.
 // Override via env if the events should live on a non-primary calendar.
 function getCalendarId(): string {
-    return process.env.GOOGLE_CALENDAR_ID ?? "primary"
+    return process.env.GOOGLE_CALENDAR_ID || "primary"
 }
-function getDefaultTimeZone(): string {
-    return process.env.GOOGLE_CALENDAR_TIMEZONE ?? "Asia/Kolkata"
+export function getDefaultTimeZone(): string {
+    return process.env.GOOGLE_CALENDAR_TIMEZONE || "Asia/Kolkata"
 }
 
 // ---------------------------------------------------------------------------
@@ -76,7 +76,7 @@ export interface CreateMeetEventInput {
     description?: string | null
     /** Start time as an ISO string (your stored `scheduledAt`). */
     startISO: string
-    /** Meeting length in minutes. Defaults to 30. */
+    /** Meeting length in minutes. Defaults to 60. */
     durationMinutes?: number
     /** Email addresses to invite. Empty array is fine — a Meet link is still created. */
     attendeeEmails?: string[]
@@ -126,7 +126,8 @@ export async function createMeetEvent(
         )
     }
 
-    const end = new Date(start.getTime() + 60 * 60 * 1000)  // start + 1 hour (60 min × 60 sec × 1000 ms)
+    // Defaults to 1 hour, which is what CRM-scheduled meetings have always used.
+    const end = new Date(start.getTime() + (input.durationMinutes ?? 60) * 60_000)
     const timeZone = input.timeZone ?? getDefaultTimeZone()
 
     const requestBody: calendar_v3.Schema$Event = {
@@ -211,6 +212,167 @@ export async function cancelMeetEvent(
         eventId: googleEventId,
         sendUpdates,
     })
+}
+
+// ---------------------------------------------------------------------------
+// Free/busy — used by the public booking page
+// ---------------------------------------------------------------------------
+
+export interface BusyInterval {
+    start: Date
+    end: Date
+}
+
+/**
+ * Returns the busy blocks on the configured calendar between two instants.
+ * Only time ranges are exposed by Google here — never event titles/details —
+ * so the result is safe to derive public availability from.
+ */
+export async function getBusyIntervals(
+    timeMin: Date,
+    timeMax: Date
+): Promise<BusyInterval[]> {
+    try {
+        return await getBusyIntervalsViaFreeBusy(timeMin, timeMax)
+    } catch (err) {
+        // FreeBusy needs the calendar.freebusy / calendar.readonly / calendar
+        // scope. A token granted only `calendar.events` gets a 403 here, but can
+        // still list events — derive busy blocks from those instead.
+        if (!isInsufficientScopeError(err)) throw err
+        return getBusyIntervalsViaEvents(timeMin, timeMax)
+    }
+}
+
+async function getBusyIntervalsViaFreeBusy(
+    timeMin: Date,
+    timeMax: Date
+): Promise<BusyInterval[]> {
+    const cal = getCalendarClient()
+    const calendarId = getCalendarId()
+
+    const res = await cal.freebusy.query({
+        requestBody: {
+            timeMin: timeMin.toISOString(),
+            timeMax: timeMax.toISOString(),
+            timeZone: getDefaultTimeZone(),
+            items: [{ id: calendarId }],
+        },
+    })
+
+    const calendars = res.data.calendars ?? {}
+    const entry = calendars[calendarId] ?? Object.values(calendars)[0]
+
+    if (!entry) {
+        throw new Error("[google-calendar] freebusy returned no calendar entry")
+    }
+    if (entry.errors?.length) {
+        throw new Error(
+            `[google-calendar] freebusy error: ${entry.errors
+                .map((e) => e.reason)
+                .join(", ")}`
+        )
+    }
+
+    return (entry.busy ?? []).flatMap((b) =>
+        b.start && b.end
+            ? [{ start: new Date(b.start), end: new Date(b.end) }]
+            : []
+    )
+}
+
+async function getBusyIntervalsViaEvents(
+    timeMin: Date,
+    timeMax: Date
+): Promise<BusyInterval[]> {
+    const cal = getCalendarClient()
+    const busy: BusyInterval[] = []
+    let pageToken: string | undefined
+
+    do {
+        const res = await cal.events.list({
+            calendarId: getCalendarId(),
+            timeMin: timeMin.toISOString(),
+            timeMax: timeMax.toISOString(),
+            singleEvents: true, // expand recurring events into instances
+            showDeleted: false,
+            maxResults: 2500,
+            fields: "nextPageToken,items(status,transparency,start,end,attendees(self,responseStatus))",
+            pageToken,
+        })
+
+        for (const ev of res.data.items ?? []) {
+            if (ev.status === "cancelled") continue
+            if (ev.transparency === "transparent") continue // marked "Free"
+            const self = ev.attendees?.find((a) => a.self)
+            if (self?.responseStatus === "declined") continue
+
+            // Timed events use dateTime; all-day events use date (end is exclusive).
+            const tz = getDefaultTimeZone()
+            const start = ev.start?.dateTime
+                ? new Date(ev.start.dateTime)
+                : ev.start?.date
+                  ? zonedMidnight(ev.start.date, tz)
+                  : null
+            const end = ev.end?.dateTime
+                ? new Date(ev.end.dateTime)
+                : ev.end?.date
+                  ? zonedMidnight(ev.end.date, tz)
+                  : null
+            if (start && end) busy.push({ start, end })
+        }
+
+        pageToken = res.data.nextPageToken ?? undefined
+    } while (pageToken)
+
+    return busy
+}
+
+/** Midnight of a "YYYY-MM-DD" date in `timeZone`, as a UTC instant. */
+function zonedMidnight(dateKey: string, timeZone: string): Date {
+    const [y, m, d] = dateKey.split("-").map(Number)
+    const guess = Date.UTC(y, m - 1, d)
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone,
+        hourCycle: "h23",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+    }).formatToParts(new Date(guess))
+    const get = (t: Intl.DateTimeFormatPartTypes) =>
+        Number(parts.find((p) => p.type === t)?.value)
+    const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour") % 24, get("minute"))
+    return new Date(guess - (asUtc - guess))
+}
+
+function isInsufficientScopeError(err: unknown): boolean {
+    const e = err as {
+        status?: number
+        message?: string
+        response?: { status?: number }
+    }
+    const status = e?.response?.status ?? e?.status
+    return (
+        status === 403 &&
+        Boolean(e?.message?.toLowerCase().includes("insufficient authentication scopes"))
+    )
+}
+
+/**
+ * True when Google rejected the stored refresh token (expired, revoked, or
+ * invalidated by an account password change). The fix is to re-run the OAuth
+ * consent flow and replace GOOGLE_CALENDAR_REFRESH_TOKEN.
+ */
+export function isGoogleAuthError(err: unknown): boolean {
+    const e = err as {
+        message?: string
+        response?: { data?: { error?: string } }
+    }
+    return (
+        e?.response?.data?.error === "invalid_grant" ||
+        Boolean(e?.message?.includes("invalid_grant"))
+    )
 }
 
 // ---------------------------------------------------------------------------
