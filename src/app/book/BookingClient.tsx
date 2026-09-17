@@ -247,7 +247,7 @@ export default function BookingClient() {
         ? `Mon – Fri, ${formatMinutes(availability.officeStartMinutes)} – ${formatMinutes(
               availability.officeEndMinutes
           )}`
-        : "Mon – Fri, 11 AM – 8 PM"
+        : "Mon – Fri, 10 AM – 8 PM"
 
     function handleSelectDate(date: string) {
         setSelectedDate(date)

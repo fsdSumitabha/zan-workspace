@@ -14,7 +14,7 @@ export const BOOKING_RULES = {
     /** Days of the week the office takes meetings (0 = Sunday … 6 = Saturday). */
     officeDays: [1, 2, 3, 4, 5],
     /** Office opening time, minutes after midnight in the calendar time zone. */
-    officeStartMinutes: 11 * 60,
+    officeStartMinutes: 10 * 60,
     /** Office closing time — the last slot must END by this. */
     officeEndMinutes: 20 * 60,
     /** Length of a bookable meeting, and the step between slot starts. */
