@@ -16,6 +16,7 @@ import {
     Video,
 } from "lucide-react"
 import { toast } from "sonner"
+import { getPhonePlaceholder } from "@/lib/phone"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -549,7 +550,7 @@ export default function BookingClient() {
                                                     autoComplete="tel"
                                                     inputMode="tel"
                                                     maxLength={20}
-                                                    placeholder="+91 98765 43210"
+                                                    placeholder={getPhonePlaceholder()}
                                                     value={form.phone}
                                                     onChange={(e) => updateField("phone", e.target.value)}
                                                     className={inputClass(!!fieldErrors.phone)}

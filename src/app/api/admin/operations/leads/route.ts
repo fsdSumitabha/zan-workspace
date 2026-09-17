@@ -10,6 +10,7 @@ import { escapeRegex } from "@/lib/search/escapeRegex"
 import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { normalizePhoneForStorage } from "@/lib/phone"
 
 export async function GET(req: NextRequest) {
     try {
@@ -127,7 +128,9 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const existing = await Lead.findOne({ phone: body.phone })
+        const phone = normalizePhoneForStorage(body.phone)
+
+        const existing = await Lead.findOne({ phone })
 
         if (existing) {
             return NextResponse.json(
@@ -136,7 +139,7 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const { name, email, phone, source } = body
+        const { name, email, source } = body
 
         const lead = await auditedCreate(
             Lead,

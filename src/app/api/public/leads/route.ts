@@ -5,6 +5,7 @@ import { auditedCreate } from "@/lib/activity-log"
 import { verifyClientPortalKey } from "@/lib/security/timingSafeKey"
 import { resolveAllowedOrigin, withCors } from "@/lib/security/withCors"
 import { checkRateLimit } from "@/lib/security/rateLimit"
+import { normalizePhoneForStorage } from "@/lib/phone"
 
 const RATE_LIMIT = 5 
 const RATE_WINDOW_MS = 60 * 60 * 1000 
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
   
     const name =
         typeof raw.name === "string" ? raw.name.trim() : ""
-    const phone =
+    const rawPhone =
         typeof raw.phone === "string" ? raw.phone.trim() : ""
     const email =
         typeof raw.email === "string" ? raw.email.trim() : ""
@@ -117,13 +118,14 @@ export async function POST(req: NextRequest) {
             matchedOrigin
         )
     }
-    if (!phone || phone.length > PHONE_MAX || !PHONE_REGEX.test(phone)) {
+    if (!rawPhone || rawPhone.length > PHONE_MAX || !PHONE_REGEX.test(rawPhone)) {
         return respond(
             { success: false, message: "Invalid request" },
             400,
             matchedOrigin
         )
     }
+    const phone = normalizePhoneForStorage(rawPhone)
     if (email && (email.length > EMAIL_MAX || !EMAIL_REGEX.test(email))) {
         return respond(
             { success: false, message: "Invalid request" },

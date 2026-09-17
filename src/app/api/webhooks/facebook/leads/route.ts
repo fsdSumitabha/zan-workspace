@@ -6,6 +6,7 @@ import { fetchFacebookLead } from "@/lib/webhooks/facebook/fetch-lead"
 import type { FacebookWebhookPayload } from "@/types/facebook/facebook-leads"
 import { auditedCreate } from "@/lib/activity-log"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { normalizePhoneForStorage } from "@/lib/phone"
 
 // Prevent any caching/static optimization on this route
 export const dynamic = "force-dynamic"
@@ -75,8 +76,9 @@ async function processLeads(payload: FacebookWebhookPayload) {
                 const name =
                     lead.fields["full_name"] || lead.fields["name"] || "Unknown"
                 const email = lead.fields["email"] || ""
-                const phone =
+                const phone = normalizePhoneForStorage(
                     lead.fields["phone_number"] || lead.fields["phone"] || ""
+                )
 
                 if (!phone) {
                     console.warn(`[fb-webhook] no phone for lead ${leadgen_id}`)

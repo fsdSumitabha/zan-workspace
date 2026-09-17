@@ -10,6 +10,7 @@ import { escapeRegex } from "@/lib/search/escapeRegex"
 import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { normalizePhoneForStorage } from "@/lib/phone"
 
 export async function GET(req: NextRequest) {
     try {
@@ -124,6 +125,8 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             )
         }
+
+        body.phone = normalizePhoneForStorage(body.phone)
 
         const existing = await Client.findOne({ phone: body.phone })
 

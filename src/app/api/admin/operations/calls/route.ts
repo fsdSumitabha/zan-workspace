@@ -13,6 +13,7 @@ import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-
 import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { resolveParentName } from "@/lib/notifications/resolveParentName"
+import { normalizePhoneForStorage } from "@/lib/phone"
 
 function parentUrlFor(et: number, eid: string): string | undefined {
     if (et === ENTITY_TYPE.LEAD) return `/admin/operations/leads/${eid}`
@@ -41,7 +42,9 @@ export async function POST(req: NextRequest) {
         }
 
         const contactPersonName = formData.get("contactPersonName") as string
-        const contactPersonPhone = formData.get("contactPersonPhone") as string
+        const contactPersonPhone = normalizePhoneForStorage(
+            formData.get("contactPersonPhone") as string
+        )
 
         const callTime = formData.get("callTime") as string
         const duration = Number(formData.get("duration"))

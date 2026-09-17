@@ -15,6 +15,7 @@ import { emitNotification } from "@/lib/notifications/emit"
 import { escapeRegex } from "@/lib/search/escapeRegex"
 import { checkRateLimit } from "@/lib/security/rateLimit"
 import { getClientIp } from "@/lib/security/clientIp"
+import { normalizePhoneForStorage } from "@/lib/phone"
 import {
     cancelMeetEvent,
     createMeetEvent,
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
 
     const name = readString(raw, "name")
     const email = readString(raw, "email").toLowerCase()
-    const phone = readString(raw, "phone")
+    const rawPhone = readString(raw, "phone")
     const company = readString(raw, "company")
     const notes = readString(raw, "notes")
     const startISO = readString(raw, "start")
@@ -150,9 +151,10 @@ export async function POST(req: NextRequest) {
     if (!email || email.length > EMAIL_MAX || !EMAIL_REGEX.test(email)) {
         return fail("Please enter a valid email address.", 400, "email")
     }
-    if (!phone || phone.length > PHONE_MAX || !PHONE_REGEX.test(phone)) {
+    if (!rawPhone || rawPhone.length > PHONE_MAX || !PHONE_REGEX.test(rawPhone)) {
         return fail("Please enter a valid phone number.", 400, "phone")
     }
+    const phone = normalizePhoneForStorage(rawPhone)
     if (company.length > COMPANY_MAX) {
         return fail("Company name is too long.", 400, "company")
     }

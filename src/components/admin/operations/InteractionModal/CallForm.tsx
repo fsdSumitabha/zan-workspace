@@ -2,6 +2,13 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
+import { getPhoneRegion } from "@/lib/phone"
+
+// IN keeps the original 10-digit rule. US also accepts an optional
+// +1 and common separators; the server adds +1 when it is missing.
+const IS_US = getPhoneRegion() === "US"
+const PHONE_PATTERN = IS_US ? "\\+?[0-9 \\-\\(\\)\\.]{10,20}" : "[0-9]{10}"
+const PHONE_PLACEHOLDER = IS_US ? "Enter US phone number, e.g. (415) 555-0123" : "Enter 10-digit phone number"
 
 interface Props {
     entityType: number
@@ -95,8 +102,8 @@ export default function CallForm({ entityType, entityId, onClose, onSuccess }: P
                     <input
                         required
                         type="tel"
-                        placeholder="Enter 10-digit phone number"
-                        pattern="[0-9]{10}"
+                        placeholder={PHONE_PLACEHOLDER}
+                        pattern={PHONE_PATTERN}
                         value={form.contactPersonPhone}
                         onChange={set("contactPersonPhone")}
                         className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none text-sm"

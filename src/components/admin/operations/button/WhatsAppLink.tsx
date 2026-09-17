@@ -3,20 +3,11 @@
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { toWhatsAppNumber } from "@/lib/phone";
 
 type WhatsAppLinkProps = {
     phone?: string;
 };
-
-function formatPhoneNumber(phone: string) {
-    let cleaned = phone.replace(/\D/g, "");
-
-    if (cleaned.length === 10) {
-        cleaned = "91" + cleaned;
-    }
-
-    return cleaned;
-}
 
 function isValidPhone(phone: string) {
     const cleaned = phone.replace(/\D/g, "");
@@ -29,7 +20,7 @@ function isMobileDevice() {
 }
 
 export default function WhatsAppLink({ phone }: WhatsAppLinkProps) {
-    const formatted = phone ? formatPhoneNumber(phone) : "";
+    const formatted = phone ? toWhatsAppNumber(phone) : "";
 
     const href = formatted
         ? isMobileDevice()

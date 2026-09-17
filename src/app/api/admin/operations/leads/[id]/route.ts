@@ -6,6 +6,7 @@ import { Types } from "mongoose"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
+import { normalizePhoneForStorage } from "@/lib/phone"
 
 export async function GET(
     req: NextRequest,
@@ -83,8 +84,10 @@ export async function PATCH(
         await dbConnect()
         const user = await requireRole(req, [10, 15, 50, 60, 70, 45])
 
+        const phone = normalizePhoneForStorage(body.phone)
+
         const existing = await Lead.findOne({
-            phone: body.phone,
+            phone,
             _id: { $ne: id }
         })
 
@@ -95,7 +98,7 @@ export async function PATCH(
             )
         }
 
-        const { name, email, phone, source } = body
+        const { name, email, source } = body
 
         const lead = await auditedFindByIdAndUpdate(
             Lead,
