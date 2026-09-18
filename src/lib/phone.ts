@@ -30,6 +30,8 @@ export const PHONE_MESSAGES = {
     TOO_LONG: "This number is too long. Check the digits and the country.",
     HAS_EXTENSION: "Remove the extension. Enter the main number only.",
     INVALID: "This is not a valid number for the selected country.",
+    HAS_COUNTRY_CODE: "The country code is already set. Type the number without it.",
+    OTHER_COUNTRY: "This number belongs to another country. Pick that country in the list first.",
 } as const
 
 export type PhoneErrorCode = keyof typeof PHONE_MESSAGES
@@ -80,6 +82,74 @@ export function validatePhone(input: unknown, defaultCountry: CountryCode): Phon
     return fail("NOT_A_NUMBER")
 }
 
+/**
+ * Checks the text in the phone box, where the country comes from the picker.
+ *
+ * The box is for the local number only. A number with a country code is
+ * refused: typed as "+44 …", or dialled as "011 44 …" or "00 44 …". A code
+ * for the picked country is allowed only as a dialling prefix, because the
+ * saved number is then the one the user sees.
+ *
+ * Check the text shown in the box, not the library's value. The library
+ * reads "011 44 20 7946 0958" with US picked as a US number, but the user
+ * typed a UK number.
+ */
+export function validateLocalPhone(input: unknown, country: CountryCode): PhoneCheck {
+    const text = typeof input === "string" ? input.replace(HIDDEN_MARKS, "").trim() : ""
+    if (text.startsWith("+")) return fail("HAS_COUNTRY_CODE")
+
+    const result = validatePhone(text, country)
+    if (!result.ok) return result
+
+    if (!isSameCallingCode(result.e164, country)) return fail("OTHER_COUNTRY")
+    return result
+}
+
+/**
+ * Checks text pasted into the phone box, before the box changes it.
+ * The box drops letters, so "Call after 6pm: 415 555 0146" would become
+ * "641 555 5014", a different number.
+ *
+ * Returns:
+ * - { action: "allow" }: digits and spaces, ( ) . -. The box takes them.
+ * - { action: "replace", e164 }: a full number for the picked country,
+ *   such as "+1 415 555 0123". Put `e164` in the box instead.
+ * - { action: "reject", message }: letters, other symbols, or a number
+ *   for another country.
+ */
+export type PasteCheck =
+    | { action: "allow" }
+    | { action: "replace"; e164: string }
+    | { action: "reject"; message: string }
+
+export function checkPastedPhone(pasted: string, country: CountryCode): PasteCheck {
+    const text = pasted.replace(HIDDEN_MARKS, "").trim()
+    if (!text) return { action: "allow" }
+
+    if (text.startsWith("+")) {
+        const result = validatePhone(text, country)
+        if (!result.ok) return { action: "reject", message: result.message }
+        if (!isSameCallingCode(result.e164, country)) {
+            return { action: "reject", message: PHONE_MESSAGES.OTHER_COUNTRY }
+        }
+        return { action: "replace", e164: result.e164 }
+    }
+
+    // \p{Nd} covers every script's digits, such as "４" and "٤".
+    if (/^[\p{Nd}\s().-]+$/u.test(text)) return { action: "allow" }
+
+    const result = validatePhone(text, country)
+    return {
+        action: "reject",
+        message: result.ok ? PHONE_MESSAGES.NOT_A_NUMBER : result.message,
+    }
+}
+
+function isSameCallingCode(e164: string, country: CountryCode): boolean {
+    const phone = parsePhoneNumberFromString(e164)
+    return !!phone && phone.countryCallingCode === getCountryCallingCode(country)
+}
+
 /** A saved value as E.164, or null when it is not a valid number. */
 export function toE164(stored: unknown, defaultCountry: CountryCode): string | null {
     const phone = parse(stored, defaultCountry)
@@ -103,20 +173,34 @@ export function toWhatsAppNumber(stored: unknown, defaultCountry: CountryCode): 
 }
 
 /**
- * Values an existing row may hold for the same number. Old rows were saved
- * as typed, so "+919876543210" may be stored as "919876543210",
- * "9876543210" or "09876543210". Use this with $in for duplicate checks.
- * Numbers with spaces or dashes are not covered.
+ * A Mongo condition for the `phone` field that matches every saved form of
+ * one number. Use it for duplicate checks: `{ phone: phoneLookupCondition(...) }`.
+ *
+ * Old rows were saved as typed, so "+14155550181" may be stored as
+ * "14155550181", "4155550181", "(415) 555-0181", "+1 415-555-0181" or
+ * "001 415 555 0181". The pattern allows any non-digits between digits, an
+ * optional "00" or "011" dialling prefix, and an optional trunk "0".
+ *
+ * Numbers without a country code were saved in the region's country, so the
+ * code is optional only for that country. For other countries it is required.
+ *
+ * A regex cannot use the phone index. That is fine for one lookup per save.
  */
-export function phoneLookupValues(e164: string, defaultCountry: CountryCode): string[] {
-    const values = [e164, e164.slice(1)]
+export function phoneLookupCondition(
+    e164: string,
+    defaultCountry: CountryCode
+): { $regex: string } {
     const phone = parsePhoneNumberFromString(e164)
-    // Numbers without a country code were saved in the region's country,
-    // so only match them for that country.
-    if (phone && phone.countryCallingCode === getCountryCallingCode(defaultCountry)) {
-        values.push(phone.nationalNumber, `0${phone.nationalNumber}`)
+    if (!phone) return { $regex: `^${e164.replace(/\D/g, "")}$` }
+
+    const gap = "[^0-9]*"
+    const spaced = (digits: string) => digits.split("").join(gap)
+    const code = `(?:(?:00|011)${gap})?${spaced(phone.countryCallingCode)}${gap}`
+    const sameCountry = phone.countryCallingCode === getCountryCallingCode(defaultCountry)
+
+    return {
+        $regex: `^${gap}${sameCountry ? `(?:${code})?` : code}(?:0${gap})?${spaced(phone.nationalNumber)}${gap}$`,
     }
-    return values
 }
 
 /**

@@ -5,7 +5,7 @@ import { auditedCreate } from "@/lib/activity-log"
 import { verifyClientPortalKey } from "@/lib/security/timingSafeKey"
 import { resolveAllowedOrigin, withCors } from "@/lib/security/withCors"
 import { checkRateLimit } from "@/lib/security/rateLimit"
-import { phoneLookupValues, validatePhone } from "@/lib/phone"
+import { phoneLookupCondition, validatePhone } from "@/lib/phone"
 import { getRegion } from "@/lib/region"
 
 const RATE_LIMIT = 5 
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
         
         
         const existing = await Lead.findOne({
-            phone: { $in: phoneLookupValues(phone, phoneCountry) }
+            phone: phoneLookupCondition(phone, phoneCountry)
         })
             .select("_id")
             .lean()

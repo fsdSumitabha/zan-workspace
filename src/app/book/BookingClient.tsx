@@ -16,10 +16,8 @@ import {
     Video,
 } from "lucide-react"
 import { toast } from "sonner"
-import type { CountryCode } from "libphonenumber-js"
 import PhoneField from "@/components/phone/PhoneField"
-import { useRegion } from "@/contexts/RegionContext"
-import { validatePhone } from "@/lib/phone"
+import { useEditablePhone } from "@/components/phone/useEditablePhone"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -57,18 +55,17 @@ type Step = "pick" | "details" | "done"
 interface FormState {
     name: string
     email: string
-    phone: string
     company: string
     notes: string
     company_website: string
 }
 
-type FieldErrors = Partial<Record<keyof FormState, string>>
+// The phone is not in FormState: useEditablePhone() holds it.
+type FieldErrors = Partial<Record<keyof FormState | "phone", string>>
 
 const EMPTY_FORM: FormState = {
     name: "",
     email: "",
-    phone: "",
     company: "",
     notes: "",
     company_website: "",
@@ -159,12 +156,10 @@ function shiftMonth(monthKey: string, delta: number): string {
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`
 }
 
-function validateForm(form: FormState, phoneCountry: CountryCode): FieldErrors {
+function validateForm(form: FormState): FieldErrors {
     const errors: FieldErrors = {}
     if (!form.name.trim()) errors.name = "Please enter your name."
     if (!EMAIL_REGEX.test(form.email.trim())) errors.email = "Please enter a valid email address."
-    const phone = validatePhone(form.phone, phoneCountry)
-    if (!phone.ok) errors.phone = phone.message
     if (form.notes.length > NOTES_MAX) errors.notes = `Please keep this under ${NOTES_MAX} characters.`
     return errors
 }
@@ -183,7 +178,7 @@ export default function BookingClient() {
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
     const [viewMonth, setViewMonth] = useState<string | null>(null)
 
-    const { phoneCountry } = useRegion()
+    const phone = useEditablePhone()
     const [form, setForm] = useState<FormState>(EMPTY_FORM)
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
     const [submitError, setSubmitError] = useState("")
@@ -233,6 +228,8 @@ export default function BookingClient() {
         [availability]
     )
 
+    const phoneError = phone.error || fieldErrors.phone
+
     const timeZone = availability?.timeZone ?? "Asia/Kolkata"
     const slotMinutes = availability?.slotMinutes ?? 30
 
@@ -278,17 +275,19 @@ export default function BookingClient() {
         e.preventDefault()
         if (!selectedSlot || submitting) return
 
-        const errors = validateForm(form, phoneCountry)
+        const errors = validateForm(form)
         setFieldErrors(errors)
         setSubmitError("")
-        if (Object.keys(errors).length) return
+        // Focus the phone box only when no field above it has an error.
+        const phoneToSend = phone.check({ focus: !errors.name && !errors.email })
+        if (Object.keys(errors).length || !phoneToSend) return
 
         setSubmitting(true)
         try {
             const res = await fetch("/api/public/booking", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...form, start: selectedSlot }),
+                body: JSON.stringify({ ...form, phone: phoneToSend, start: selectedSlot }),
             })
             const json = await res.json().catch(() => null)
 
@@ -306,7 +305,7 @@ export default function BookingClient() {
                 return
             }
 
-            if (res.status === 400 && json?.field && json.field in EMPTY_FORM) {
+            if (res.status === 400 && json?.field && (json.field in EMPTY_FORM || json.field === "phone")) {
                 setFieldErrors({ [json.field]: json.message })
                 return
             }
@@ -321,6 +320,7 @@ export default function BookingClient() {
 
     function resetBooking() {
         setForm(EMPTY_FORM)
+        phone.reset()
         setFieldErrors({})
         setSubmitError("")
         setResult(null)
@@ -547,13 +547,16 @@ export default function BookingClient() {
                                         </Field>
 
                                         <div className="grid gap-4 sm:grid-cols-2">
-                                            <Field label="Phone" required error={fieldErrors.phone} htmlFor="book-phone">
+                                            <Field label="Phone" required error={phoneError} htmlFor="book-phone">
                                                 <PhoneField
                                                     id="book-phone"
-                                                    value={form.phone}
-                                                    onChange={(value) => updateField("phone", value ?? "")}
-                                                    hasError={!!fieldErrors.phone}
-                                                    className={phoneBoxClass(!!fieldErrors.phone)}
+                                                    {...phone.fieldProps}
+                                                    onChange={(value) => {
+                                                        phone.fieldProps.onChange(value)
+                                                        if (fieldErrors.phone) setFieldErrors((e) => ({ ...e, phone: undefined }))
+                                                    }}
+                                                    hasError={!!phoneError}
+                                                    className={phoneBoxClass(!!phoneError)}
                                                 />
                                             </Field>
 

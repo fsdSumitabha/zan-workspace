@@ -6,7 +6,7 @@ import { fetchFacebookLead } from "@/lib/webhooks/facebook/fetch-lead"
 import type { FacebookWebhookPayload } from "@/types/facebook/facebook-leads"
 import { auditedCreate } from "@/lib/activity-log"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
-import { phoneLookupValues, validatePhone } from "@/lib/phone"
+import { phoneLookupCondition, validatePhone } from "@/lib/phone"
 import { getRegion } from "@/lib/region"
 
 // Prevent any caching/static optimization on this route
@@ -94,14 +94,14 @@ async function processLeads(payload: FacebookWebhookPayload) {
                     console.warn(`[fb-webhook] invalid phone kept as sent for lead ${leadgen_id}: ${phoneCheck.code}`)
                 }
                 const phone = phoneCheck.ok ? phoneCheck.e164 : rawPhone
-                const phoneValues = phoneCheck.ok
-                    ? phoneLookupValues(phone, phoneCountry)
-                    : [phone]
+                const phoneMatch = phoneCheck.ok
+                    ? phoneLookupCondition(phone, phoneCountry)
+                    : phone
 
                 // Idempotency: same lead_id should never create two leads,
                 // even if Meta retries. Use upsert OR check existence.
                 const existing = await Lead.findOne({
-                    $or: [{ phone: { $in: phoneValues } }, { externalLeadId: leadgen_id }],
+                    $or: [{ phone: phoneMatch }, { externalLeadId: leadgen_id }],
                 })
                 if (existing) {
                     console.log(`[fb-webhook] duplicate skipped: ${leadgen_id}`)

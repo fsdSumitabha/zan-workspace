@@ -15,7 +15,7 @@ import { emitNotification } from "@/lib/notifications/emit"
 import { escapeRegex } from "@/lib/search/escapeRegex"
 import { checkRateLimit } from "@/lib/security/rateLimit"
 import { getClientIp } from "@/lib/security/clientIp"
-import { phoneLookupValues, validatePhone } from "@/lib/phone"
+import { phoneLookupCondition, validatePhone } from "@/lib/phone"
 import { getRegion } from "@/lib/region"
 import {
     cancelMeetEvent,
@@ -69,7 +69,7 @@ async function resolveLeadId(
     actorId: string
 ): Promise<string> {
     const byPhone = await Lead.findOne({
-        phone: { $in: phoneLookupValues(input.phone, getRegion().phoneCountry) },
+        phone: phoneLookupCondition(input.phone, getRegion().phoneCountry),
     })
         .select("_id")
         .lean<{ _id: unknown }>()

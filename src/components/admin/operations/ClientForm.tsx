@@ -55,7 +55,7 @@ export default function ClientForm({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        const phoneToSend = phone.check()
+        const phoneToSend = phone.check({ focus: true })
 
         if (!form.name || !form.company) {
             toast.error("Please fill required fields")
@@ -158,10 +158,7 @@ export default function ClientForm({
                     <PhoneField
                         id="client-phone"
                         name="phone"
-                        value={phone.value}
-                        onChange={phone.onChange}
-                        onBlur={phone.onBlur}
-                        hasError={!!phone.error}
+                        {...phone.fieldProps}
                         className={`w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 ${phone.error ? "border-red-400 dark:border-red-500" : "dark:border-neutral-700"}`}
                     />
                     <PhoneHint error={phone.error} savedInvalid={phone.savedInvalid} />

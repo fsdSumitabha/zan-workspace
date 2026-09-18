@@ -12,9 +12,11 @@ export default function PhoneHint({ error, savedInvalid }: PhoneHintProps) {
     }
     if (savedInvalid) {
         return (
-            <p className="mt-1 text-xs break-all text-amber-700 dark:text-amber-400">
-                Saved value &quot;{savedInvalid}&quot; is not a valid number. It stays as it is
-                unless you enter a new one.
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                {/* break-all only on the value: a long saved value must wrap,
+                    but the words of the note must not break. */}
+                Saved value &quot;<span className="break-all">{savedInvalid}</span>&quot; is not a
+                valid number. It stays as it is unless you enter a new one.
             </p>
         )
     }

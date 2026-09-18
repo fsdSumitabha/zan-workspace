@@ -6,7 +6,8 @@ import { Types } from "mongoose"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
-import { phoneLookupValues, validatePhone } from "@/lib/phone"
+import { validatePhone } from "@/lib/phone"
+import { DUPLICATE_LEAD_MESSAGE, findLeadPhoneConflict } from "@/lib/leads/findLeadByPhone"
 import { getRegion } from "@/lib/region"
 
 export async function GET(
@@ -107,14 +108,10 @@ export async function PATCH(
             }
             phone = check.e164
 
-            const existing = await Lead.findOne({
-                phone: { $in: phoneLookupValues(phone, phoneCountry) },
-                _id: { $ne: id }
-            })
-
-            if (existing) {
+            const conflict = await findLeadPhoneConflict(phone, phoneCountry, id)
+            if (conflict) {
                 return NextResponse.json(
-                    { success: false, message: "Another lead already has this phone number.", field: "phone" },
+                    { success: false, message: conflict, field: "phone" },
                     { status: 409 }
                 )
             }
@@ -153,10 +150,11 @@ export async function PATCH(
             )
         }
 
-        // The unique index also covers deleted leads, which findOne hides.
+        // Deleted leads are checked before the save. So a duplicate error
+        // here means another request saved the same number at the same time.
         if (error?.code === 11000) {
             return NextResponse.json(
-                { success: false, message: "A deleted lead has this phone number.", field: "phone" },
+                { success: false, message: DUPLICATE_LEAD_MESSAGE, field: "phone" },
                 { status: 409 }
             )
         }

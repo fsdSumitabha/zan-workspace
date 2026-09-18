@@ -8,7 +8,7 @@ import { requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
-import { phoneLookupValues, validatePhone } from "@/lib/phone"
+import { phoneLookupCondition, validatePhone } from "@/lib/phone"
 import { getRegion } from "@/lib/region"
 
 export async function GET(
@@ -115,7 +115,7 @@ export async function PATCH(
             phone = check.e164
 
             const existing = await Client.findOne({
-                phone: { $in: phoneLookupValues(phone, phoneCountry) },
+                phone: phoneLookupCondition(phone, phoneCountry),
                 _id: { $ne: id }
             })
 

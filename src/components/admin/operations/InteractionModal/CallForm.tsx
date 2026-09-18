@@ -34,7 +34,7 @@ export default function CallForm({ entityType, entityId, onClose, onSuccess }: P
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        const phoneToSend = phone.check()
+        const phoneToSend = phone.check({ focus: true })
         if (!phoneToSend) return
 
         setLoading(true)
@@ -104,10 +104,7 @@ export default function CallForm({ entityType, entityId, onClose, onSuccess }: P
                     <label htmlFor="call-contact-phone" className="text-xs text-gray-500 dark:text-gray-400">Contact Phone <span className="text-red-500">*</span></label>
                     <PhoneField
                         id="call-contact-phone"
-                        value={phone.value}
-                        onChange={phone.onChange}
-                        onBlur={phone.onBlur}
-                        hasError={!!phone.error}
+                        {...phone.fieldProps}
                         className={`w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 text-sm ${phone.error ? "border-red-400 dark:border-red-500" : "dark:border-neutral-700"}`}
                     />
                     <PhoneHint error={phone.error} />

@@ -10,7 +10,7 @@ import { escapeRegex } from "@/lib/search/escapeRegex"
 import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
-import { phoneLookupValues, validatePhone } from "@/lib/phone"
+import { phoneLookupCondition, validatePhone } from "@/lib/phone"
 import { getRegion } from "@/lib/region"
 
 export async function GET(req: NextRequest) {
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
         body.phone = check.e164
 
         const existing = await Client.findOne({
-            phone: { $in: phoneLookupValues(body.phone, phoneCountry) }
+            phone: phoneLookupCondition(body.phone, phoneCountry)
         })
 
         if (existing) {
