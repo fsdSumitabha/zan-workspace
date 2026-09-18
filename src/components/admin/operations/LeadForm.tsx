@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import PhoneField from "@/components/phone/PhoneField"
+import PhoneHint from "@/components/phone/PhoneHint"
+import { useEditablePhone } from "@/components/phone/useEditablePhone"
 
 type LeadFormValues = {
     name: string
@@ -24,12 +27,13 @@ export default function LeadForm({
 }: LeadFormProps) {
     const router = useRouter()
 
-    const [form, setForm] = useState<LeadFormValues>({
+    const [form, setForm] = useState<Omit<LeadFormValues, "phone">>({
         name: "",
         email: "",
-        phone: "",
         source: ""
     })
+
+    const phone = useEditablePhone(mode === "edit" ? initialValues?.phone : "")
 
     const [loading, setLoading] = useState(false)
 
@@ -38,7 +42,6 @@ export default function LeadForm({
             setForm({
                 name: initialValues.name || "",
                 email: initialValues.email || "",
-                phone: initialValues.phone || "",
                 source: initialValues.source || ""
             })
         }
@@ -54,10 +57,13 @@ export default function LeadForm({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!form.name || !form.phone || !form.source) {
+        const phoneToSend = phone.check()
+
+        if (!form.name || !form.source) {
             toast.error("Please fill required fields")
             return
         }
+        if (!phoneToSend) return
 
         try {
             setLoading(true)
@@ -74,10 +80,15 @@ export default function LeadForm({
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(form)
+                body: JSON.stringify({ ...form, phone: phoneToSend })
             })
 
             const data = await res.json()
+
+            if (data?.field === "phone" && data.message) {
+                phone.setError(data.message)
+                return
+            }
 
             if (!res.ok || !data.success) {
                 throw new Error(
@@ -127,16 +138,19 @@ export default function LeadForm({
                 </div>
 
                 <div>
-                    <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
+                    <label htmlFor="lead-phone" className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
                     Phone *
                     </label>
-                    <input
+                    <PhoneField
+                    id="lead-phone"
                     name="phone"
-                    value={form.phone}
-                    onChange={handleChange}
-                    placeholder="Enter phone number"
-                    className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
+                    value={phone.value}
+                    onChange={phone.onChange}
+                    onBlur={phone.onBlur}
+                    hasError={!!phone.error}
+                    className={`w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 ${phone.error ? "border-red-400 dark:border-red-500" : "dark:border-neutral-700"}`}
                     />
+                    <PhoneHint error={phone.error} savedInvalid={phone.savedInvalid} />
                 </div>
 
                 <div>

@@ -6,7 +6,8 @@ import { fetchFacebookLead } from "@/lib/webhooks/facebook/fetch-lead"
 import type { FacebookWebhookPayload } from "@/types/facebook/facebook-leads"
 import { auditedCreate } from "@/lib/activity-log"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
-import { normalizePhoneForStorage } from "@/lib/phone"
+import { phoneLookupValues, validatePhone } from "@/lib/phone"
+import { getRegion } from "@/lib/region"
 
 // Prevent any caching/static optimization on this route
 export const dynamic = "force-dynamic"
@@ -76,19 +77,31 @@ async function processLeads(payload: FacebookWebhookPayload) {
                 const name =
                     lead.fields["full_name"] || lead.fields["name"] || "Unknown"
                 const email = lead.fields["email"] || ""
-                const phone = normalizePhoneForStorage(
+                const rawPhone = String(
                     lead.fields["phone_number"] || lead.fields["phone"] || ""
-                )
+                ).trim()
 
-                if (!phone) {
+                if (!rawPhone) {
                     console.warn(`[fb-webhook] no phone for lead ${leadgen_id}`)
                     continue
                 }
 
+                // A paid lead is never dropped. A valid number is saved as
+                // E.164. An invalid one is saved as sent and logged.
+                const { phoneCountry } = getRegion()
+                const phoneCheck = validatePhone(rawPhone, phoneCountry)
+                if (!phoneCheck.ok) {
+                    console.warn(`[fb-webhook] invalid phone kept as sent for lead ${leadgen_id}: ${phoneCheck.code}`)
+                }
+                const phone = phoneCheck.ok ? phoneCheck.e164 : rawPhone
+                const phoneValues = phoneCheck.ok
+                    ? phoneLookupValues(phone, phoneCountry)
+                    : [phone]
+
                 // Idempotency: same lead_id should never create two leads,
                 // even if Meta retries. Use upsert OR check existence.
                 const existing = await Lead.findOne({
-                    $or: [{ phone }, { externalLeadId: leadgen_id }],
+                    $or: [{ phone: { $in: phoneValues } }, { externalLeadId: leadgen_id }],
                 })
                 if (existing) {
                     console.log(`[fb-webhook] duplicate skipped: ${leadgen_id}`)

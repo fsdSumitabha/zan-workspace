@@ -6,7 +6,8 @@ import { Types } from "mongoose"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
-import { normalizePhoneForStorage } from "@/lib/phone"
+import { phoneLookupValues, validatePhone } from "@/lib/phone"
+import { getRegion } from "@/lib/region"
 
 export async function GET(
     req: NextRequest,
@@ -74,7 +75,7 @@ export async function PATCH(
 
         const body = await req.json()
 
-        if (!body.name || !body.phone || !body.source) {
+        if (!body.name || !body.source) {
             return NextResponse.json(
                 { success: false, message: "Missing required fields" },
                 { status: 400 }
@@ -84,18 +85,39 @@ export async function PATCH(
         await dbConnect()
         const user = await requireRole(req, [10, 15, 50, 60, 70, 45])
 
-        const phone = normalizePhoneForStorage(body.phone)
-
-        const existing = await Lead.findOne({
-            phone,
-            _id: { $ne: id }
-        })
-
-        if (existing) {
+        const current = await Lead.findById(id).select("phone").lean<{ phone?: string }>()
+        if (!current) {
             return NextResponse.json(
-                { success: false, message: "Phone already exists" },
-                { status: 409 }
+                { success: false, message: "Lead not found" },
+                { status: 404 }
             )
+        }
+
+        // An unchanged phone is kept exactly as saved, even an old format.
+        // Only a changed phone is validated and saved as E.164.
+        let phone = current.phone ?? ""
+        if (body.phone !== current.phone) {
+            const { phoneCountry } = getRegion()
+            const check = validatePhone(body.phone, phoneCountry)
+            if (!check.ok) {
+                return NextResponse.json(
+                    { success: false, message: check.message, field: "phone" },
+                    { status: 400 }
+                )
+            }
+            phone = check.e164
+
+            const existing = await Lead.findOne({
+                phone: { $in: phoneLookupValues(phone, phoneCountry) },
+                _id: { $ne: id }
+            })
+
+            if (existing) {
+                return NextResponse.json(
+                    { success: false, message: "Another lead already has this phone number.", field: "phone" },
+                    { status: 409 }
+                )
+            }
         }
 
         const { name, email, source } = body
@@ -128,6 +150,14 @@ export async function PATCH(
                     message: error.message
                 },
                 { status: error.statusCode }
+            )
+        }
+
+        // The unique index also covers deleted leads, which findOne hides.
+        if (error?.code === 11000) {
+            return NextResponse.json(
+                { success: false, message: "A deleted lead has this phone number.", field: "phone" },
+                { status: 409 }
             )
         }
 

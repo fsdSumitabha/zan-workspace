@@ -8,6 +8,7 @@ import { Mail, Phone } from "lucide-react"
 import { InteractionType } from "@/config/interactionTypes"
 import { ServiceType } from "@/constants/services"
 import Tooltip from "./tooltip/Tooltip"
+import PhoneText from "@/components/phone/PhoneText"
 
 interface Props {
     id: string
@@ -77,7 +78,7 @@ export default function ClientCard({
             <div className="mt-3 text-sm text-neutral-600 dark:text-neutral-400 space-y-1">
                 <p>
                     <Phone size={16} className="inline mr-2" />
-                    {phone}
+                    <PhoneText phone={phone} />
                 </p>
 
                 {email && (

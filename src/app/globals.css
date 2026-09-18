@@ -23,6 +23,67 @@
   }
 }
 
+/* Phone input (react-phone-number-input). The outer box gets its look from
+   Tailwind classes. These rules make the inner input blend in and theme the
+   flag and the country arrow. `.phone-field` raises specificity above the
+   library's own style.css. */
+.phone-field.PhoneInput {
+  --PhoneInput-color--focus: #4A6FA5;
+  --PhoneInputCountryFlag-height: 1em;
+  --PhoneInputCountryFlag-borderColor: rgb(0 0 0 / 0.2);
+  --PhoneInputCountryFlag-borderColor--focus: #4A6FA5;
+  --PhoneInputCountrySelectArrow-color: currentColor;
+  --PhoneInputCountrySelectArrow-opacity: 0.5;
+  --PhoneInputCountrySelect-marginRight: 0.6em;
+}
+
+.phone-field .PhoneInputInput {
+  min-width: 0;
+  height: 100%;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  border: 0;
+  outline: none;
+}
+
+.phone-field .PhoneInputInput::placeholder {
+  color: #a3a3a3;
+}
+
+.phone-field .PhoneInputCountry {
+  padding-right: 0.6em;
+  margin-right: 0.6em;
+  border-right: 1px solid rgb(0 0 0 / 0.1);
+  align-self: stretch;
+}
+
+/* The country list is a native <select>. color-scheme makes the browser
+   draw it in the same theme as the page. */
+.phone-field .PhoneInputCountrySelect {
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  .phone-field.PhoneInput {
+    --PhoneInput-color--focus: #8FB0E0;
+    --PhoneInputCountryFlag-borderColor: rgb(255 255 255 / 0.25);
+    --PhoneInputCountryFlag-borderColor--focus: #8FB0E0;
+  }
+
+  .phone-field .PhoneInputInput::placeholder {
+    color: #737373;
+  }
+
+  .phone-field .PhoneInputCountry {
+    border-right-color: rgb(255 255 255 / 0.12);
+  }
+
+  .phone-field .PhoneInputCountrySelect {
+    color-scheme: dark;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

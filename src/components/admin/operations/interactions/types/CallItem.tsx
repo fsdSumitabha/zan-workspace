@@ -6,6 +6,7 @@ import StatusBadge from "@/components/admin/operations/StatusBadge"
 import { INTERACTION_TYPE_META } from "@/constants/interactionTypes"
 import { CALL_DIRECTION_META, CALL_STATUS_META } from "@/constants/callStatus"
 import Tooltip from "@/components/admin/operations/tooltip/Tooltip"
+import PhoneText from "@/components/phone/PhoneText"
 
 
 export default function CallItem({ item }: { item: any }) {
@@ -67,14 +68,11 @@ export default function CallItem({ item }: { item: any }) {
                                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-none">
                                         {call.contactPersonName}
                                     </p>
-                                    {call.contactPersonPhone && (
-                                        <a
-                                            href={`tel:${call.contactPersonPhone}`}
-                                            className="text-xs text-blue-500 hover:underline mt-0.5 inline-block"
-                                        >
-                                            {call.contactPersonPhone}
-                                        </a>
-                                    )}
+                                    <PhoneText
+                                        phone={call.contactPersonPhone}
+                                        link
+                                        className="text-xs text-blue-500 mt-0.5 inline-block"
+                                    />
                                 </div>
                             </div>
 

@@ -2,6 +2,7 @@
 
 import { Lead } from "@/types/lead"
 import { LEAD_STATUS_META } from "@/constants/leadStatus"
+import PhoneText from "@/components/phone/PhoneText"
 
 interface Props {
     lead: Lead
@@ -26,7 +27,7 @@ export default function LeadInfoCard({ lead }: Props) {
 
             <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                 <p><strong>Name:</strong> {lead.name}</p>
-                <p><strong>Phone:</strong> {lead.phone}</p>
+                <p><strong>Phone:</strong> <PhoneText phone={lead.phone} /></p>
                 {lead.email && (
                     <p><strong>Email:</strong> {lead.email}</p>
                 )}

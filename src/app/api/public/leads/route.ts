@@ -5,16 +5,15 @@ import { auditedCreate } from "@/lib/activity-log"
 import { verifyClientPortalKey } from "@/lib/security/timingSafeKey"
 import { resolveAllowedOrigin, withCors } from "@/lib/security/withCors"
 import { checkRateLimit } from "@/lib/security/rateLimit"
-import { normalizePhoneForStorage } from "@/lib/phone"
+import { phoneLookupValues, validatePhone } from "@/lib/phone"
+import { getRegion } from "@/lib/region"
 
 const RATE_LIMIT = 5 
 const RATE_WINDOW_MS = 60 * 60 * 1000 
 
 const NAME_MAX = 120
-const PHONE_MAX = 20
 const EMAIL_MAX = 200
 
-const PHONE_REGEX = /^[+\d][\d\s\-()]{5,}$/
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function getClientIp(req: NextRequest): string {
@@ -118,14 +117,16 @@ export async function POST(req: NextRequest) {
             matchedOrigin
         )
     }
-    if (!rawPhone || rawPhone.length > PHONE_MAX || !PHONE_REGEX.test(rawPhone)) {
+    const { phoneCountry } = getRegion()
+    const phoneCheck = validatePhone(rawPhone, phoneCountry)
+    if (!phoneCheck.ok) {
         return respond(
-            { success: false, message: "Invalid request" },
+            { success: false, message: phoneCheck.message, field: "phone" },
             400,
             matchedOrigin
         )
     }
-    const phone = normalizePhoneForStorage(rawPhone)
+    const phone = phoneCheck.e164
     if (email && (email.length > EMAIL_MAX || !EMAIL_REGEX.test(email))) {
         return respond(
             { success: false, message: "Invalid request" },
@@ -142,7 +143,9 @@ export async function POST(req: NextRequest) {
         
         
         
-        const existing = await Lead.findOne({ phone })
+        const existing = await Lead.findOne({
+            phone: { $in: phoneLookupValues(phone, phoneCountry) }
+        })
             .select("_id")
             .lean()
         if (existing) {

@@ -7,6 +7,7 @@ import { PROJECT_STATUS_META } from "@/constants/projectStatus"
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import InteractionCard from "./InteractionCard"
 import TimeAgo from "./dayjs/TimeAgo"
+import PhoneText from "@/components/phone/PhoneText"
 
 import { Phone, Mail, Building2, Briefcase } from "lucide-react"
 import StatusChangeItem from "./StatusChangeItem"
@@ -79,9 +80,9 @@ export default function EntityCard({ item }: EntityCardProps) {
                 <div className="text-xs text-neutral-700 dark:text-neutral-300 flex flex-wrap gap-x-3 gap-y-1">
 
                     {phone && (
-                        <span className="flex items-center gap-1">
-                            <Phone className="w-3 h-3" />
-                            {phone}
+                        <span className="flex items-center gap-1 min-w-0">
+                            <Phone className="w-3 h-3 shrink-0" />
+                            <PhoneText phone={phone} />
                         </span>
                     )}
 
