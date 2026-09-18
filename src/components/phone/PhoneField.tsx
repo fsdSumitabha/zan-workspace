@@ -6,6 +6,7 @@ import "react-phone-number-input/style.css"
 import { useRegion } from "@/contexts/RegionContext"
 import { REGION_CODES } from "@/lib/region"
 import { getPhonePlaceholder } from "@/lib/phone"
+import CountrySelect from "./CountrySelect"
 
 // Phone input with a country picker. The value is always E.164
 // ("+14155550123") or undefined.
@@ -17,6 +18,8 @@ import { getPhonePlaceholder } from "@/lib/phone"
 //   number is always checked against that country's rules.
 // - initialValueFormat="national": a saved number from the region's country
 //   shows the same way as a typed one, "(415) 555-0123", not "+1 415 ...".
+// - countrySelectComponent: our picker shows the calling code ("+1") next to
+//   the flag, and groups the list as "Suggested" and "All countries".
 // - Letters and symbols cannot be typed. Pasted text keeps only digits and
 //   a leading "+". A pasted "+44 ..." switches the country by itself.
 
@@ -60,6 +63,7 @@ export default function PhoneField({
             defaultCountry={phoneCountry}
             initialValueFormat="national"
             countryOptionsOrder={COUNTRY_ORDER as unknown as Country[]}
+            countrySelectComponent={CountrySelect}
             addInternationalOption={false}
             limitMaxLength
             placeholder={getPhonePlaceholder(country)}

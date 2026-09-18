@@ -58,10 +58,35 @@
   align-self: stretch;
 }
 
-/* The country list is a native <select>. color-scheme makes the browser
-   draw it in the same theme as the page. */
+/* The country list is a native <select>. color-scheme asks the browser to
+   draw it in the page's theme, but some browsers ignore it for the open list.
+   So the list and its options also get explicit colours. Without them the
+   options inherit the page's text colour, which is light grey in dark theme,
+   and show on the browser's white list background. */
 .phone-field .PhoneInputCountrySelect {
   color-scheme: light;
+  background-color: #ffffff;
+  color: #171717;
+}
+
+.phone-field .PhoneInputCountrySelect option {
+  background-color: #ffffff;
+  color: #171717;
+}
+
+/* Group headings in the list: "Suggested" and "All countries". */
+.phone-field .PhoneInputCountrySelect optgroup {
+  background-color: #f5f5f5;
+  color: #525252;
+  font-weight: 600;
+}
+
+/* The calling code next to the flag, for example "+1". Clicking it opens
+   the country list, the same as clicking the flag. */
+.phone-field .PhoneInputCallingCode {
+  margin-left: 0.4em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 @media (prefers-color-scheme: dark) {
