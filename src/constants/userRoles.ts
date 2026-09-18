@@ -8,6 +8,7 @@ export const USER_ROLE_META = {
     45: { label: "Senior Blockchain Developer", description: "Builds blockchain solutions" },
     50: { label: "Digital Marketer", description: "Run digital marketing campaigns" },
     60: { label: "Business Development Executive", description: "Handles leads" },
+    69: { label: "US Leads Manager", description: "Manages leads of the US region" },
     70: { label: "Accountant", description: "Manages finances" },
     80: { label: "Technical Support", description: "IT support" },
 
