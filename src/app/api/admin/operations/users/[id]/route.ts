@@ -16,7 +16,7 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireRole(req, [10, 20])
+        await requireRole(req, [10, 20, 69])
 
         await dbConnect()
 

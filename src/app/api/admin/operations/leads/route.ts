@@ -16,7 +16,7 @@ import { getRegion } from "@/lib/region"
 
 export async function GET(req: NextRequest) {
     try {
-        await requireRole(req, [10, 15, 50, 60, 69, 70, 45])
+        await requireRole(req, [10, 15, 50, 60, 65, 69, 70, 45])
 
         await dbConnect()
 

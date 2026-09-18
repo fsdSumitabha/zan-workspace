@@ -18,7 +18,7 @@ export async function GET(
         const { id } = await context.params
 
         await dbConnect()
-        await requireRole(req, [10, 15, 50, 60, 69, 70, 45])
+        await requireRole(req, [10, 15, 50, 60, 65, 69, 70, 45])
 
         const lead = await Lead.findById(id)
 

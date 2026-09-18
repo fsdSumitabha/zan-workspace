@@ -16,13 +16,13 @@ const navItems: Array<{
     {
         name: "Dashboard",
         href: "/admin/operations",
-        roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 69, 70, 80],
+        roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 65, 69, 70, 80],
         icon: Home,
     },
     {
         name: "Leads",
         href: "/admin/operations/leads",
-        roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 69, 70, 80],
+        roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 65, 69, 70, 80],
         icon: Target,
     },
     {
@@ -40,7 +40,7 @@ const navItems: Array<{
     {
         name: "Users",
         href: "/admin/operations/users",
-        roles: [10, 15, 20],
+        roles: [10, 15, 20, 69],
         icon: UserRoundCog,
     },
 ];

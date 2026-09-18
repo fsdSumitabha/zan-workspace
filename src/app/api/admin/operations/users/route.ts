@@ -17,7 +17,7 @@ import { sendRegistrationMail } from "@/services/registrationMail"
 
 export async function GET(req: NextRequest) {
     try {
-        await requireRole(req, [10, 15, 20])
+        await requireRole(req, [10, 15, 20, 69])
 
         await dbConnect()
 
@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const authUser = await requireRole(req, [10, 20])
+        const authUser = await requireRole(req, [10, 20, 69])
 
         await dbConnect()
 
