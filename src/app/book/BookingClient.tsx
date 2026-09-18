@@ -16,7 +16,8 @@ import {
     Video,
 } from "lucide-react"
 import { toast } from "sonner"
-import { getPhonePlaceholder } from "@/lib/phone"
+import PhoneField from "@/components/phone/PhoneField"
+import { useEditablePhone } from "@/components/phone/useEditablePhone"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,25 +55,23 @@ type Step = "pick" | "details" | "done"
 interface FormState {
     name: string
     email: string
-    phone: string
     company: string
     notes: string
     company_website: string
 }
 
-type FieldErrors = Partial<Record<keyof FormState, string>>
+// The phone is not in FormState: useEditablePhone() holds it.
+type FieldErrors = Partial<Record<keyof FormState | "phone", string>>
 
 const EMPTY_FORM: FormState = {
     name: "",
     email: "",
-    phone: "",
     company: "",
     notes: "",
     company_website: "",
 }
 
 const NOTES_MAX = 1000
-const PHONE_REGEX = /^[+\d][\d\s\-()]{5,}$/
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
@@ -161,7 +160,6 @@ function validateForm(form: FormState): FieldErrors {
     const errors: FieldErrors = {}
     if (!form.name.trim()) errors.name = "Please enter your name."
     if (!EMAIL_REGEX.test(form.email.trim())) errors.email = "Please enter a valid email address."
-    if (!PHONE_REGEX.test(form.phone.trim())) errors.phone = "Please enter a valid phone number."
     if (form.notes.length > NOTES_MAX) errors.notes = `Please keep this under ${NOTES_MAX} characters.`
     return errors
 }
@@ -180,6 +178,7 @@ export default function BookingClient() {
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
     const [viewMonth, setViewMonth] = useState<string | null>(null)
 
+    const phone = useEditablePhone()
     const [form, setForm] = useState<FormState>(EMPTY_FORM)
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
     const [submitError, setSubmitError] = useState("")
@@ -229,6 +228,8 @@ export default function BookingClient() {
         [availability]
     )
 
+    const phoneError = phone.error || fieldErrors.phone
+
     const timeZone = availability?.timeZone ?? "Asia/Kolkata"
     const slotMinutes = availability?.slotMinutes ?? 30
 
@@ -277,14 +278,16 @@ export default function BookingClient() {
         const errors = validateForm(form)
         setFieldErrors(errors)
         setSubmitError("")
-        if (Object.keys(errors).length) return
+        // Focus the phone box only when no field above it has an error.
+        const phoneToSend = phone.check({ focus: !errors.name && !errors.email })
+        if (Object.keys(errors).length || !phoneToSend) return
 
         setSubmitting(true)
         try {
             const res = await fetch("/api/public/booking", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...form, start: selectedSlot }),
+                body: JSON.stringify({ ...form, phone: phoneToSend, start: selectedSlot }),
             })
             const json = await res.json().catch(() => null)
 
@@ -302,7 +305,7 @@ export default function BookingClient() {
                 return
             }
 
-            if (res.status === 400 && json?.field && json.field in EMPTY_FORM) {
+            if (res.status === 400 && json?.field && (json.field in EMPTY_FORM || json.field === "phone")) {
                 setFieldErrors({ [json.field]: json.message })
                 return
             }
@@ -317,6 +320,7 @@ export default function BookingClient() {
 
     function resetBooking() {
         setForm(EMPTY_FORM)
+        phone.reset()
         setFieldErrors({})
         setSubmitError("")
         setResult(null)
@@ -543,17 +547,16 @@ export default function BookingClient() {
                                         </Field>
 
                                         <div className="grid gap-4 sm:grid-cols-2">
-                                            <Field label="Phone" required error={fieldErrors.phone} htmlFor="book-phone">
-                                                <input
+                                            <Field label="Phone" required error={phoneError} htmlFor="book-phone">
+                                                <PhoneField
                                                     id="book-phone"
-                                                    type="tel"
-                                                    autoComplete="tel"
-                                                    inputMode="tel"
-                                                    maxLength={20}
-                                                    placeholder={getPhonePlaceholder()}
-                                                    value={form.phone}
-                                                    onChange={(e) => updateField("phone", e.target.value)}
-                                                    className={inputClass(!!fieldErrors.phone)}
+                                                    {...phone.fieldProps}
+                                                    onChange={(value) => {
+                                                        phone.fieldProps.onChange(value)
+                                                        if (fieldErrors.phone) setFieldErrors((e) => ({ ...e, phone: undefined }))
+                                                    }}
+                                                    hasError={!!phoneError}
+                                                    className={phoneBoxClass(!!phoneError)}
                                                 />
                                             </Field>
 
@@ -824,6 +827,17 @@ function inputClass(hasError: boolean): string {
         hasError
             ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
             : "border-neutral-300 focus:border-[#4A6FA5] focus:ring-[#4A6FA5]/20 dark:border-neutral-700",
+    ].join(" ")
+}
+
+// Same look as inputClass. The phone field is a <div> around the real
+// <input>, so it shows focus with focus-within instead of focus.
+function phoneBoxClass(hasError: boolean): string {
+    return [
+        "h-11 w-full rounded-lg border bg-white px-3 text-sm text-neutral-900 transition-colors focus-within:ring-2 dark:bg-neutral-950 dark:text-neutral-50",
+        hasError
+            ? "border-red-400 focus-within:border-red-500 focus-within:ring-red-500/20"
+            : "border-neutral-300 focus-within:border-[#4A6FA5] focus-within:ring-[#4A6FA5]/20 dark:border-neutral-700",
     ].join(" ")
 }
 

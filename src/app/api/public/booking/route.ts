@@ -15,7 +15,8 @@ import { emitNotification } from "@/lib/notifications/emit"
 import { escapeRegex } from "@/lib/search/escapeRegex"
 import { checkRateLimit } from "@/lib/security/rateLimit"
 import { getClientIp } from "@/lib/security/clientIp"
-import { normalizePhoneForStorage } from "@/lib/phone"
+import { phoneLookupCondition, validatePhone } from "@/lib/phone"
+import { getRegion } from "@/lib/region"
 import {
     cancelMeetEvent,
     createMeetEvent,
@@ -36,12 +37,10 @@ const RATE_LIMIT = 5
 const RATE_WINDOW_MS = 60 * 60 * 1000
 
 const NAME_MAX = 120
-const PHONE_MAX = 20
 const EMAIL_MAX = 200
 const COMPANY_MAX = 120
 const NOTES_MAX = 1000
 
-const PHONE_REGEX = /^[+\d][\d\s\-()]{5,}$/
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const DEFAULT_HOST_EMAIL = "sales@zanservices.com"
@@ -69,7 +68,11 @@ async function resolveLeadId(
     input: { name: string; email: string; phone: string },
     actorId: string
 ): Promise<string> {
-    const byPhone = await Lead.findOne({ phone: input.phone }).select("_id").lean<{ _id: unknown }>()
+    const byPhone = await Lead.findOne({
+        phone: phoneLookupCondition(input.phone, getRegion().phoneCountry),
+    })
+        .select("_id")
+        .lean<{ _id: unknown }>()
     if (byPhone) return String(byPhone._id)
 
     const byEmail = await Lead.findOne({
@@ -140,7 +143,6 @@ export async function POST(req: NextRequest) {
 
     const name = readString(raw, "name")
     const email = readString(raw, "email").toLowerCase()
-    const rawPhone = readString(raw, "phone")
     const company = readString(raw, "company")
     const notes = readString(raw, "notes")
     const startISO = readString(raw, "start")
@@ -151,10 +153,11 @@ export async function POST(req: NextRequest) {
     if (!email || email.length > EMAIL_MAX || !EMAIL_REGEX.test(email)) {
         return fail("Please enter a valid email address.", 400, "email")
     }
-    if (!rawPhone || rawPhone.length > PHONE_MAX || !PHONE_REGEX.test(rawPhone)) {
-        return fail("Please enter a valid phone number.", 400, "phone")
+    const phoneCheck = validatePhone(readString(raw, "phone"), getRegion().phoneCountry)
+    if (!phoneCheck.ok) {
+        return fail(phoneCheck.message, 400, "phone")
     }
-    const phone = normalizePhoneForStorage(rawPhone)
+    const phone = phoneCheck.e164
     if (company.length > COMPANY_MAX) {
         return fail("Company name is too long.", 400, "company")
     }

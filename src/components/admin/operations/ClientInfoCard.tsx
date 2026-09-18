@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { CLIENT_STATUS_META } from "@/constants/clientStatus"
 import { Client } from "@/types/clients"
+import PhoneText from "@/components/phone/PhoneText"
 
 export default function ClientInfoCard() {
     const params = useParams()
@@ -103,7 +104,7 @@ export default function ClientInfoCard() {
                 <div>
                     <p className="text-neutral-400 text-xs mb-1">Phone</p>
                     <p className="text-neutral-800 dark:text-neutral-200">
-                        {safe(client.phone) || "—"}
+                        {client.phone?.trim() ? <PhoneText phone={client.phone} /> : "—"}
                     </p>
                 </div>
 

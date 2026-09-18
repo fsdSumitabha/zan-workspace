@@ -2,13 +2,9 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
-import { getPhoneRegion } from "@/lib/phone"
-
-// IN keeps the original 10-digit rule. US also accepts an optional
-// +1 and common separators; the server adds +1 when it is missing.
-const IS_US = getPhoneRegion() === "US"
-const PHONE_PATTERN = IS_US ? "\\+?[0-9 \\-\\(\\)\\.]{10,20}" : "[0-9]{10}"
-const PHONE_PLACEHOLDER = IS_US ? "Enter US phone number, e.g. (415) 555-0123" : "Enter 10-digit phone number"
+import PhoneField from "@/components/phone/PhoneField"
+import PhoneHint from "@/components/phone/PhoneHint"
+import { useEditablePhone } from "@/components/phone/useEditablePhone"
 
 interface Props {
     entityType: number
@@ -20,7 +16,6 @@ interface Props {
 export default function CallForm({ entityType, entityId, onClose, onSuccess }: Props) {
     const [form, setForm] = useState({
         contactPersonName: "",
-        contactPersonPhone: "",
         callTime: new Date().toISOString().slice(0, 16),
         duration: "",
         direction: "0",
@@ -31,19 +26,24 @@ export default function CallForm({ entityType, entityId, onClose, onSuccess }: P
     })
     const [recording, setRecording] = useState<File | null>(null)
     const [loading, setLoading] = useState(false)
+    const phone = useEditablePhone()
 
-    const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    const set =(field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
         setForm(prev => ({ ...prev, [field]: e.target.value }))
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        const phoneToSend = phone.check({ focus: true })
+        if (!phoneToSend) return
+
         setLoading(true)
 
         const formData = new FormData()
         formData.append("entityType", String(entityType))
         formData.append("entityId", entityId)
         formData.append("contactPersonName", form.contactPersonName)
-        formData.append("contactPersonPhone", form.contactPersonPhone)
+        formData.append("contactPersonPhone", phoneToSend)
         formData.append("callTime", form.callTime)
         formData.append("duration", form.duration || "0")
         formData.append("direction", form.direction)
@@ -58,6 +58,9 @@ export default function CallForm({ entityType, entityId, onClose, onSuccess }: P
             body: formData,
         }).then(async (res) => {
             const data = await res.json()
+            if (data?.field === "phone" && data.message) {
+                phone.setError(data.message)
+            }
             if (!res.ok || !data.success) {
                 throw new Error(data.message || "Failed to log call")
             }
@@ -98,16 +101,13 @@ export default function CallForm({ entityType, entityId, onClose, onSuccess }: P
                     />
                 </div>
                 <div className="space-y-1">
-                    <label className="text-xs text-gray-500 dark:text-gray-400">Contact Phone</label>
-                    <input
-                        required
-                        type="tel"
-                        placeholder={PHONE_PLACEHOLDER}
-                        pattern={PHONE_PATTERN}
-                        value={form.contactPersonPhone}
-                        onChange={set("contactPersonPhone")}
-                        className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none text-sm"
+                    <label htmlFor="call-contact-phone" className="text-xs text-gray-500 dark:text-gray-400">Contact Phone <span className="text-red-500">*</span></label>
+                    <PhoneField
+                        id="call-contact-phone"
+                        {...phone.fieldProps}
+                        className={`w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 text-sm ${phone.error ? "border-red-400 dark:border-red-500" : "dark:border-neutral-700"}`}
                     />
+                    <PhoneHint error={phone.error} />
                 </div>
             </div>
 

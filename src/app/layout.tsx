@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/AuthContext"
+import { RegionProvider } from "@/contexts/RegionContext"
+import { getRegion } from "@/lib/region"
 import { ImageKitProvider } from "@imagekit/next"
 import { SWRegister } from "./sw-register";
 
@@ -36,6 +38,7 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} >
+                <RegionProvider region={getRegion().code}>
                 <AuthProvider>
                     <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!}>
                     <Toaster position="top-center" theme="dark" richColors />
@@ -43,6 +46,7 @@ export default function RootLayout({
                     <SWRegister />
                     </ImageKitProvider>
                 </AuthProvider>
+                </RegionProvider>
             </body>
         </html>
     );

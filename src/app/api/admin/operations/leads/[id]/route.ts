@@ -6,7 +6,9 @@ import { Types } from "mongoose"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
-import { normalizePhoneForStorage } from "@/lib/phone"
+import { validatePhone } from "@/lib/phone"
+import { DUPLICATE_LEAD_MESSAGE, findLeadPhoneConflict } from "@/lib/leads/findLeadByPhone"
+import { getRegion } from "@/lib/region"
 
 export async function GET(
     req: NextRequest,
@@ -74,7 +76,7 @@ export async function PATCH(
 
         const body = await req.json()
 
-        if (!body.name || !body.phone || !body.source) {
+        if (!body.name || !body.source) {
             return NextResponse.json(
                 { success: false, message: "Missing required fields" },
                 { status: 400 }
@@ -84,18 +86,35 @@ export async function PATCH(
         await dbConnect()
         const user = await requireRole(req, [10, 15, 50, 60, 70, 45])
 
-        const phone = normalizePhoneForStorage(body.phone)
-
-        const existing = await Lead.findOne({
-            phone,
-            _id: { $ne: id }
-        })
-
-        if (existing) {
+        const current = await Lead.findById(id).select("phone").lean<{ phone?: string }>()
+        if (!current) {
             return NextResponse.json(
-                { success: false, message: "Phone already exists" },
-                { status: 409 }
+                { success: false, message: "Lead not found" },
+                { status: 404 }
             )
+        }
+
+        // An unchanged phone is kept exactly as saved, even an old format.
+        // Only a changed phone is validated and saved as E.164.
+        let phone = current.phone ?? ""
+        if (body.phone !== current.phone) {
+            const { phoneCountry } = getRegion()
+            const check = validatePhone(body.phone, phoneCountry)
+            if (!check.ok) {
+                return NextResponse.json(
+                    { success: false, message: check.message, field: "phone" },
+                    { status: 400 }
+                )
+            }
+            phone = check.e164
+
+            const conflict = await findLeadPhoneConflict(phone, phoneCountry, id)
+            if (conflict) {
+                return NextResponse.json(
+                    { success: false, message: conflict, field: "phone" },
+                    { status: 409 }
+                )
+            }
         }
 
         const { name, email, source } = body
@@ -128,6 +147,15 @@ export async function PATCH(
                     message: error.message
                 },
                 { status: error.statusCode }
+            )
+        }
+
+        // Deleted leads are checked before the save. So a duplicate error
+        // here means another request saved the same number at the same time.
+        if (error?.code === 11000) {
+            return NextResponse.json(
+                { success: false, message: DUPLICATE_LEAD_MESSAGE, field: "phone" },
+                { status: 409 }
             )
         }
 

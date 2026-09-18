@@ -2,17 +2,12 @@
 
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { toast } from "sonner";
-import { toWhatsAppNumber } from "@/lib/phone";
+import { useRegion } from "@/contexts/RegionContext";
+import { formatPhoneForDisplay, toWhatsAppNumber } from "@/lib/phone";
 
 type WhatsAppLinkProps = {
     phone?: string;
 };
-
-function isValidPhone(phone: string) {
-    const cleaned = phone.replace(/\D/g, "");
-    return cleaned.length >= 10 && cleaned.length <= 13;
-}
 
 function isMobileDevice() {
     if (typeof navigator === "undefined") return false;
@@ -20,38 +15,36 @@ function isMobileDevice() {
 }
 
 export default function WhatsAppLink({ phone }: WhatsAppLinkProps) {
-    const formatted = phone ? toWhatsAppNumber(phone) : "";
+    const { phoneCountry } = useRegion();
+    const number = toWhatsAppNumber(phone, phoneCountry);
 
-    const href = formatted
-        ? isMobileDevice()
-            ? `whatsapp://send?phone=${formatted}`
-            : `https://web.whatsapp.com/send?phone=${formatted}`
-        : "#";
+    // No link for a missing or invalid number. A link would open a chat
+    // with the wrong person, or with nobody.
+    if (!number) {
+        return (
+            <span
+                title={phone ? "This is not a valid phone number" : undefined}
+                className="inline-flex items-center gap-2 text-neutral-400 dark:text-neutral-500"
+            >
+                <MessageCircle size={16} className="shrink-0" />
+                <span className="break-all">{phone?.trim() || "N/A"}</span>
+            </span>
+        );
+    }
 
-    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-        if (!phone) {
-            e.preventDefault();
-            toast.error("Phone number not available");
-            return;
-        }
-
-        if (!isValidPhone(phone)) {
-            e.preventDefault();
-            toast.error("Invalid phone number");
-            return;
-        }
-    };
+    const href = isMobileDevice()
+        ? `whatsapp://send?phone=${number}`
+        : `https://web.whatsapp.com/send?phone=${number}`;
 
     return (
         <Link
             href={href}
-            onClick={handleClick}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-green-500 hover:underline"
         >
-            <MessageCircle size={16} />
-            <span>{phone || "N/A"}</span>
+            <MessageCircle size={16} className="shrink-0" />
+            <span className="break-all">{formatPhoneForDisplay(phone, phoneCountry)}</span>
         </Link>
     );
 }

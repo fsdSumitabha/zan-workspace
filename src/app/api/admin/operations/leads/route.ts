@@ -10,7 +10,9 @@ import { escapeRegex } from "@/lib/search/escapeRegex"
 import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
-import { normalizePhoneForStorage } from "@/lib/phone"
+import { validatePhone } from "@/lib/phone"
+import { DUPLICATE_LEAD_MESSAGE, findLeadPhoneConflict } from "@/lib/leads/findLeadByPhone"
+import { getRegion } from "@/lib/region"
 
 export async function GET(req: NextRequest) {
     try {
@@ -41,6 +43,12 @@ export async function GET(req: NextRequest) {
                 { email: re },
                 { phone: re },
             ]
+            // Phones are saved as "+14155550142", so "(415) 555-0142"
+            // only matches by its digits. Same rule as the global search.
+            const digitsOnly = search.replace(/\D/g, "")
+            if (digitsOnly.length >= 4) {
+                query.$or.push({ phone: { $regex: escapeRegex(digitsOnly) } })
+            }
         }
 
         // Date range on createdAt — `to` is treated as end-of-day inclusive.
@@ -121,20 +129,27 @@ export async function POST(req: NextRequest) {
 
         const body = await req.json()
 
-        if (!body.name || !body.phone || !body.source) {
+        if (!body.name || !body.source) {
             return NextResponse.json(
                 { success: false, message: "Missing required fields" },
                 { status: 400 }
             )
         }
 
-        const phone = normalizePhoneForStorage(body.phone)
-
-        const existing = await Lead.findOne({ phone })
-
-        if (existing) {
+        const { phoneCountry } = getRegion()
+        const check = validatePhone(body.phone, phoneCountry)
+        if (!check.ok) {
             return NextResponse.json(
-                { success: false, message: "Phone already exists" },
+                { success: false, message: check.message, field: "phone" },
+                { status: 400 }
+            )
+        }
+        const phone = check.e164
+
+        const conflict = await findLeadPhoneConflict(phone, phoneCountry)
+        if (conflict) {
+            return NextResponse.json(
+                { success: false, message: conflict, field: "phone" },
                 { status: 409 }
             )
         }
@@ -177,6 +192,15 @@ export async function POST(req: NextRequest) {
                     message: error.message
                 },
                 { status: error.statusCode }
+            )
+        }
+
+        // Deleted leads are checked before the save. So a duplicate error
+        // here means another request saved the same number at the same time.
+        if (error?.code === 11000) {
+            return NextResponse.json(
+                { success: false, message: DUPLICATE_LEAD_MESSAGE, field: "phone" },
+                { status: 409 }
             )
         }
 

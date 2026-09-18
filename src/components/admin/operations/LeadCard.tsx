@@ -8,6 +8,7 @@ import { SquaresIntersect } from "lucide-react"
 import ConvertButton from "./ConvertClientButton"
 import { UserRole } from "@/constants/userRoles"
 import Tooltip from "./tooltip/Tooltip"
+import PhoneText from "@/components/phone/PhoneText"
 
 
 interface Props {
@@ -54,7 +55,7 @@ export default function LeadCard({
 
             {/* Contact Info */}
             <div className="relative mt-3 text-sm text-neutral-600 dark:text-neutral-300 space-y-1">
-                <p>{phone}</p>
+                <p><PhoneText phone={phone} /></p>
                 {email && <p>{email}</p>}
                 <p className="text-xs text-neutral-500 flex gap-1 items-center">
                     <span>{source}</span>

@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import PhoneField from "@/components/phone/PhoneField"
+import PhoneHint from "@/components/phone/PhoneHint"
+import { useEditablePhone } from "@/components/phone/useEditablePhone"
 
 type ClientFormValues = {
     name: string
@@ -24,12 +27,13 @@ export default function ClientForm({
 }: ClientFormProps) {
     const router = useRouter()
 
-    const [form, setForm] = useState<ClientFormValues>({
+    const [form, setForm] = useState<Omit<ClientFormValues, "phone">>({
         name: "",
         company: "",
-        email: "",
-        phone: ""
+        email: ""
     })
+
+    const phone = useEditablePhone(mode === "edit" ? initialValues?.phone : "")
 
     const [loading, setLoading] = useState(false)
 
@@ -38,8 +42,7 @@ export default function ClientForm({
             setForm({
                 name: initialValues.name || "",
                 company: initialValues.company || "",
-                email: initialValues.email || "",
-                phone: initialValues.phone || ""
+                email: initialValues.email || ""
             })
         }
     }, [initialValues])
@@ -52,10 +55,13 @@ export default function ClientForm({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!form.name || !form.company || !form.phone) {
+        const phoneToSend = phone.check({ focus: true })
+
+        if (!form.name || !form.company) {
             toast.error("Please fill required fields")
             return
         }
+        if (!phoneToSend) return
 
         try {
             setLoading(true)
@@ -73,11 +79,16 @@ export default function ClientForm({
                     name: form.name,
                     company: form.company,
                     email: form.email || undefined,
-                    phone: form.phone
+                    phone: phoneToSend
                 })
             })
 
             const data = await res.json()
+
+            if (data?.field === "phone" && data.message) {
+                phone.setError(data.message)
+                return
+            }
 
             if (!res.ok || !data.success) {
                 throw new Error(
@@ -141,16 +152,16 @@ export default function ClientForm({
                 </div>
 
                 <div>
-                    <label className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
+                    <label htmlFor="client-phone" className="block text-sm mb-1 text-gray-600 dark:text-gray-300">
                         Phone *
                     </label>
-                    <input
+                    <PhoneField
+                        id="client-phone"
                         name="phone"
-                        value={form.phone}
-                        onChange={handleChange}
-                        placeholder="Phone number"
-                        className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
+                        {...phone.fieldProps}
+                        className={`w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 ${phone.error ? "border-red-400 dark:border-red-500" : "dark:border-neutral-700"}`}
                     />
+                    <PhoneHint error={phone.error} savedInvalid={phone.savedInvalid} />
                 </div>
 
                 <div>
