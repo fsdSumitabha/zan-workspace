@@ -26,7 +26,7 @@ function parentUrlFor(et: number, eid: string): string | undefined {
 
 export async function POST(req: NextRequest) {
     try {
-        const authUser = await requireRole(req, [10, 15, 50, 60, 45, 70])
+        const authUser = await requireRole(req, [10, 15, 50, 60, 69, 45, 70])
 
         await dbConnect()
 

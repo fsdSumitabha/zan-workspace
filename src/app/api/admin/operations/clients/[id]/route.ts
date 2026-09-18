@@ -16,7 +16,7 @@ export async function GET(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireRole(req, [10, 15, 50, 60, 70, 45])
+        await requireRole(req, [10, 15, 50, 60, 69, 70, 45])
 
         await dbConnect()
 
@@ -90,7 +90,7 @@ export async function PATCH(
 
         await dbConnect()
 
-        const user = await requireRole(req, [10, 15, 60, 70, 45])
+        const user = await requireRole(req, [10, 15, 60, 69, 70, 45])
 
         const current = await Client.findById(id).select("phone").lean<{ phone?: string }>()
         if (!current) {
