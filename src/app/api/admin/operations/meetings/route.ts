@@ -24,7 +24,11 @@ import { resolveParentName } from "@/lib/notifications/resolveParentName"
 
 export async function GET(req: NextRequest) {
     try {
-        requireAuth(req)
+        // The await matters. Without it requireAuth returns a pending promise,
+        // the handler runs on, and two things break: a 401 becomes an
+        // unhandled rejection instead of a response, and the region context is
+        // still empty when the query runs, so the list comes back empty.
+        await requireAuth(req)
 
         await dbConnect()
 
