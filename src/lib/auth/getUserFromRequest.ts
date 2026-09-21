@@ -72,7 +72,9 @@ export async function getUserFromRequest(
             email: user.email,
             role: user.role,
             isActive: user.isActive,
-            regions: (user.regions ?? []) as RegionCode[]
+            // Array.from, not the Mongoose array itself. Callers put this in
+            // JWTs and query filters, and a Mongoose array breaks cloning.
+            regions: Array.from(user.regions ?? []).map(String) as RegionCode[]
         }
 
     } catch (error) {

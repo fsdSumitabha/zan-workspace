@@ -76,6 +76,12 @@ export async function POST(req: NextRequest) {
         }
 
         // 8. Create JWT
+        // A Mongoose array is an Array subclass carrying internal state, and
+        // jose runs structuredClone on the payload, which cannot clone it.
+        // Array.from gives a plain array. Do this for anything leaving
+        // Mongoose for a library that clones or serialises.
+        const regions = Array.from(user.regions ?? []).map(String)
+
         // `regions` rides along for src/proxy.ts, which runs at the edge
         // and cannot read the database. API routes ignore this copy and
         // read the user row instead, so revoking a region takes effect at
@@ -83,7 +89,7 @@ export async function POST(req: NextRequest) {
         const token = await new SignJWT({
             userId: user._id.toString(),
             role: user.role,
-            regions: user.regions ?? []
+            regions
         })
             .setProtectedHeader({ alg: "HS256" })
             .setIssuedAt()
@@ -102,8 +108,14 @@ export async function POST(req: NextRequest) {
         })
 
         // 10. Update last login
+        //
+        // validateModifiedOnly, because a plain save() validates every path
+        // on the document. lastLoginAt is a side effect of signing in. It
+        // must never be the reason a sign-in fails, and without this flag any
+        // required field added later would lock out every row that predates
+        // it. That is exactly what the new `regions` validator did.
         user.lastLoginAt = new Date()
-        await user.save()
+        await user.save({ validateModifiedOnly: true })
 
         // 11. Return success (NO password)
         return NextResponse.json(

@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
                     name: user.name,
                     email: user.email,
                     role: user.role,
-                    regions: user.regions ?? [],
+                    regions: Array.from(user.regions ?? []).map(String),
                     avatar: user.avatar || ""
                 }
             },
