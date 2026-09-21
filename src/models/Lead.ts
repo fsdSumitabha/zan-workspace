@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Query } from "mongoose"
 import { LEAD_STATUS } from "@/constants/leadStatus"
+import { REGION_CODES, type RegionCode } from "@/lib/region"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
@@ -9,6 +10,10 @@ export interface ILead extends Document {
     email?: string
     phone: string
     source: string
+
+    // Which sales region owns this lead. Optional until every row is
+    // backfilled. See docs/region-rollout.md.
+    region?: RegionCode
 
     status: number
 
@@ -29,6 +34,15 @@ const LeadSchema = new Schema<ILead>(
         email: String,
         phone: { type: String, required: true, unique: true },
         source: { type: String, required: true },
+
+        // Not required yet. Existing rows get "IN" from
+        // `npm run db:backfill-lead-region`. Make it required only after
+        // that script reports 0 rows left.
+        region: {
+            type: String,
+            enum: REGION_CODES,
+            index: true
+        },
 
         status: {
             type: Number,
