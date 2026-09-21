@@ -49,10 +49,37 @@ export function getRegionContext(): RegionContextStore | undefined {
 }
 
 /**
+ * Enters a DENY-ALL region scope and hands back the store.
+ *
+ * Must be called before the first `await` in the request. See the long note
+ * in requireAuth. Fill the regions in later by assigning to the returned
+ * object; the caller holds the same object, so it sees the change.
+ *
+ * It starts empty, which denies everything. If auth throws before the
+ * regions are filled in, nothing is readable. That is the right way round.
+ */
+export function beginRegionContext(): RegionContextStore {
+    const store: RegionContextStore = { regions: [], writeRegion: null }
+    getStorage().enterWith(store)
+    return store
+}
+
+/**
  * Sets the region scope for the rest of the current request.
- * Call it straight after auth, the same way `enterAuditContext` is called.
+ *
+ * If a store is already entered, this mutates it in place rather than
+ * entering a new one. Entering a new one after an await would be invisible
+ * to the caller. Used by the public endpoints, which set their scope before
+ * they await anything.
  */
 export function enterRegionContext(store: RegionContextStore): void {
+    const existing = getStorage().getStore()
+    if (existing) {
+        existing.regions = store.regions
+        existing.writeRegion = store.writeRegion
+        existing.bypass = store.bypass
+        return
+    }
     getStorage().enterWith(store)
 }
 

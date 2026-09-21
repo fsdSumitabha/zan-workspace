@@ -1,6 +1,7 @@
 export {
     getRegionContext,
     enterRegionContext,
+    beginRegionContext,
     runWithRegionContext,
     runWithoutRegionScope,
     type RegionContextStore,

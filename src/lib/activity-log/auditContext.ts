@@ -42,7 +42,32 @@ export function runWithAuditContext<T>(
     return Promise.resolve(getStorage().run(context, fn))
 }
 
-/** Sets audit actor for the rest of the current async request (use after auth). */
+/**
+ * Enters an EMPTY audit context and hands back the store.
+ *
+ * Must be called before the first `await` in the request. See the long note
+ * in requireAuth: enterWith() only reaches the caller while it still runs
+ * inside the caller's synchronous execution. Fill the actor in later by
+ * assigning to the returned object.
+ */
+export function beginAuditContext(): AuditContextStore {
+    const store: AuditContextStore = { userId: null }
+    getStorage().enterWith(store)
+    return store
+}
+
+/**
+ * Sets the audit actor.
+ *
+ * If a store is already entered, this mutates it in place rather than
+ * entering a new one. Entering a new one after an await would be invisible
+ * to the caller.
+ */
 export function enterAuditContext(userId: string | null): void {
+    const existing = getStorage().getStore()
+    if (existing) {
+        existing.userId = userId
+        return
+    }
     getStorage().enterWith({ userId })
 }

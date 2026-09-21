@@ -33,6 +33,7 @@ async function main() {
     const {
         runWithRegionContext,
         runWithoutRegionScope,
+        beginRegionContext,
     } = await import("@/lib/region-scope")
 
     await dbConnect()
@@ -95,6 +96,33 @@ async function main() {
         // the lookup of the signed-in user.
         { name: "lazy callback keeps context", run: () => asIN(() => Lead.countDocuments({})), want: inAll, wantText: `${inAll}` },
     ]
+
+    // The one that matters most: requireAuth enters the context, awaits the
+    // user lookup, then fills the regions in. AsyncLocalStorage.enterWith()
+    // only reaches the caller while it runs inside the caller's synchronous
+    // execution, so entering the store AFTER the await is invisible to the
+    // route and every query is denied.
+    //
+    // That bug shipped once. Every other check in this file passed while the
+    // whole app returned empty lists. Do not delete this case.
+    async function mimicRequireAuth() {
+        const store = beginRegionContext()          // before any await
+        await Lead.collection.countDocuments({})    // the user lookup
+        store.regions = ["IN"]                      // filled in after
+        store.writeRegion = "IN"
+    }
+
+    async function viaRequireAuth() {
+        await mimicRequireAuth()
+        return Lead.countDocuments({})
+    }
+
+    cases.push({
+        name: "context survives requireAuth",
+        run: viaRequireAuth,
+        want: inAll,
+        wantText: `${inAll}, enterWith must happen before the await`,
+    })
 
     let failed = 0
 

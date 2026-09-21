@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Interaction from "@/models/Interaction"
 import { auditedCreate } from "@/lib/activity-log"
+import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 
 export async function GET(req: NextRequest) {
     try {
+        // Was missing. Without it there is no region context, so every
+        // query below is denied, and before regions this route was
+        // readable by anyone. Role gating is left to the parent resource;
+        // the region filter does the data scoping.
+        await requireAuth(req)
+
         await dbConnect()
 
         const { searchParams } = new URL(req.url)
@@ -33,6 +40,12 @@ export async function GET(req: NextRequest) {
         })
 
     } catch (error) {
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: error.statusCode }
+            )
+        }
         console.error("GET INTERACTIONS PAGINATION ERROR:", error)
 
         return NextResponse.json(
@@ -44,6 +57,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        // Was missing. Without it there is no region context, so every
+        // query below is denied, and before regions this route was
+        // readable by anyone. Role gating is left to the parent resource;
+        // the region filter does the data scoping.
+        const authUser = await requireAuth(req)
+
         await dbConnect()
 
         const body = await req.json()
@@ -53,9 +72,13 @@ export async function POST(req: NextRequest) {
             entityId,
             type,
             title,
-            description,
-            createdBy
+            description
         } = body
+
+        // createdBy used to come from the request body, so a caller could
+        // write a timeline entry as anybody. It comes from the verified
+        // token now and the body value is ignored.
+        const createdBy = authUser.id
 
         const interaction = await auditedCreate(
             Interaction,
@@ -77,6 +100,12 @@ export async function POST(req: NextRequest) {
         })
 
     } catch (error) {
+        if (error instanceof AuthError) {
+            return NextResponse.json(
+                { success: false, message: error.message },
+                { status: error.statusCode }
+            )
+        }
         console.error(error)
         return NextResponse.json(
             { success: false, message: "Failed to create interaction" },
