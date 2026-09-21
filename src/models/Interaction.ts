@@ -1,6 +1,8 @@
 import mongoose, { Document } from "mongoose"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { REGION_CODES, type RegionCode } from "@/lib/region"
+import { regionScopePlugin, inheritFromEntity } from "@/lib/region-scope"
 
 export interface IInteractionEdit {
     oldTitle?: string
@@ -10,6 +12,9 @@ export interface IInteractionEdit {
 }
 
 export interface IInteraction extends Document {
+    // Which sales region owns this record. Denormalised from the parent so
+    // reads never need a join. See docs/region-rollout.md.
+    region?: RegionCode
     entityType: number
     entityId: mongoose.Types.ObjectId
     type: number
@@ -21,6 +26,13 @@ export interface IInteraction extends Document {
 }
 
 const InteractionSchema = new mongoose.Schema<IInteraction>({
+    // Not required yet. Existing rows are backfilled by
+    // `npm run db:backfill-region`. Stamped on create by regionScopePlugin.
+    region: {
+        type: String,
+        enum: REGION_CODES,
+        index: true
+    },
 
     entityType: {
         type: Number,
@@ -60,10 +72,14 @@ const InteractionSchema = new mongoose.Schema<IInteraction>({
 
 ensureAuditPlugin(InteractionSchema, ENTITY_TYPE.INTERACTION)
 
+regionScopePlugin(InteractionSchema, { inheritFrom: inheritFromEntity })
+
 const Interaction =
     mongoose.models.Interaction ||
     mongoose.model<IInteraction>("Interaction", InteractionSchema)
 
 ensureAuditPlugin(Interaction.schema, ENTITY_TYPE.INTERACTION)
+
+regionScopePlugin(Interaction.schema, { inheritFrom: inheritFromEntity })
 
 export default Interaction

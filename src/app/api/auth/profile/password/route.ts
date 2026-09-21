@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"
 
 import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
+import { runWithoutRegionScope } from "@/lib/region-scope"
 import { verifyToken } from "@/lib/auth/verifyToken"
 
 export async function PATCH(req: NextRequest) {
@@ -56,7 +57,7 @@ export async function PATCH(req: NextRequest) {
 
         await dbConnect()
 
-        const user = await User.findById(userId)
+        const user = await runWithoutRegionScope(() => User.findById(userId))
 
         if (!user || !user.isActive) {
             return NextResponse.json(

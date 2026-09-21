@@ -13,6 +13,7 @@ import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { validatePhone } from "@/lib/phone"
 import { DUPLICATE_LEAD_MESSAGE, findLeadPhoneConflict } from "@/lib/leads/findLeadByPhone"
 import { getRegion } from "@/lib/region"
+import { resolveWriteRegion, RegionChoiceError } from "@/lib/region-scope/resolveWriteRegion"
 
 export async function GET(req: NextRequest) {
     try {
@@ -156,6 +157,11 @@ export async function POST(req: NextRequest) {
 
         const { name, email, source } = body
 
+        // A lead has no parent to copy a region from. Someone who covers
+        // one region gets it automatically. An admin covers several, so
+        // the request has to name one.
+        const region = resolveWriteRegion(body.region, authUser)
+
         const lead = await auditedCreate(
             Lead,
             0,
@@ -164,6 +170,7 @@ export async function POST(req: NextRequest) {
                 email,
                 phone,
                 source,
+                region,
                 createdBy: authUser.id,
             },
             authUser.id

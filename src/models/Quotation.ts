@@ -1,8 +1,13 @@
 import mongoose, { Schema, Document } from "mongoose"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { REGION_CODES, type RegionCode } from "@/lib/region"
+import { regionScopePlugin, inheritFromEntity } from "@/lib/region-scope"
 
 export interface IQuotation extends Document {
+    // Which sales region owns this record. Denormalised from the parent so
+    // reads never need a join. See docs/region-rollout.md.
+    region?: RegionCode
     entityType: number
     entityId: mongoose.Types.ObjectId
     title?: string
@@ -16,6 +21,13 @@ export interface IQuotation extends Document {
 
 const QuotationSchema = new Schema<IQuotation>(
     {
+        // Not required yet. Existing rows are backfilled by
+        // `npm run db:backfill-region`. Stamped on create by regionScopePlugin.
+        region: {
+            type: String,
+            enum: REGION_CODES,
+            index: true
+        },
         entityType: {
             type: Number,
             enum: [0, 1, 2], // 0: LEAD, 1: CLIENT, 2: PROJECT
@@ -53,10 +65,14 @@ const QuotationSchema = new Schema<IQuotation>(
 
 ensureAuditPlugin(QuotationSchema, ENTITY_TYPE.QUOTATION)
 
+regionScopePlugin(QuotationSchema, { inheritFrom: inheritFromEntity })
+
 const Quotation =
     mongoose.models.Quotation ||
     mongoose.model<IQuotation>("Quotation", QuotationSchema)
 
 ensureAuditPlugin(Quotation.schema, ENTITY_TYPE.QUOTATION)
+
+regionScopePlugin(Quotation.schema, { inheritFrom: inheritFromEntity })
 
 export default Quotation

@@ -4,6 +4,7 @@ import { REGION_CODES, type RegionCode } from "@/lib/region"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { regionScopePlugin } from "@/lib/region-scope"
 
 export interface ILead extends Document {
     name: string
@@ -90,10 +91,14 @@ LeadSchema.pre(/^find/, function (this: Query<any, ILead>) {
 ensureAuditPlugin(LeadSchema, ENTITY_TYPE.LEAD)
 statsInvalidatePlugin(LeadSchema)
 
+regionScopePlugin(LeadSchema)
+
 const Lead =
     mongoose.models.Lead || mongoose.model<ILead>("Lead", LeadSchema)
 
 ensureAuditPlugin(Lead.schema, ENTITY_TYPE.LEAD)
 statsInvalidatePlugin(Lead.schema)
+
+regionScopePlugin(Lead.schema)
 
 export default Lead

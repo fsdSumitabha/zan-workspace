@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { enterRegionContext, runWithoutRegionScope } from "@/lib/region-scope"
 import mongoose from "mongoose"
 import dbConnect from "@/lib/db/dbConnect"
 import Lead from "@/models/Lead"
@@ -100,6 +101,14 @@ async function resolveLeadId(
         // Duplicate phone: either a concurrent request won the race, or the
         // phone belongs to a soft-deleted lead (hidden from normal finds).
         if ((err as { code?: number })?.code === 11000) {
+            // Deliberately NOT region-filtered. The unique index on phone
+            // is global, so this has to look everywhere the index does.
+            // Adding a region filter here would find nothing and rethrow
+            // the driver error as a 500.
+            //
+            // The rare bad case: a booking in one region reuses a lead
+            // that belongs to another. That is the same cross-region phone
+            // collision described in docs/region-rollout.md section 1.4.
             const existing = await Lead.collection.findOne(
                 { phone: input.phone },
                 { projection: { _id: 1 } }
@@ -116,6 +125,17 @@ async function resolveLeadId(
  * the CRM as a Lead meeting.
  */
 export async function POST(req: NextRequest) {
+    // Nobody is signed in here, so there is no region scope yet. Give the
+    // request the deploy region instead of a bypass. Reads stay filtered
+    // and regionScopePlugin stamps the new lead, so this path needs no
+    // special handling anywhere downstream.
+    //
+    // Facebook Lead Ads is the one that will need a better rule later:
+    // one deploy can receive forms from several regions. Map form_id to a
+    // region when that happens. See docs/region-rollout.md.
+    const deployRegion = getRegion().code
+    enterRegionContext({ regions: [deployRegion], writeRegion: deployRegion })
+
     const rl = checkRateLimit(
         `public-booking:${getClientIp(req)}`,
         RATE_LIMIT,
@@ -201,7 +221,12 @@ export async function POST(req: NextRequest) {
         const leadId = await resolveLeadId({ name, email, phone }, actorId)
 
         const hostEmail = (process.env.BOOKING_HOST_EMAIL || DEFAULT_HOST_EMAIL).toLowerCase()
-        const hostUser = await User.findOne({ email: hostEmail }).select("_id").lean<{ _id: unknown }>()
+        // The host comes from config, not from the booking. It is looked
+        // up outside the region scope so a host account that does not hold
+        // the deploy region still resolves.
+        const hostUser = await runWithoutRegionScope(() =>
+            User.findOne({ email: hostEmail }).select("_id").lean<{ _id: unknown }>()
+        )
         const attendeeIds = hostUser ? [String(hostUser._id)] : []
 
         const title = `Meeting with ${name}${company ? ` (${company})` : ""}`

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
+import { runWithoutRegionScope } from "@/lib/region-scope"
 import { verifyToken } from "@/lib/auth/verifyToken"
 
 type PopulatedCreatedBy = {
@@ -36,10 +37,12 @@ export async function GET(req: NextRequest) {
 
         await dbConnect()
 
-        const user = await User.findById(userId)
-            .select("-password")
-            .populate("createdBy", "name email role")
-            .lean()
+        const user = await runWithoutRegionScope(() =>
+            User.findById(userId)
+                .select("-password")
+                .populate("createdBy", "name email role")
+                .lean()
+        )
 
         if (!user || !user.isActive) {
             return NextResponse.json(

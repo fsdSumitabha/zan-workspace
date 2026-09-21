@@ -9,6 +9,8 @@ import { USER_ROLE_META, UserRole } from "@/constants/userRoles"
 import { auditedCreate } from "@/lib/activity-log"
 import { escapeRegex } from "@/lib/search/escapeRegex"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { runWithoutRegionScope } from "@/lib/region-scope"
+import { REGION_CODES, type RegionCode } from "@/lib/region"
 
 import { imagekit } from "@/lib/imagekit/imagekit"
 
@@ -117,6 +119,23 @@ export async function POST(req: NextRequest) {
         const role = Number(formData.get("role"))
         const isActive = formData.get("isActive") === "true"
 
+        // Regions arrive either as repeated `regions` fields or as one
+        // JSON array. Accept both so the form and the API agree.
+        const rawRegions = formData.getAll("regions").flatMap((v) => {
+            const text = v.toString().trim()
+            if (text.startsWith("[")) {
+                try {
+                    const parsed = JSON.parse(text)
+                    return Array.isArray(parsed) ? parsed.map(String) : []
+                } catch {
+                    return []
+                }
+            }
+            return text ? [text] : []
+        })
+
+        const regions = [...new Set(rawRegions.map((r) => r.toUpperCase()))]
+
         const file = formData.get("avatarFile") as File | null
 
         if (!name || !email || !password) {
@@ -133,6 +152,42 @@ export async function POST(req: NextRequest) {
             )
         }
 
+        if (regions.length === 0) {
+            return NextResponse.json(
+                { success: false, message: "Pick at least one region", field: "regions" },
+                { status: 400 }
+            )
+        }
+
+        const unknown = regions.filter(
+            (r) => !(REGION_CODES as readonly string[]).includes(r)
+        )
+        if (unknown.length > 0) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: `Unknown region: ${unknown.join(", ")}`,
+                    field: "regions"
+                },
+                { status: 400 }
+            )
+        }
+
+        // You cannot hand out a region you do not hold yourself. Without
+        // this, an HR user in one region could create an account in
+        // another and then sign in as it.
+        const notMine = regions.filter((r) => !authUser.regions.includes(r as RegionCode))
+        if (notMine.length > 0) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: `You cannot give access to: ${notMine.join(", ")}`,
+                    field: "regions"
+                },
+                { status: 403 }
+            )
+        }
+
         if (password.length < 6) {
             return NextResponse.json(
                 { success: false, message: "Password must be at least 6 characters" },
@@ -140,7 +195,13 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const existingUser = await User.findOne({ email })
+        // Outside the region scope. The unique index on email is global,
+        // so a scoped check would miss a user in another region and the
+        // insert would then fail with a driver error instead of a clean
+        // 409. Only the existence of the row is used, nothing is returned.
+        const existingUser = await runWithoutRegionScope(() =>
+            User.findOne({ email }).select("_id")
+        )
 
         if (existingUser) {
             return NextResponse.json(
@@ -190,6 +251,7 @@ export async function POST(req: NextRequest) {
                 email,
                 password: hashedPassword,
                 role,
+                regions,
                 isActive,
                 avatar: avatarUrl,
                 createdBy: authUser.id,

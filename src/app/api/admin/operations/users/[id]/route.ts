@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import mongoose from "mongoose"
 import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
+import { runWithoutRegionScope } from "@/lib/region-scope"
 import { requireRole } from "@/lib/auth/requireRole"
 import bcrypt from "bcryptjs"
 import { AuthError } from "@/lib/auth/requireAuth"
@@ -119,7 +120,13 @@ export async function PATCH(
             }
 
             if (email !== targetUser.email) {
-                const existingUser = await User.findOne({ email, _id: { $ne: id } })
+                // Outside the region scope: the unique index on email is
+                // global, so a scoped check would miss a user in another
+                // region and the update would fail with a driver error
+                // instead of a clean 409.
+                const existingUser = await runWithoutRegionScope(() =>
+                    User.findOne({ email, _id: { $ne: id } }).select("_id")
+                )
 
                 if (existingUser) {
                     return NextResponse.json(

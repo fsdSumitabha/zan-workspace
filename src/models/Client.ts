@@ -3,8 +3,14 @@ import { CLIENT_STATUS } from "@/constants/clientStatus"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { REGION_CODES, type RegionCode } from "@/lib/region"
+import { regionScopePlugin } from "@/lib/region-scope"
+import type { Types } from "mongoose"
 
 export interface IClient extends Document {
+    // Which sales region owns this record. Denormalised from the parent so
+    // reads never need a join. See docs/region-rollout.md.
+    region?: RegionCode
     name: string
     company: string
     email?: string
@@ -22,6 +28,13 @@ export interface IClient extends Document {
 
 const ClientSchema = new Schema<IClient>(
     {
+        // Not required yet. Existing rows are backfilled by
+        // `npm run db:backfill-region`. Stamped on create by regionScopePlugin.
+        region: {
+            type: String,
+            enum: REGION_CODES,
+            index: true
+        },
         name: { type: String, required: true },
         company: { type: String, required: true },
         email: String,
@@ -63,11 +76,21 @@ ClientSchema.pre(/^find/, function (this: Query<any, IClient>) {
 ensureAuditPlugin(ClientSchema, ENTITY_TYPE.CLIENT)
 statsInvalidatePlugin(ClientSchema)
 
+regionScopePlugin(ClientSchema, {
+    inheritFrom: (doc) =>
+        doc.leadId ? { model: "Lead", id: doc.leadId as Types.ObjectId } : null,
+})
+
 const Client =
     mongoose.models.Client ||
     mongoose.model<IClient>("Client", ClientSchema)
 
 ensureAuditPlugin(Client.schema, ENTITY_TYPE.CLIENT)
 statsInvalidatePlugin(Client.schema)
+
+regionScopePlugin(Client.schema, {
+    inheritFrom: (doc) =>
+        doc.leadId ? { model: "Lead", id: doc.leadId as Types.ObjectId } : null,
+})
 
 export default Client

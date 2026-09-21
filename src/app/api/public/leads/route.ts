@@ -7,6 +7,7 @@ import { resolveAllowedOrigin, withCors } from "@/lib/security/withCors"
 import { checkRateLimit } from "@/lib/security/rateLimit"
 import { phoneLookupCondition, validatePhone } from "@/lib/phone"
 import { getRegion } from "@/lib/region"
+import { enterRegionContext } from "@/lib/region-scope"
 
 const RATE_LIMIT = 5 
 const RATE_WINDOW_MS = 60 * 60 * 1000 
@@ -117,6 +118,17 @@ export async function POST(req: NextRequest) {
             matchedOrigin
         )
     }
+    // Nobody is signed in here, so there is no region scope yet. Give the
+    // request the deploy region instead of a bypass. Reads stay filtered
+    // and regionScopePlugin stamps the new lead, so this path needs no
+    // special handling anywhere downstream.
+    //
+    // Facebook Lead Ads is the one that will need a better rule later:
+    // one deploy can receive forms from several regions. Map form_id to a
+    // region when that happens. See docs/region-rollout.md.
+    const deployRegion = getRegion().code
+    enterRegionContext({ regions: [deployRegion], writeRegion: deployRegion })
+
     const { phoneCountry } = getRegion()
     const phoneCheck = validatePhone(rawPhone, phoneCountry)
     if (!phoneCheck.ok) {

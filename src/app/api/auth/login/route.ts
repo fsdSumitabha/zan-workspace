@@ -5,6 +5,7 @@ import { cookies } from "next/headers"
 
 import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
+import { runWithoutRegionScope } from "@/lib/region-scope"
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 
@@ -39,7 +40,14 @@ export async function POST(req: NextRequest) {
         const normalizedEmail = String(email).toLowerCase().trim()
 
         // 4. Find user (deletedAt already handled by pre hook)
-        const user = await User.findOne({ email: normalizedEmail })
+        //
+        // Outside the region scope. Nobody is signed in yet, so there is
+        // no scope to filter by. Without the bypass every login would be
+        // denied. The lookup is by email only and the result is checked
+        // against a password before anything is returned.
+        const user = await runWithoutRegionScope(() =>
+            User.findOne({ email: normalizedEmail })
+        )
 
         // 5. User not found
         if (!user) {
@@ -68,9 +76,14 @@ export async function POST(req: NextRequest) {
         }
 
         // 8. Create JWT
+        // `regions` rides along for src/proxy.ts, which runs at the edge
+        // and cannot read the database. API routes ignore this copy and
+        // read the user row instead, so revoking a region takes effect at
+        // once rather than when the 7-day token expires.
         const token = await new SignJWT({
             userId: user._id.toString(),
-            role: user.role
+            role: user.role,
+            regions: user.regions ?? []
         })
             .setProtectedHeader({ alg: "HS256" })
             .setIssuedAt()
@@ -101,7 +114,8 @@ export async function POST(req: NextRequest) {
                     id: user._id,
                     name: user.name,
                     email: user.email,
-                    role: user.role
+                    role: user.role,
+                    regions: user.regions ?? []
                 }
             },
             { status: 200 }
