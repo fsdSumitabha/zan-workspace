@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { LogOut, MoreVertical, User, UserCircle, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import NotificationBell from "@/components/admin/operations/NotificationBell";
-import RegionIndicator from "@/components/admin/operations/region/RegionIndicator";
+import RegionSwitcher from "@/components/admin/operations/region/RegionSwitcher";
 
 export default function OperationsMobileTopBar() {
     const { user, loading, logout } = useAuth();
@@ -85,7 +85,7 @@ export default function OperationsMobileTopBar() {
 
                 {/* Flag only. The header has no room for the name, and the
                     flag alone still answers "which region am I in". */}
-                <RegionIndicator compact className="mr-auto ml-2" />
+                <RegionSwitcher compact className="mr-auto ml-2" />
 
                 <div ref={menuWrapRef} className="flex items-center gap-2">
                     <NotificationBell />

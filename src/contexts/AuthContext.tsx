@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { UserRole } from "@/constants/userRoles"
-import type { RegionCode } from "@/lib/region"
+import type { ActiveRegion, RegionCode } from "@/lib/region"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -17,6 +17,12 @@ interface AuthUser {
      * Comes from /api/auth/me, which reads the user row, not the token.
      */
     regions: RegionCode[]
+
+    /**
+     * What this session is narrowed to. `"ALL"` means every region above.
+     * Worked out server-side, so it always matches what the APIs will do.
+     */
+    activeRegion: ActiveRegion
 
     /** Public URL path under `/public`, e.g. `/uploads/avatars/...` */
     avatar?: string

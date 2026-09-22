@@ -7,6 +7,7 @@
 // creating an account in another and signing in as it.
 
 import { resolveGrantedRegions, parseRegionsInput, RegionChoiceError } from "@/lib/region-scope/regionGrant"
+import { narrowToActiveRegion } from "@/lib/region-scope/activeRegion"
 
 type Case = [name: string, fn: () => unknown, expect: string]
 
@@ -59,6 +60,40 @@ const cases: Case[] = [
     ["Ops Manager (15) cannot grant US",
         () => resolveGrantedRegions({ submitted: ["US"], granter: ["IN"], granterRole: 15 }),
         "403 You do not have access to: US"],
+    // --- the region switch. The cookie may only ever narrow. ---
+    ["no cookie: admin sees all three",
+        () => narrowToActiveRegion(undefined, ["IN","US","AE"]).regions,
+        "IN,US,AE"],
+    ["pinned to US: only US",
+        () => narrowToActiveRegion("US", ["IN","US","AE"]).regions,
+        "US"],
+    ["pinned to US: writes stamp US",
+        () => [narrowToActiveRegion("US", ["IN","US","AE"]).writeRegion],
+        "US"],
+    ["unpinned admin: writes need an explicit pick",
+        () => [String(narrowToActiveRegion("ALL", ["IN","US","AE"]).writeRegion)],
+        "null"],
+    ["ALL restores everything",
+        () => narrowToActiveRegion("ALL", ["IN","US","AE"]).regions,
+        "IN,US,AE"],
+    ["CANNOT widen: pin to a region not held",
+        () => narrowToActiveRegion("US", ["IN"]).regions,
+        "IN"],
+    ["CANNOT widen: forged junk value",
+        () => narrowToActiveRegion("../../etc", ["IN"]).regions,
+        "IN"],
+    ["CANNOT widen: unknown code",
+        () => narrowToActiveRegion("XX", ["IN"]).regions,
+        "IN"],
+    ["stale pin after regions revoked falls back",
+        () => narrowToActiveRegion("AE", ["IN","US"]).regions,
+        "IN,US"],
+    ["lowercase cookie still works",
+        () => narrowToActiveRegion("us", ["IN","US"]).regions,
+        "US"],
+    ["single-region user is unaffected",
+        () => narrowToActiveRegion(undefined, ["US"]).regions,
+        "US"],
     ["parse: repeated fields",
         () => parseRegionsInput(["us", " IN "]),
         "US,IN"],

@@ -1,6 +1,10 @@
 import { NextRequest } from "next/server"
 import { beginAuditContext } from "@/lib/activity-log/auditContext"
-import { beginRegionContext } from "@/lib/region-scope"
+import {
+    beginRegionContext,
+    narrowToActiveRegion,
+    ACTIVE_REGION_COOKIE,
+} from "@/lib/region-scope"
 import { getUserFromRequest, AuthUser } from "./getUserFromRequest"
 
 export class AuthError extends Error {
@@ -58,13 +62,19 @@ export async function requireAuth(req: NextRequest): Promise<AuthUser> {
 
     audit.userId = user.id
 
-    // writeRegion is what new records get stamped with. It is null when the
-    // user holds more than one region, which is the admin case. Those routes
-    // have to set `region` themselves, because there is no way to guess which
-    // region an admin meant. Once the admin region switch exists, it narrows
-    // both fields here and nothing else changes.
-    region.regions = user.regions
-    region.writeRegion = user.regions.length === 1 ? user.regions[0] : null
+    // These two lines are the only place a signed-in request gets its region.
+    // Narrowing them here is the whole region switch: every route, every
+    // query and every stamped write follows, with no other change anywhere.
+    //
+    // The cookie can only narrow. The result is always a subset of what the
+    // user row says, so the cookie never has to be trusted.
+    const selection = narrowToActiveRegion(
+        req.cookies.get(ACTIVE_REGION_COOKIE)?.value,
+        user.regions
+    )
+
+    region.regions = selection.regions
+    region.writeRegion = selection.writeRegion
 
     if (user.regions.length === 0) {
         console.warn(

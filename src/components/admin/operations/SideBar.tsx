@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Image } from "@imagekit/next"
-import RegionIndicator from "@/components/admin/operations/region/RegionIndicator"
+import RegionSwitcher from "@/components/admin/operations/region/RegionSwitcher"
 import { User, LogOut, Home, Target, Handshake, FolderKanban, CalendarClock, UserRoundCog, Activity, BarChart3 } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -69,7 +69,7 @@ export default function Sidebar() {
                     />
                 </Link>
 
-                <RegionIndicator />
+                <RegionSwitcher />
             </div>
 
             {/* Nav */}

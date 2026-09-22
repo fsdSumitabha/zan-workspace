@@ -59,7 +59,7 @@ export type ActiveRegion = RegionCode | typeof ALL_REGIONS
 // "All regions" gets a globe icon there.
 export const ALL_REGIONS_META = {
     code: ALL_REGIONS,
-    label: "All regions",
+    label: "Planet",
 } as const
 
 /**

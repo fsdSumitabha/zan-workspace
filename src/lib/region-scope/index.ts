@@ -9,6 +9,13 @@ export {
 } from "./regionContext"
 
 export {
+    ACTIVE_REGION_COOKIE,
+    narrowToActiveRegion,
+    isSelectableRegion,
+    type RegionSelection,
+} from "./activeRegion"
+
+export {
     regionScopePlugin,
     regionFilter,
     inheritFromEntity,

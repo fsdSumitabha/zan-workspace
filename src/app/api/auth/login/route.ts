@@ -5,7 +5,7 @@ import { cookies } from "next/headers"
 
 import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
-import { runWithoutRegionScope } from "@/lib/region-scope"
+import { runWithoutRegionScope, ACTIVE_REGION_COOKIE } from "@/lib/region-scope"
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 
@@ -98,6 +98,11 @@ export async function POST(req: NextRequest) {
 
         // 9. Set cookie
         const cookieStore = await cookies()
+
+        // A pin left over from a previous session on this browser would apply
+        // to whoever just signed in. Start every session showing everything
+        // the account holds.
+        cookieStore.delete(ACTIVE_REGION_COOKIE)
 
         cookieStore.set("auth_token", token, {
             httpOnly: true,
