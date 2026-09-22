@@ -23,6 +23,9 @@ plugin adds the filter to every query. Routes do not mention regions at all.
 | Region for new top-level records | `src/lib/region-scope/resolveWriteRegion.ts` |
 | Backfill | `src/scripts/backfill-region.ts` |
 | Proof that it filters | `src/scripts/test-region-scope.ts` |
+| Grant and switch rules | `src/scripts/test-region-grant.ts` |
+| UI checks before merge | `docs/region-ui-test-plan.md` |
+| Adversarial API testing | `docs/region-test-brief.md` |
 
 Scoped models: Lead, Client, Project, Interaction, Meeting, Call, Quotation,
 Document, User.
