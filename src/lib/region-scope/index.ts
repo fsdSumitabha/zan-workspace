@@ -4,6 +4,7 @@ export {
     beginRegionContext,
     runWithRegionContext,
     runWithoutRegionScope,
+    runWithoutRegionScopeIf,
     type RegionContextStore,
 } from "./regionContext"
 

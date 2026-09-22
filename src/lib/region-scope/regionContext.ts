@@ -122,3 +122,22 @@ export function runWithRegionContext<T>(
 export function runWithoutRegionScope<T>(fn: () => T | Promise<T>): Promise<T> {
     return runWithRegionContext({ regions: [], writeRegion: null, bypass: true }, fn)
 }
+
+/**
+ * Bypasses the filter only when `bypass` is true, otherwise runs `fn` as-is.
+ *
+ * For a route whose scope depends on the caller, such as the /users routes,
+ * which read across regions for HR and admin but stay scoped for everyone
+ * else.
+ *
+ * The false branch still awaits inside an async function. A Mongoose query is
+ * lazy, so returning one un-awaited would leave the caller's context before it
+ * runs. Same trap as runWithRegionContext.
+ */
+export function runWithoutRegionScopeIf<T>(
+    bypass: boolean,
+    fn: () => T | Promise<T>
+): Promise<T> {
+    if (bypass) return runWithoutRegionScope(fn)
+    return (async () => await fn())()
+}

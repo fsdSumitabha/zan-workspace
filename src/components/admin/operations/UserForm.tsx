@@ -4,12 +4,16 @@ import { useState } from "react"
 import { USER_ROLE_META, UserRole } from "@/constants/userRoles"
 import FileUpload from "@/components/admin/operations/dropzone/FileUpload"
 import AvatarPreview from "@/components/admin/operations/AvatarPreview"
+import RegionSelect from "@/components/admin/operations/region/RegionSelect"
+import { useAuth } from "@/contexts/AuthContext"
+import type { RegionCode } from "@/lib/region"
 
 interface UserFormValues {
     name: string
     email: string
     password: string
     role: UserRole
+    regions: RegionCode[]
     isActive: boolean
     avatar?: string
     avatarFile?: File | null
@@ -20,16 +24,22 @@ interface Props {
     loading?: boolean
     defaultValues?: Partial<UserFormValues>
     mode?: "create" | "edit"
+
+    /** Set when editing yourself. Regions become read-only with this text. */
+    regionsLockedReason?: string
 }
 
 export default function UserForm({
     onSubmit,
     loading = false,
     defaultValues,
-    mode = "create"
+    mode = "create",
+    regionsLockedReason
 }: Props) {
 
     const isEdit = mode === "edit"
+
+    const { regions: myRegions } = useAuth()
 
     // Role 10 is never assignable, but keep it visible when the user already holds it
     const ROLE_ENTRIES = Object.entries(USER_ROLE_META).filter(
@@ -43,10 +53,20 @@ export default function UserForm({
         email: defaultValues?.email || "",
         password: "",
         role: defaultValues?.role ?? SELECTABLE_ROLES[0],
+
+        // Creating: start with your own region when you only have one,
+        // because that is the answer for every single-region user and
+        // makes the common case a zero-click field.
+        regions:
+            defaultValues?.regions ??
+            (myRegions.length === 1 ? myRegions : []),
+
         isActive: defaultValues?.isActive ?? true,
         avatar: defaultValues?.avatar || "",
         avatarFile: null as File | null
     })
+
+    const [regionError, setRegionError] = useState<string | null>(null)
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -66,6 +86,15 @@ export default function UserForm({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        // Checkboxes cannot be `required`, so this is the only guard the
+        // form has. The server checks it again.
+        if (!regionsLockedReason && form.regions.length === 0) {
+            setRegionError("Pick at least one region")
+            return
+        }
+
+        setRegionError(null)
         await onSubmit(form)
     }
 
@@ -166,6 +195,23 @@ export default function UserForm({
                             {USER_ROLE_META[form.role]?.description}
                         </p>
                     </div>
+
+                    {/* Regions */}
+                    <RegionSelect
+                        value={form.regions}
+                        onChange={(regions) =>
+                            setForm((prev) => ({ ...prev, regions }))
+                        }
+                        existing={defaultValues?.regions ?? []}
+                        disabled={loading}
+                        lockedReason={regionsLockedReason}
+                    />
+
+                    {regionError && (
+                        <p className="text-xs text-red-600 dark:text-red-400">
+                            {regionError}
+                        </p>
+                    )}
 
                     {/* Active Toggle */}
                     <div className="flex items-center gap-2 sm:col-span-2 mt-2">

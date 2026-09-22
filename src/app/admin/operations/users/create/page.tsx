@@ -4,12 +4,14 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import UserForm from "@/components/admin/operations/UserForm"
+import type { RegionCode } from "@/lib/region"
 
 interface UserFormValues {
     name: string
     email: string
     password: string
     role: number
+    regions: RegionCode[]
     isActive: boolean
     avatar?: string
     avatarFile?: File | null
@@ -29,6 +31,11 @@ export default function Page() {
             fd.append("email", data.email)
             fd.append("password", data.password)
             fd.append("role", String(data.role))
+
+            // One entry per region. The API also accepts a JSON array.
+            for (const region of data.regions) {
+                fd.append("regions", region)
+            }
             fd.append("isActive", String(data.isActive))
 
             if (data.avatarFile) {

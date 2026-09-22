@@ -62,6 +62,28 @@ With no region in context the filter matches nothing.
 An empty list is a bug somebody reports within an hour. A leak is a bug
 nobody reports.
 
+### User administration is a separate axis
+
+Who may administer staff accounts is decided by role. Which regions a person
+may read data from is decided by `regions`. They are not the same question.
+
+HR covers India for leads and clients but hires for every region. So the roles
+in `CROSS_REGION_USER_ADMIN_ROLES` (`src/constants/userRoles.ts`, currently
+Admin 10 and HR 20) get two things:
+
+1. They may grant any region, not only the ones they hold.
+2. The `/users` list and detail routes read outside the region scope for them.
+   Without that, HR would create a US account and watch it vanish from the
+   list, unable to edit it.
+
+This widens nothing else. Leads, clients, projects and the assignee picker
+stay region-scoped for these roles like everyone else. The picker in
+particular must stay scoped: you should not be able to assign an IN lead to
+someone who cannot open it.
+
+A scoped list with an unscoped total would read "0 of 12", so the row query
+and the count use the same wrapper.
+
 ### The bypass
 
 `runWithoutRegionScope` skips the filter. Every use is a hole in the wall, so
@@ -128,16 +150,22 @@ run before the app starts enforcing anything.
 Once `npm run db:backfill-region` reports nothing left, add `required: true`
 to `region` on each model. `regions` on User is already required.
 
-### 3.2 A region picker for admins
+### 3.2 A region picker for leads and clients
 
 An admin holds three regions, so there is no single region to stamp. The API
 already handles this: `POST /leads` and `POST /clients` accept a `region`
 field, checked against the caller's own regions by `resolveWriteRegion`.
 
-The forms do not send it yet. Until they do, an admin creating a lead by hand
-gets "Pick a region. Your account covers: IN, US, AE."
+The lead and client forms do not send it yet. Until they do, an admin creating
+a lead by hand gets "Pick a region. Your account covers: IN, US, AE."
 
 Someone who holds one region never sees the field.
+
+**The user forms are done.** Create, edit and the user card all handle regions.
+`RegionSelect` and `RegionBadges` in
+`src/components/admin/operations/region/` are reusable for the lead and client
+forms. The grant rules live in `src/lib/region-scope/regionGrant.ts` and are
+covered by `npm run db:test-region-grant`.
 
 ### 3.3 Notifications still pick recipients by role
 

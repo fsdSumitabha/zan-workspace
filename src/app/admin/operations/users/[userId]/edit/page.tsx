@@ -5,12 +5,15 @@ import { useParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 import UserForm from "@/components/admin/operations/UserForm"
 import { UserRole } from "@/constants/userRoles"
+import type { RegionCode } from "@/lib/region"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface UserFormValues {
     name: string
     email: string
     password: string
     role: UserRole
+    regions: RegionCode[]
     isActive: boolean
     avatar?: string
     avatarFile?: File | null
@@ -21,6 +24,7 @@ interface LoadedUser {
     name: string
     email: string
     role: UserRole
+    regions?: RegionCode[]
     isActive: boolean
     avatar?: string
 }
@@ -28,6 +32,7 @@ interface LoadedUser {
 export default function Page() {
     const router = useRouter()
     const { userId } = useParams<{ userId: string }>()
+    const { user: signedInUser } = useAuth()
 
     const [user, setUser] = useState<LoadedUser | null>(null)
     const [fetching, setFetching] = useState(true)
@@ -92,6 +97,18 @@ export default function Page() {
 
         if (data.isActive !== user.isActive) {
             fd.append("isActive", String(data.isActive))
+        }
+
+        // Only send regions when the set actually changed. The API rejects
+        // a user editing their own regions, so sending an unchanged list
+        // would turn a no-op save into a 403.
+        const currentRegions = [...(user.regions ?? [])].sort().join(",")
+        const nextRegions = [...data.regions].sort().join(",")
+
+        if (currentRegions !== nextRegions) {
+            for (const region of data.regions) {
+                fd.append("regions", region)
+            }
         }
 
         // Blank password field = keep the current one
@@ -206,10 +223,16 @@ export default function Page() {
             mode="edit"
             onSubmit={handleUpdateUser}
             loading={loading}
+            regionsLockedReason={
+                signedInUser?.id === user._id
+                    ? "You cannot change your own regions. Ask another admin."
+                    : undefined
+            }
             defaultValues={{
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                regions: user.regions ?? [],
                 isActive: user.isActive,
                 avatar: user.avatar || ""
             }}

@@ -5,12 +5,19 @@ import User from "@/models/User"
 import { SortOrder } from "mongoose"
 import { requireRole } from "@/lib/auth/requireRole"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
-import { USER_ROLE_META, UserRole } from "@/constants/userRoles"
+import {
+    USER_ROLE_META,
+    UserRole,
+    canAdministerAllRegions,
+} from "@/constants/userRoles"
 import { auditedCreate } from "@/lib/activity-log"
 import { escapeRegex } from "@/lib/search/escapeRegex"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
-import { runWithoutRegionScope } from "@/lib/region-scope"
-import { REGION_CODES, type RegionCode } from "@/lib/region"
+import {
+    runWithoutRegionScope,
+    runWithoutRegionScopeIf,
+} from "@/lib/region-scope"
+import { parseRegionsInput, resolveGrantedRegions, RegionChoiceError, } from "@/lib/region-scope/regionGrant"
 
 import { imagekit } from "@/lib/imagekit/imagekit"
 
@@ -19,7 +26,7 @@ import { sendRegistrationMail } from "@/services/registrationMail"
 
 export async function GET(req: NextRequest) {
     try {
-        await requireRole(req, [10, 15, 20, 69])
+        const authUser = await requireRole(req, [10, 15, 20, 69])
 
         await dbConnect()
 
@@ -61,16 +68,26 @@ export async function GET(req: NextRequest) {
                 ? { createdAt: 1 }
                 : { createdAt: -1 }
 
-        const [data, total] = await Promise.all([
-            User.find(query)
-                .select("-password")
-                .populate("createdBy", "name email role")
-                .sort(sortOption)
-                .skip(skip)
-                .limit(limit)
-                .lean(),
+        // HR and admin administer accounts in every region, so the list and
+        // its total leave the region scope for them. Everyone else stays
+        // scoped, which is why the count has to use the same wrapper as the
+        // rows: a scoped list with an unscoped total would show 0 of 12.
+        const crossRegion = canAdministerAllRegions(authUser.role)
 
-            User.countDocuments(query)
+        const [data, total] = await Promise.all([
+            runWithoutRegionScopeIf(crossRegion, () =>
+                User.find(query)
+                    .select("-password")
+                    .populate("createdBy", "name email role")
+                    .sort(sortOption)
+                    .skip(skip)
+                    .limit(limit)
+                    .lean()
+            ),
+
+            runWithoutRegionScopeIf(crossRegion, () =>
+                User.countDocuments(query)
+            )
         ])
 
         return NextResponse.json({
@@ -119,22 +136,7 @@ export async function POST(req: NextRequest) {
         const role = Number(formData.get("role"))
         const isActive = formData.get("isActive") === "true"
 
-        // Regions arrive either as repeated `regions` fields or as one
-        // JSON array. Accept both so the form and the API agree.
-        const rawRegions = formData.getAll("regions").flatMap((v) => {
-            const text = v.toString().trim()
-            if (text.startsWith("[")) {
-                try {
-                    const parsed = JSON.parse(text)
-                    return Array.isArray(parsed) ? parsed.map(String) : []
-                } catch {
-                    return []
-                }
-            }
-            return text ? [text] : []
-        })
-
-        const regions = [...new Set(rawRegions.map((r) => r.toUpperCase()))]
+        const submittedRegions = parseRegionsInput(formData.getAll("regions"))
 
         const file = formData.get("avatarFile") as File | null
 
@@ -152,41 +154,12 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        if (regions.length === 0) {
-            return NextResponse.json(
-                { success: false, message: "Pick at least one region", field: "regions" },
-                { status: 400 }
-            )
-        }
-
-        const unknown = regions.filter(
-            (r) => !(REGION_CODES as readonly string[]).includes(r)
-        )
-        if (unknown.length > 0) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: `Unknown region: ${unknown.join(", ")}`,
-                    field: "regions"
-                },
-                { status: 400 }
-            )
-        }
-
-        // You cannot hand out a region you do not hold yourself. Without
-        // this, an HR user in one region could create an account in
-        // another and then sign in as it.
-        const notMine = regions.filter((r) => !authUser.regions.includes(r as RegionCode))
-        if (notMine.length > 0) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: `You cannot give access to: ${notMine.join(", ")}`,
-                    field: "regions"
-                },
-                { status: 403 }
-            )
-        }
+        // One rule for create and edit. See src/lib/region-scope/regionGrant.ts.
+        const regions = resolveGrantedRegions({
+            submitted: submittedRegions,
+            granter: authUser.regions,
+            granterRole: authUser.role,
+        })
 
         if (password.length < 6) {
             return NextResponse.json(
@@ -291,6 +264,12 @@ export async function POST(req: NextRequest) {
             { status: 201 }
         )
     } catch (error: any) {
+        if (error instanceof RegionChoiceError) {
+            return NextResponse.json(
+                { success: false, message: error.message, field: error.field },
+                { status: error.statusCode }
+            )
+        }
         if (error instanceof AuthError) {
             return NextResponse.json(
                 { success: false, message: error.message },
