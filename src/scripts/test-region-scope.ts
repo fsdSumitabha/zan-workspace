@@ -45,10 +45,12 @@ async function main() {
     const inAll = await col.countDocuments({ region: "IN" })
     const usAll = await col.countDocuments({ region: "US" })
     const inLive = await col.countDocuments({ region: "IN", deletedAt: null })
+    const usLive = await col.countDocuments({ region: "US", deletedAt: null })
     const allLive = await col.countDocuments({ deletedAt: null })
 
     console.log(
-        `Raw driver: ${total} leads. IN=${inAll} (${inLive} not deleted), US=${usAll}.`
+        `Raw driver: ${total} leads. ` +
+        `IN=${inAll} (${inLive} not deleted), US=${usAll} (${usLive} not deleted).`
     )
     console.log("")
 
@@ -79,8 +81,11 @@ async function main() {
         { name: "countDocuments as IN", run: () => asIN(() => Lead.countDocuments({})), want: inAll, wantText: `${inAll}` },
         { name: "aggregate as IN", run: () => asIN(countAgg), want: inAll, wantText: `${inAll}` },
 
-        // A region with no data sees nothing, and cannot see IN.
-        { name: "find as US", run: () => asUS(countFind), want: 0, wantText: "0" },
+        // US sees its own rows and none of IN. Derived, not hardcoded: this
+        // case said 0 while the US region was empty, and started failing the
+        // moment somebody created a US lead. A test that encodes today's data
+        // is a test that will lie to you later.
+        { name: "find as US", run: () => asUS(countFind), want: usLive, wantText: `${usLive}` },
         { name: "countDocuments as US", run: () => asUS(() => Lead.countDocuments({})), want: usAll, wantText: `${usAll}` },
 
         // Admin holds every region, so it sees the sum.

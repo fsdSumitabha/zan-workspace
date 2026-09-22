@@ -4,7 +4,6 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/AuthContext"
 import { RegionProvider } from "@/contexts/RegionContext"
-import { getRegion } from "@/lib/region"
 import { ImageKitProvider } from "@imagekit/next"
 import { SWRegister } from "./sw-register";
 
@@ -38,15 +37,18 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} >
-                <RegionProvider region={getRegion().code}>
+                {/* RegionProvider reads the signed-in user, so it has to sit
+                    inside AuthProvider. It used to be outside, when the region
+                    came from an env var instead. */}
                 <AuthProvider>
-                    <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!}>
-                    <Toaster position="top-center" theme="dark" richColors />
-                    {children}
-                    <SWRegister />
-                    </ImageKitProvider>
+                    <RegionProvider>
+                        <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!}>
+                            <Toaster position="top-center" theme="dark" richColors />
+                            {children}
+                            <SWRegister />
+                        </ImageKitProvider>
+                    </RegionProvider>
                 </AuthProvider>
-                </RegionProvider>
             </body>
         </html>
     );

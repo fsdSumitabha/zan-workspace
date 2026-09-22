@@ -167,6 +167,41 @@ Someone who holds one region never sees the field.
 forms. The grant rules live in `src/lib/region-scope/regionGrant.ts` and are
 covered by `npm run db:test-region-grant`.
 
+### 3.2a The active region, and what "All regions" means
+
+`src/contexts/RegionContext.tsx` holds what the signed-in person is looking
+at. It used to read NEXT_PUBLIC_REGION, one region per deployment. It now
+reads the user.
+
+Two values, and the difference matters:
+
+- `active` — what they are looking at. `"ALL"` when they hold more than one
+  region and have not narrowed it. Someone with one region gets that region
+  and has nothing to switch to.
+- `config` — the single region for anything that needs exactly one, such as
+  parsing a phone number typed with no country code. `"ALL"` resolves to
+  India.
+
+`ALL_REGIONS` is deliberately not a `RegionCode`. No record is stored with
+it and no query filter uses it, so it cannot reach the database by being
+passed to the wrong function.
+
+None of this is a security boundary. The server decides what a query returns,
+from the user row. A person could change `active` in their browser and still
+read only their own regions.
+
+`RegionIndicator` shows it next to the logo in the sidebar and the mobile
+header. Flag plus code, or a globe and "All regions".
+
+**Decided:** in "All regions" mode a create form preselects **India** and
+lets the admin change it. The value is on screen rather than hidden, so it is
+a default and not a silent assumption. The cost is that an admin who meant US
+and did not look gets an India lead.
+
+Side effect worth knowing: phone parsing follows `config`. A US rep typing a
+local number now gets +1 instead of failing as an Indian number. An admin in
+"All regions" typing a US number without +1 still gets India.
+
 ### 3.3 Notifications still pick recipients by role
 
 `src/lib/notifications/resolveRecipients.ts` queries

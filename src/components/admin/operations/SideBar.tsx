@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Image } from "@imagekit/next"
+import RegionIndicator from "@/components/admin/operations/region/RegionIndicator"
 import { User, LogOut, Home, Target, Handshake, FolderKanban, CalendarClock, UserRoundCog, Activity, BarChart3 } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -14,8 +15,8 @@ const navItems = [
     { name: "Projects", href: "/admin/operations/projects", icon: FolderKanban, roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 70, 80] },
     { name: "Meetings", href: "/admin/operations/meetings", icon: CalendarClock, roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 65, 69, 70, 80] },
     { name: "Overall Stats", href: "/admin/operations/overall-stats", icon: BarChart3, roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 70, 80] },
-    { name: "Users", href: "/admin/operations/users", icon: UserRoundCog, roles: [10, 15, 20, 45, 69] },
-    { name: "Activity Log", href: "/admin/operations/activity-logs", icon: Activity, roles: [10, 15, 20] },
+    { name: "Users", href: "/admin/operations/users", icon: UserRoundCog, roles: [10, 20, 45, 69] },
+    { name: "Activity Log", href: "/admin/operations/activity-logs", icon: Activity, roles: [10, 20] },
 ]
 
 export default function Sidebar() {
@@ -39,31 +40,37 @@ export default function Sidebar() {
 
     return (
         <aside className="w-64 bg-gray-50 sticky top-0 h-screen dark:bg-neutral-950 text-gray-900 dark:text-white border-r-4 border-neutral-800 flex flex-col">
-            {/* Logo */}
-            <Link
-                href="/admin/operations"
-                className="h-14 flex items-center px-4 border-b border-neutral-800 font-semibold"
-            >
-                {/* Light Theme Logo */}
-                <Image
-                    src="/zan-services-color-logo.png"
-                    alt="ZAN CRM Logo"
-                    height={30}
-                    width={90}
-                    priority
-                    className="block dark:hidden"
-                />
+            {/* Logo, with the region the person is working in. Two people
+                on different regions see identical screens otherwise, and
+                the only difference is which rows appear. */}
+            <div className="h-14 flex items-center justify-between gap-2 px-4 border-b border-neutral-800 font-semibold">
+                <Link
+                    href="/admin/operations"
+                    className="flex items-center"
+                >
+                    {/* Light Theme Logo */}
+                    <Image
+                        src="/zan-services-color-logo.png"
+                        alt="ZAN CRM Logo"
+                        height={30}
+                        width={90}
+                        priority
+                        className="block dark:hidden"
+                    />
 
-                {/* Dark Theme Logo */}
-                <Image
-                    src="/zan-logo-white.png"
-                    alt="ZAN CRM Logo"
-                    height={30}
-                    width={90}
-                    priority
-                    className="hidden dark:block"
-                />
-            </Link>
+                    {/* Dark Theme Logo */}
+                    <Image
+                        src="/zan-logo-white.png"
+                        alt="ZAN CRM Logo"
+                        height={30}
+                        width={90}
+                        priority
+                        className="hidden dark:block"
+                    />
+                </Link>
+
+                <RegionIndicator />
+            </div>
 
             {/* Nav */}
             <nav className="flex-1 p-2 space-y-1">
