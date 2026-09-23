@@ -8,7 +8,7 @@ import {
     REGIONS,
     type RegionCode,
 } from "@/lib/region"
-import { RegionBadge } from "./RegionBadge"
+import RegionFlag from "./RegionFlag"
 
 /**
  * The region a new lead or client is saved in.
@@ -22,6 +22,10 @@ import { RegionBadge } from "./RegionBadge"
  * Pinned is fixed on purpose. The form opens the new record after saving,
  * and a session pinned to US cannot read an IN record, so the page would say
  * "not found". The server applies the same rule in resolveWriteRegion.
+ *
+ * It shows the flag and the code only, like the header switch, so it fits a
+ * narrow column. The full name is the tooltip. A native <select> cannot draw
+ * an SVG inside an option, so the selected flag is laid over the select.
  */
 export function useWriteRegion() {
     const { regions, active } = useRegionScope()
@@ -71,38 +75,47 @@ export default function WriteRegionField({
             </label>
 
             {options.length > 1 ? (
-                <select
-                    id={id}
-                    value={value ?? ""}
-                    onChange={(e) => onChange(e.target.value as RegionCode)}
-                    className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
-                >
-                    {options.map((code) => (
-                        <option key={code} value={code}>
-                            {REGIONS[code].label} ({code})
-                        </option>
-                    ))}
-                </select>
+                <div className="relative">
+                    {value && (
+                        <RegionFlag
+                            region={value}
+                            className="w-5 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                        />
+                    )}
+                    <select
+                        id={id}
+                        value={value ?? ""}
+                        onChange={(e) => onChange(e.target.value as RegionCode)}
+                        title={value ? REGIONS[value].label : undefined}
+                        className="w-full pl-10 pr-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
+                    >
+                        {options.map((code) => (
+                            <option key={code} value={code} title={REGIONS[code].label}>
+                                {code}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             ) : (
                 <div
                     id={id}
+                    title={
+                        value
+                            ? REGIONS[value].label +
+                              (pinned ? ". To save in another region, switch region in the header." : "")
+                            : undefined
+                    }
                     className="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-neutral-800/60 dark:border-neutral-700 text-gray-800 dark:text-gray-200 flex items-center gap-2"
                 >
                     {value ? (
                         <>
-                            <RegionBadge code={value} />
-                            <span>{REGIONS[value].label}</span>
+                            <RegionFlag region={value} className="w-5" />
+                            <span>{value}</span>
                         </>
                     ) : (
-                        <span className="text-gray-400">Loading...</span>
+                        <span className="text-gray-400">...</span>
                     )}
                 </div>
-            )}
-
-            {pinned && (
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    To save in another region, switch region in the header.
-                </p>
             )}
         </div>
     )
