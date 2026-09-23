@@ -1,10 +1,11 @@
-import mongoose, { Schema, Document, Query } from "mongoose"
+import mongoose, { Schema, Document } from "mongoose"
 import { CLIENT_STATUS } from "@/constants/clientStatus"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { REGION_CODES, type RegionCode } from "@/lib/region"
 import { regionScopePlugin } from "@/lib/region-scope"
+import { softDeletePlugin } from "@/lib/db/softDeletePlugin"
 import type { Types } from "mongoose"
 
 export interface IClient extends Document {
@@ -69,9 +70,7 @@ const ClientSchema = new Schema<IClient>(
     { timestamps: true }
 )
 
-ClientSchema.pre(/^find/, function (this: Query<any, IClient>) {
-    this.where({ deletedAt: null })
-})
+softDeletePlugin(ClientSchema)
 
 ensureAuditPlugin(ClientSchema, ENTITY_TYPE.CLIENT)
 statsInvalidatePlugin(ClientSchema)
@@ -85,6 +84,7 @@ const Client =
     mongoose.models.Client ||
     mongoose.model<IClient>("Client", ClientSchema)
 
+softDeletePlugin(Client.schema)
 ensureAuditPlugin(Client.schema, ENTITY_TYPE.CLIENT)
 statsInvalidatePlugin(Client.schema)
 

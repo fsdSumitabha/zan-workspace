@@ -1,4 +1,3 @@
-import { Query } from "mongoose"
 import { UserRole } from "@/constants/userRoles"
 import mongoose, { Schema, Document } from "mongoose"
 import { USER_ROLE_META } from "@/constants/userRoles"
@@ -6,6 +5,7 @@ import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { REGION_CODES, type RegionCode } from "@/lib/region"
 import { regionScopePlugin } from "@/lib/region-scope"
+import { softDeletePlugin } from "@/lib/db/softDeletePlugin"
 
 export interface IUser extends Document {
     name: string
@@ -102,9 +102,7 @@ const UserSchema = new Schema<IUser>(
     { timestamps: true }
 )
 
-UserSchema.pre(/^find/, function (this: Query<any, IUser>) {
-    this.where({ deletedAt: null })
-})
+softDeletePlugin(UserSchema)
 
 ensureAuditPlugin(UserSchema, ENTITY_TYPE.USER)
 regionScopePlugin(UserSchema, { field: "regions", stampOnCreate: false })
@@ -112,6 +110,7 @@ regionScopePlugin(UserSchema, { field: "regions", stampOnCreate: false })
 const User =
     mongoose.models.User || mongoose.model<IUser>("User", UserSchema)
 
+softDeletePlugin(User.schema)
 ensureAuditPlugin(User.schema, ENTITY_TYPE.USER)
 regionScopePlugin(User.schema, { field: "regions", stampOnCreate: false })
 

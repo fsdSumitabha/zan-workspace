@@ -9,10 +9,10 @@
 // It covers the query kinds a `pre(/^find/)` hook does not reach, because
 // those are the ones that leak: countDocuments and aggregate.
 //
-// Note on the baselines: the soft-delete hook is registered as `pre(/^find/)`
-// in each model, so it applies to `find` but NOT to `countDocuments`. That is
-// a pre-existing gap, unrelated to regions, and it is why the expected counts
-// for find and countDocuments differ. See docs/region-rollout.md section 2.
+// Note on the baselines: softDeletePlugin hides deleted rows from find,
+// countDocuments and aggregate alike. So every Mongoose count must equal the
+// "not deleted" driver count. A mismatch means a list total will disagree
+// with its rows again.
 
 import { config } from "dotenv"
 
@@ -78,28 +78,29 @@ async function main() {
 
         // One region sees only its own rows.
         { name: "find as IN", run: () => asIN(countFind), want: inLive, wantText: `${inLive}, soft delete applies to find` },
-        { name: "countDocuments as IN", run: () => asIN(() => Lead.countDocuments({})), want: inAll, wantText: `${inAll}` },
-        { name: "aggregate as IN", run: () => asIN(countAgg), want: inAll, wantText: `${inAll}` },
+        { name: "countDocuments as IN", run: () => asIN(() => Lead.countDocuments({})), want: inLive, wantText: `${inLive}, soft delete applies to count` },
+        { name: "aggregate as IN", run: () => asIN(countAgg), want: inLive, wantText: `${inLive}, soft delete applies to aggregate` },
 
         // US sees its own rows and none of IN. Derived, not hardcoded: this
         // case said 0 while the US region was empty, and started failing the
         // moment somebody created a US lead. A test that encodes today's data
         // is a test that will lie to you later.
         { name: "find as US", run: () => asUS(countFind), want: usLive, wantText: `${usLive}` },
-        { name: "countDocuments as US", run: () => asUS(() => Lead.countDocuments({})), want: usAll, wantText: `${usAll}` },
+        { name: "countDocuments as US", run: () => asUS(() => Lead.countDocuments({})), want: usLive, wantText: `${usLive}` },
 
         // Admin holds every region, so it sees the sum.
-        { name: "countDocuments as admin", run: () => asAdmin(() => Lead.countDocuments({})), want: inAll + usAll, wantText: `${inAll + usAll}` },
+        { name: "countDocuments as admin", run: () => asAdmin(() => Lead.countDocuments({})), want: inLive + usLive, wantText: `${inLive + usLive}` },
         { name: "find as admin", run: () => asAdmin(countFind), want: allLive, wantText: `${allLive}` },
 
-        // The bypass really does bypass.
-        { name: "countDocuments, bypass", run: () => runWithoutRegionScope(() => Lead.countDocuments({})), want: total, wantText: `${total}` },
+        // The bypass really does bypass the region filter. It does not bypass
+        // soft delete, which is a separate plugin.
+        { name: "countDocuments, bypass", run: () => runWithoutRegionScope(() => Lead.countDocuments({})), want: allLive, wantText: `${allLive}` },
 
         // The lazy callback form must keep the context. A Mongoose query is
         // lazy, so a callback that returns one without awaiting used to leave
         // the context before the query ran. Everything was denied, including
         // the lookup of the signed-in user.
-        { name: "lazy callback keeps context", run: () => asIN(() => Lead.countDocuments({})), want: inAll, wantText: `${inAll}` },
+        { name: "lazy callback keeps context", run: () => asIN(() => Lead.countDocuments({})), want: inLive, wantText: `${inLive}` },
     ]
 
     // The one that matters most: requireAuth enters the context, awaits the
@@ -125,8 +126,8 @@ async function main() {
     cases.push({
         name: "context survives requireAuth",
         run: viaRequireAuth,
-        want: inAll,
-        wantText: `${inAll}, enterWith must happen before the await`,
+        want: inLive,
+        wantText: `${inLive}, enterWith must happen before the await`,
     })
 
     let failed = 0

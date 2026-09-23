@@ -26,9 +26,9 @@ export interface StatsCounts {
  *                      (excludes pre-confirmation + CLOSED)
  *  - meetingsThisWeek: scheduledAt in [now, now + 7d], not CANCELLED
  *
- * NOTE: `Lead.countDocuments` does NOT pick up the schema-level
- * `pre(/^find/)` soft-delete filter, so the deletedAt clause is needed
- * explicitly here.
+ * softDeletePlugin already hides deleted rows from `countDocuments`.
+ * The explicit deletedAt clause is kept anyway, as a plain statement of
+ * intent.
  */
 export async function computeStats(): Promise<StatsCounts> {
     const now = new Date()
