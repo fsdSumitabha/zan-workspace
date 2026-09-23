@@ -6,18 +6,9 @@ import {
     ACTIVE_REGION_COOKIE,
 } from "@/lib/region-scope"
 import { getUserFromRequest, AuthUser } from "./getUserFromRequest"
+import { AuthError } from "./AuthError"
 
-export class AuthError extends Error {
-    statusCode: number
-
-    constructor(message: string, statusCode: number = 401) {
-        super(message)
-        this.statusCode = statusCode
-
-        // fix prototype chain (important in TS)
-        Object.setPrototypeOf(this, AuthError.prototype)
-    }
-}
+export { AuthError }
 
 
 /**

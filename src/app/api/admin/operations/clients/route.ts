@@ -180,6 +180,12 @@ export async function POST(req: NextRequest) {
             { status: 201 }
         )
     } catch (error: any) {
+        if (error instanceof RegionChoiceError) {
+            return NextResponse.json(
+                { success: false, message: error.message, field: error.field },
+                { status: error.statusCode }
+            )
+        }
         if (error instanceof AuthError) {
             return NextResponse.json(
                 {

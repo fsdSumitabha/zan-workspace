@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import PhoneField from "@/components/phone/PhoneField"
 import PhoneHint from "@/components/phone/PhoneHint"
 import { useEditablePhone } from "@/components/phone/useEditablePhone"
+import WriteRegionField, { useWriteRegion } from "@/components/admin/operations/region/WriteRegionField"
 
 type LeadFormValues = {
     name: string
@@ -34,6 +35,9 @@ export default function LeadForm({
     })
 
     const phone = useEditablePhone(mode === "edit" ? initialValues?.phone : "")
+
+    // Create only. A lead's region does not change after it is saved.
+    const region = useWriteRegion()
 
     const [loading, setLoading] = useState(false)
 
@@ -80,7 +84,11 @@ export default function LeadForm({
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ ...form, phone: phoneToSend })
+                body: JSON.stringify({
+                    ...form,
+                    phone: phoneToSend,
+                    ...(mode === "create" && region.value ? { region: region.value } : {})
+                })
             })
 
             const data = await res.json()
@@ -175,6 +183,16 @@ export default function LeadForm({
                     className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
                     />
                 </div>
+
+                {mode === "create" && (
+                    <WriteRegionField
+                        id="lead-region"
+                        value={region.value}
+                        onChange={region.setValue}
+                        options={region.options}
+                        pinned={region.pinned}
+                    />
+                )}
             </div>
 
             <button

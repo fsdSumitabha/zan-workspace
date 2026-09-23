@@ -1,6 +1,7 @@
 import mongoose from "mongoose"
 import type { Schema, Query, Aggregate, PipelineStage, Types } from "mongoose"
 import { getRegionContext } from "./regionContext"
+import { AuthError } from "@/lib/auth/AuthError"
 
 /**
  * Adds the region filter to every query on a schema, and stamps the region
@@ -173,36 +174,64 @@ export function regionScopePlugin(
      * If none of those produce a value, the save fails. An unstamped record
      * would match no region filter, so nobody, not even an admin, would ever
      * see it again. A loud error now beats a row that silently disappears.
+     *
+     * ## Two checks after that
+     *
+     * The parent is read with the raw driver, past the region filter. So
+     * nothing above checks that the caller may see it. Without a check, a
+     * user who holds IN only could post a note, call, meeting or project
+     * against a US record id, and it would be saved in US. The author could
+     * not read it back, and the US team would see it.
+     *
+     *   1. The caller must be able to read the parent. If not, the answer is
+     *      404, the same answer a route gives when it loads a record the
+     *      caller cannot see. It does not confirm that the record exists.
+     *   2. The new record must land in a region the caller can read, however
+     *      its region was set. This also stops a route that copies the
+     *      request body from saving a region the caller does not hold.
+     *
+     * Both run only when the request has a region scope. Scripts either
+     * bypass or run with no context, and are not checked.
      */
     schema.pre("validate", async function (this: RegionDoc) {
         if (!this.isNew) return
-        if (this.get(field)) return
 
         const ctx = getRegionContext()
         if (ctx?.bypass) return
 
+        const allowed: readonly string[] | undefined = ctx?.regions
+
+        let parentRegion: string | null = null
         if (inheritFrom) {
             const ref = inheritFrom(this.toObject() as Record<string, unknown>)
             if (ref) {
-                const parentRegion = await readParentRegion(ref)
-                if (parentRegion) {
-                    this.set(field, parentRegion)
-                    return
+                parentRegion = await readParentRegion(ref)
+                if (parentRegion && allowed && !allowed.includes(parentRegion)) {
+                    throw new AuthError(`${ref.model} not found`, 404)
                 }
             }
         }
 
-        if (ctx?.writeRegion) {
-            this.set(field, ctx.writeRegion)
-            return
+        if (!this.get(field)) {
+            const region = parentRegion ?? ctx?.writeRegion
+            if (!region) {
+                throw new Error(
+                    `Cannot save this record without a region. The signed-in user ` +
+                    `holds ${ctx?.regions?.length ?? 0} region(s), so there is no ` +
+                    `single region to stamp, and no parent record to copy one from. ` +
+                    `The route has to set "${field}" itself.`
+                )
+            }
+            this.set(field, region)
         }
 
-        throw new Error(
-            `Cannot save this record without a region. The signed-in user ` +
-            `holds ${ctx?.regions?.length ?? 0} region(s), so there is no ` +
-            `single region to stamp, and no parent record to copy one from. ` +
-            `The route has to set "${field}" itself.`
-        )
+        const region = this.get(field) as string
+        if (allowed && !allowed.includes(region)) {
+            throw new AuthError(
+                `You do not have access to the ${region} region.`,
+                403
+            )
+        }
     })
 
     schema.pre("insertMany", function (next, docs: unknown) {

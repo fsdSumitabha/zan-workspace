@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { enterRegionContext, runWithoutRegionScope } from "@/lib/region-scope"
+import { enterRegionContext, getRegionContext, runWithoutRegionScope } from "@/lib/region-scope"
 import mongoose from "mongoose"
 import dbConnect from "@/lib/db/dbConnect"
 import Lead from "@/models/Lead"
@@ -17,7 +17,7 @@ import { escapeRegex } from "@/lib/search/escapeRegex"
 import { checkRateLimit } from "@/lib/security/rateLimit"
 import { getClientIp } from "@/lib/security/clientIp"
 import { phoneLookupCondition, validatePhone } from "@/lib/phone"
-import { getRegion } from "@/lib/region"
+import { getRegion, type RegionCode } from "@/lib/region"
 import {
     cancelMeetEvent,
     createMeetEvent,
@@ -111,9 +111,20 @@ async function resolveLeadId(
             // collision described in docs/region-rollout.md section 1.4.
             const existing = await Lead.collection.findOne(
                 { phone: input.phone },
-                { projection: { _id: 1 } }
+                { projection: { _id: 1, region: 1 } }
             )
-            if (existing) return String(existing._id)
+            if (existing) {
+                // The meeting and interaction booked next belong to this
+                // lead's region. regionScopePlugin refuses a child whose
+                // parent is outside the request's regions, so add it here.
+                // The rest of this request only writes those two records.
+                const ctx = getRegionContext()
+                const leadRegion = existing.region as RegionCode | undefined
+                if (ctx && leadRegion && !ctx.regions.includes(leadRegion)) {
+                    ctx.regions = [...ctx.regions, leadRegion]
+                }
+                return String(existing._id)
+            }
         }
         throw err
     }

@@ -11,6 +11,7 @@
     "db:backfill-lead-region": "tsx src/scripts/backfill-lead-region.ts",
     "db:backfill-region": "tsx src/scripts/backfill-region.ts",
     "db:test-region-scope": "tsx src/scripts/test-region-scope.ts",
+    "db:test-region-writes": "tsx src/scripts/test-region-writes.ts",
     "db:test-region-grant": "tsx src/scripts/test-region-grant.ts"
   },
   "dependencies": {
