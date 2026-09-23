@@ -5,6 +5,7 @@ import { cookies } from "next/headers"
 
 import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
+import { runWithoutRegionScope, ACTIVE_REGION_COOKIE } from "@/lib/region-scope"
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 
@@ -39,7 +40,14 @@ export async function POST(req: NextRequest) {
         const normalizedEmail = String(email).toLowerCase().trim()
 
         // 4. Find user (deletedAt already handled by pre hook)
-        const user = await User.findOne({ email: normalizedEmail })
+        //
+        // Outside the region scope. Nobody is signed in yet, so there is
+        // no scope to filter by. Without the bypass every login would be
+        // denied. The lookup is by email only and the result is checked
+        // against a password before anything is returned.
+        const user = await runWithoutRegionScope(() =>
+            User.findOne({ email: normalizedEmail })
+        )
 
         // 5. User not found
         if (!user) {
@@ -68,9 +76,20 @@ export async function POST(req: NextRequest) {
         }
 
         // 8. Create JWT
+        // A Mongoose array is an Array subclass carrying internal state, and
+        // jose runs structuredClone on the payload, which cannot clone it.
+        // Array.from gives a plain array. Do this for anything leaving
+        // Mongoose for a library that clones or serialises.
+        const regions = Array.from(user.regions ?? []).map(String)
+
+        // `regions` rides along for src/proxy.ts, which runs at the edge
+        // and cannot read the database. API routes ignore this copy and
+        // read the user row instead, so revoking a region takes effect at
+        // once rather than when the 7-day token expires.
         const token = await new SignJWT({
             userId: user._id.toString(),
-            role: user.role
+            role: user.role,
+            regions
         })
             .setProtectedHeader({ alg: "HS256" })
             .setIssuedAt()
@@ -79,6 +98,11 @@ export async function POST(req: NextRequest) {
 
         // 9. Set cookie
         const cookieStore = await cookies()
+
+        // A pin left over from a previous session on this browser would apply
+        // to whoever just signed in. Start every session showing everything
+        // the account holds.
+        cookieStore.delete(ACTIVE_REGION_COOKIE)
 
         cookieStore.set("auth_token", token, {
             httpOnly: true,
@@ -89,8 +113,14 @@ export async function POST(req: NextRequest) {
         })
 
         // 10. Update last login
+        //
+        // validateModifiedOnly, because a plain save() validates every path
+        // on the document. lastLoginAt is a side effect of signing in. It
+        // must never be the reason a sign-in fails, and without this flag any
+        // required field added later would lock out every row that predates
+        // it. That is exactly what the new `regions` validator did.
         user.lastLoginAt = new Date()
-        await user.save()
+        await user.save({ validateModifiedOnly: true })
 
         // 11. Return success (NO password)
         return NextResponse.json(
@@ -101,7 +131,8 @@ export async function POST(req: NextRequest) {
                     id: user._id,
                     name: user.name,
                     email: user.email,
-                    role: user.role
+                    role: user.role,
+                    regions: user.regions ?? []
                 }
             },
             { status: 200 }

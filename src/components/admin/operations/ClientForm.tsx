@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import PhoneField from "@/components/phone/PhoneField"
 import PhoneHint from "@/components/phone/PhoneHint"
 import { useEditablePhone } from "@/components/phone/useEditablePhone"
+import WriteRegionField, { useWriteRegion } from "@/components/admin/operations/region/WriteRegionField"
 
 type ClientFormValues = {
     name: string
@@ -34,6 +35,9 @@ export default function ClientForm({
     })
 
     const phone = useEditablePhone(mode === "edit" ? initialValues?.phone : "")
+
+    // Create only. A client's region does not change after it is saved.
+    const region = useWriteRegion()
 
     const [loading, setLoading] = useState(false)
 
@@ -79,7 +83,8 @@ export default function ClientForm({
                     name: form.name,
                     company: form.company,
                     email: form.email || undefined,
-                    phone: phoneToSend
+                    phone: phoneToSend,
+                    ...(!isEdit && region.value ? { region: region.value } : {})
                 })
             })
 
@@ -177,6 +182,16 @@ export default function ClientForm({
                         className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
                     />
                 </div>
+
+                {mode === "create" && (
+                    <WriteRegionField
+                        id="client-region"
+                        value={region.value}
+                        onChange={region.setValue}
+                        options={region.options}
+                        pinned={region.pinned}
+                    />
+                )}
             </div>
 
             <button

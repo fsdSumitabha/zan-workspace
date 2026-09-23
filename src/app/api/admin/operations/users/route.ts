@@ -5,10 +5,19 @@ import User from "@/models/User"
 import { SortOrder } from "mongoose"
 import { requireRole } from "@/lib/auth/requireRole"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
-import { USER_ROLE_META, UserRole } from "@/constants/userRoles"
+import {
+    USER_ROLE_META,
+    UserRole,
+    canAdministerAllRegions,
+} from "@/constants/userRoles"
 import { auditedCreate } from "@/lib/activity-log"
 import { escapeRegex } from "@/lib/search/escapeRegex"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import {
+    runWithoutRegionScope,
+    runWithoutRegionScopeIf,
+} from "@/lib/region-scope"
+import { parseRegionsInput, resolveGrantedRegions, RegionChoiceError, } from "@/lib/region-scope/regionGrant"
 
 import { imagekit } from "@/lib/imagekit/imagekit"
 
@@ -17,7 +26,7 @@ import { sendRegistrationMail } from "@/services/registrationMail"
 
 export async function GET(req: NextRequest) {
     try {
-        await requireRole(req, [10, 15, 20, 69])
+        const authUser = await requireRole(req, [10, 15, 20, 69])
 
         await dbConnect()
 
@@ -59,16 +68,26 @@ export async function GET(req: NextRequest) {
                 ? { createdAt: 1 }
                 : { createdAt: -1 }
 
-        const [data, total] = await Promise.all([
-            User.find(query)
-                .select("-password")
-                .populate("createdBy", "name email role")
-                .sort(sortOption)
-                .skip(skip)
-                .limit(limit)
-                .lean(),
+        // HR and admin administer accounts in every region, so the list and
+        // its total leave the region scope for them. Everyone else stays
+        // scoped, which is why the count has to use the same wrapper as the
+        // rows: a scoped list with an unscoped total would show 0 of 12.
+        const crossRegion = canAdministerAllRegions(authUser.role)
 
-            User.countDocuments(query)
+        const [data, total] = await Promise.all([
+            runWithoutRegionScopeIf(crossRegion, () =>
+                User.find(query)
+                    .select("-password")
+                    .populate("createdBy", "name email role")
+                    .sort(sortOption)
+                    .skip(skip)
+                    .limit(limit)
+                    .lean()
+            ),
+
+            runWithoutRegionScopeIf(crossRegion, () =>
+                User.countDocuments(query)
+            )
         ])
 
         return NextResponse.json({
@@ -117,6 +136,8 @@ export async function POST(req: NextRequest) {
         const role = Number(formData.get("role"))
         const isActive = formData.get("isActive") === "true"
 
+        const submittedRegions = parseRegionsInput(formData.getAll("regions"))
+
         const file = formData.get("avatarFile") as File | null
 
         if (!name || !email || !password) {
@@ -133,6 +154,13 @@ export async function POST(req: NextRequest) {
             )
         }
 
+        // One rule for create and edit. See src/lib/region-scope/regionGrant.ts.
+        const regions = resolveGrantedRegions({
+            submitted: submittedRegions,
+            granter: authUser.regions,
+            granterRole: authUser.role,
+        })
+
         if (password.length < 6) {
             return NextResponse.json(
                 { success: false, message: "Password must be at least 6 characters" },
@@ -140,7 +168,13 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const existingUser = await User.findOne({ email })
+        // Outside the region scope. The unique index on email is global,
+        // so a scoped check would miss a user in another region and the
+        // insert would then fail with a driver error instead of a clean
+        // 409. Only the existence of the row is used, nothing is returned.
+        const existingUser = await runWithoutRegionScope(() =>
+            User.findOne({ email }).select("_id")
+        )
 
         if (existingUser) {
             return NextResponse.json(
@@ -190,6 +224,7 @@ export async function POST(req: NextRequest) {
                 email,
                 password: hashedPassword,
                 role,
+                regions,
                 isActive,
                 avatar: avatarUrl,
                 createdBy: authUser.id,
@@ -229,6 +264,12 @@ export async function POST(req: NextRequest) {
             { status: 201 }
         )
     } catch (error: any) {
+        if (error instanceof RegionChoiceError) {
+            return NextResponse.json(
+                { success: false, message: error.message, field: error.field },
+                { status: error.statusCode }
+            )
+        }
         if (error instanceof AuthError) {
             return NextResponse.json(
                 { success: false, message: error.message },

@@ -2,6 +2,8 @@ import mongoose, { Schema, Document } from "mongoose"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
 import { MEETING_STATUS, MeetingStatus } from "@/constants/meetingStatus"
 import { MeetingType } from "@/constants/meetingTypes"
+import { REGION_CODES, type RegionCode } from "@/lib/region"
+import { regionScopePlugin, inheritFromEntity } from "@/lib/region-scope"
 
 interface IRescheduleEntry {
     oldDate?: Date
@@ -12,6 +14,9 @@ interface IRescheduleEntry {
 }
 
 export interface IMeeting extends Document {
+    // Which sales region owns this record. Denormalised from the parent so
+    // reads never need a join. See docs/region-rollout.md.
+    region?: RegionCode
     entityType: number
     entityId: mongoose.Types.ObjectId
     title: string
@@ -32,6 +37,13 @@ export interface IMeeting extends Document {
 }
 
 const MeetingSchema = new mongoose.Schema<IMeeting>({
+    // Not required yet. Existing rows are backfilled by
+    // `npm run db:backfill-region`. Stamped on create by regionScopePlugin.
+    region: {
+        type: String,
+        enum: REGION_CODES,
+        index: true
+    },
 
     entityType: {
         type: Number,
@@ -128,10 +140,14 @@ const MeetingSchema = new mongoose.Schema<IMeeting>({
 
 statsInvalidatePlugin(MeetingSchema)
 
+regionScopePlugin(MeetingSchema, { inheritFrom: inheritFromEntity })
+
 const Meeting =
     mongoose.models.Meeting ||
     mongoose.model<IMeeting>("Meeting", MeetingSchema)
 
 statsInvalidatePlugin(Meeting.schema)
+
+regionScopePlugin(Meeting.schema, { inheritFrom: inheritFromEntity })
 
 export default Meeting

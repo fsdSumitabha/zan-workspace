@@ -17,3 +17,30 @@ export const USER_ROLE_META = {
 } as const
 
 export type UserRole = keyof typeof USER_ROLE_META
+
+/**
+ * Roles that administer staff accounts across every region.
+ *
+ * User administration is a different axis from data access. HR covers one
+ * region for leads and clients, but hires for all of them, so HR must be able
+ * to list, create and edit an account in a region they cannot read data from.
+ *
+ * Two effects, both deliberate:
+ *
+ * 1. They may grant any region, not only the ones they hold.
+ *    See src/lib/region-scope/regionGrant.ts.
+ * 2. The /users routes read outside the region scope for them. Without that,
+ *    HR would create a US account and then watch it vanish from the list,
+ *    unable to edit it.
+ *
+ * This does NOT widen what they can see anywhere else. Leads, clients and the
+ * assignee picker stay region-scoped for these roles like everyone else.
+ */
+export const CROSS_REGION_USER_ADMIN_ROLES: readonly number[] = [
+    10, // Admin
+    20, // HR
+]
+
+export function canAdministerAllRegions(role: number): boolean {
+    return CROSS_REGION_USER_ADMIN_ROLES.includes(role)
+}

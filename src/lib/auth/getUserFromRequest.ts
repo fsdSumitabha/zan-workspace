@@ -4,6 +4,8 @@ import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
 
 import { verifyToken, AuthTokenPayload } from "./verifyToken"
+import { runWithoutRegionScope } from "@/lib/region-scope"
+import type { RegionCode } from "@/lib/region"
 
 export interface AuthUser {
     id: string
@@ -11,6 +13,9 @@ export interface AuthUser {
     email?: string
     role: number
     isActive: boolean
+
+    /** Read from the user row, never from the token. Can be empty. */
+    regions: RegionCode[]
 }
 
 /**
@@ -47,8 +52,13 @@ export async function getUserFromRequest(
         await dbConnect()
 
         // 4. Fetch user (deletedAt already handled by schema pre-hook)
-        const user = await User.findById(userId).select(
-            "_id name email role isActive"
+        //
+        // Outside the region scope on purpose. This lookup is what
+        // establishes the scope, so it cannot be filtered by it. Without
+        // the bypass every request would deny itself and nobody could
+        // sign in. It reads one user by id, so it leaks nothing.
+        const user = await runWithoutRegionScope(() =>
+            User.findById(userId).select("_id name email role isActive regions")
         )
 
         if (!user) {
@@ -61,7 +71,10 @@ export async function getUserFromRequest(
             name: user.name,
             email: user.email,
             role: user.role,
-            isActive: user.isActive
+            isActive: user.isActive,
+            // Array.from, not the Mongoose array itself. Callers put this in
+            // JWTs and query filters, and a Mongoose array breaks cloning.
+            regions: Array.from(user.regions ?? []).map(String) as RegionCode[]
         }
 
     } catch (error) {

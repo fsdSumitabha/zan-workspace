@@ -1,14 +1,21 @@
-import mongoose, { Schema, Document, Query } from "mongoose"
+import mongoose, { Schema, Document } from "mongoose"
 import { LEAD_STATUS } from "@/constants/leadStatus"
+import { REGION_CODES, type RegionCode } from "@/lib/region"
 import { ensureAuditPlugin } from "@/lib/activity-log/ensureAuditPlugin"
 import { statsInvalidatePlugin } from "@/lib/stats/statsInvalidatePlugin"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
+import { regionScopePlugin } from "@/lib/region-scope"
+import { softDeletePlugin } from "@/lib/db/softDeletePlugin"
 
 export interface ILead extends Document {
     name: string
     email?: string
     phone: string
     source: string
+
+    // Which sales region owns this lead. Optional until every row is
+    // backfilled. See docs/region-rollout.md.
+    region?: RegionCode
 
     status: number
 
@@ -29,6 +36,15 @@ const LeadSchema = new Schema<ILead>(
         email: String,
         phone: { type: String, required: true, unique: true },
         source: { type: String, required: true },
+
+        // Not required yet. Existing rows get "IN" from
+        // `npm run db:backfill-lead-region`. Make it required only after
+        // that script reports 0 rows left.
+        region: {
+            type: String,
+            enum: REGION_CODES,
+            index: true
+        },
 
         status: {
             type: Number,
@@ -69,17 +85,20 @@ const LeadSchema = new Schema<ILead>(
     { timestamps: true }
 )
 
-LeadSchema.pre(/^find/, function (this: Query<any, ILead>) {
-    this.where({ deletedAt: null })
-})
+softDeletePlugin(LeadSchema)
 
 ensureAuditPlugin(LeadSchema, ENTITY_TYPE.LEAD)
 statsInvalidatePlugin(LeadSchema)
 
+regionScopePlugin(LeadSchema)
+
 const Lead =
     mongoose.models.Lead || mongoose.model<ILead>("Lead", LeadSchema)
 
+softDeletePlugin(Lead.schema)
 ensureAuditPlugin(Lead.schema, ENTITY_TYPE.LEAD)
 statsInvalidatePlugin(Lead.schema)
+
+regionScopePlugin(Lead.schema)
 
 export default Lead

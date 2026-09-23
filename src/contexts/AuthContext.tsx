@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { UserRole } from "@/constants/userRoles"
+import type { ActiveRegion, RegionCode } from "@/lib/region"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -10,6 +11,19 @@ interface AuthUser {
     name?: string
     email?: string
     role: UserRole
+
+    /**
+     * Regions this user may see. Admin holds every code.
+     * Comes from /api/auth/me, which reads the user row, not the token.
+     */
+    regions: RegionCode[]
+
+    /**
+     * What this session is narrowed to. `"ALL"` means every region above.
+     * Worked out server-side, so it always matches what the APIs will do.
+     */
+    activeRegion: ActiveRegion
+
     /** Public URL path under `/public`, e.g. `/uploads/avatars/...` */
     avatar?: string
 }
@@ -19,6 +33,10 @@ interface AuthContextType {
     loading: boolean
     isAuthenticated: boolean
     role: UserRole | null
+
+    /** Empty until /api/auth/me returns. Never assume it has a value. */
+    regions: RegionCode[]
+
     refreshUser: () => Promise<void>
     logout: () => Promise<void>
 }
@@ -101,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 loading,
                 isAuthenticated: !!user,
                 role: user?.role ?? null,
+                regions: user?.regions ?? [],
                 refreshUser,
                 logout
             }}

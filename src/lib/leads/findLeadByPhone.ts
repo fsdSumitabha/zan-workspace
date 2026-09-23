@@ -12,6 +12,16 @@ export const DELETED_LEAD_MESSAGE = "A deleted lead has this phone number."
  * The unique index on `phone` covers deleted leads, but Lead.find() hides
  * them. So this reads the collection directly. It returns the message to
  * show, or null when the number is free.
+ *
+ * Reading the collection directly also means no region filter, and that is
+ * correct. The index this guards is global. A region-filtered check would
+ * pass, the insert would then hit the index, and the user would get a 500
+ * instead of a clear message.
+ *
+ * The cost is a dead end: a user can be told a number is taken by a lead
+ * they cannot see. The message never includes the lead, so nothing leaks.
+ * Making the message say "another region" is tracked in
+ * docs/region-rollout.md section 1.4.
  */
 export async function findLeadPhoneConflict(
     e164: string,

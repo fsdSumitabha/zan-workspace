@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { jwtVerify } from "jose"
 
 import dbConnect from "@/lib/db/dbConnect"
+import type { RegionCode } from "@/lib/region"
 import User from "@/models/User"
+import {
+    runWithoutRegionScope,
+    narrowToActiveRegion,
+    ACTIVE_REGION_COOKIE,
+} from "@/lib/region-scope"
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 
@@ -55,8 +61,15 @@ export async function GET(req: NextRequest) {
         // 5. Fetch user from DB (source of truth)
         await dbConnect()
 
-        const user = await User.findById(userId).select(
-            "_id name email role isActive avatar"
+        // Outside the region scope on purpose. These routes decode the
+        // token themselves instead of going through requireAuth, so no
+        // region context exists and the plugin would deny the read. The
+        // user is identified by their own id from a verified token and
+        // only their own row is touched, so nothing leaks.
+        const user = await runWithoutRegionScope(() =>
+            User.findById(userId).select(
+                "_id name email role isActive avatar regions"
+            )
         )
 
         // 6. User not found / inactive
@@ -70,7 +83,17 @@ export async function GET(req: NextRequest) {
             )
         }
 
-        // 7. Return user
+        // 7. Work out the session region, same rules as requireAuth
+        const accountRegions = Array.from(user.regions ?? []).map(
+            String
+        ) as RegionCode[]
+
+        const selection = narrowToActiveRegion(
+            req.cookies.get(ACTIVE_REGION_COOKIE)?.value,
+            accountRegions
+        )
+
+        // 8. Return user
         return NextResponse.json(
             {
                 success: true,
@@ -79,6 +102,13 @@ export async function GET(req: NextRequest) {
                     name: user.name,
                     email: user.email,
                     role: user.role,
+                    regions: accountRegions,
+
+                    // What the session is currently narrowed to, worked out
+                    // the same way requireAuth does. The UI renders the region
+                    // switcher from this, so a reload cannot show a different
+                    // region from the one the API will actually use.
+                    activeRegion: selection.active,
                     avatar: user.avatar || ""
                 }
             },

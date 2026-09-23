@@ -42,3 +42,34 @@ export function parseRegionCode(raw: unknown): RegionCode {
 export function getRegion(): RegionConfig {
     return REGIONS[parseRegionCode(process.env.NEXT_PUBLIC_REGION)]
 }
+
+/**
+ * The "every region at once" view, for someone who holds more than one.
+ *
+ * Deliberately NOT a RegionCode. No record is ever stored with it, and no
+ * query filter ever uses it. It only describes what the person is looking at,
+ * so it cannot leak into the database by being passed to the wrong function.
+ */
+export const ALL_REGIONS = "ALL" as const
+
+export type ActiveRegion = RegionCode | typeof ALL_REGIONS
+
+// No flag here on purpose. Flags are SVGs now, in RegionFlag.tsx, because
+// Windows has no country flag glyphs and emoji fall back to the letter code.
+// "All regions" gets a globe icon there.
+export const ALL_REGIONS_META = {
+    code: ALL_REGIONS,
+    label: "Planet",
+} as const
+
+/**
+ * The single region to use when something needs exactly one and the person is
+ * looking at all of them. A phone number typed without a country code has to
+ * be parsed as somewhere, and a form field has to start on something.
+ *
+ * This is a display and input default only. It never decides what a query
+ * returns.
+ */
+export function resolveEffectiveRegion(active: ActiveRegion): RegionConfig {
+    return active === ALL_REGIONS ? REGIONS[DEFAULT_REGION] : REGIONS[active]
+}

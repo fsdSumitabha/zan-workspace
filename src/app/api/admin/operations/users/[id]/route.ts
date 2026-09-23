@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 import mongoose from "mongoose"
 import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
+import {
+    runWithoutRegionScope,
+    runWithoutRegionScopeIf,
+} from "@/lib/region-scope"
+import { canAdministerAllRegions } from "@/constants/userRoles"
+import {
+    parseRegionsInput,
+    resolveGrantedRegions,
+    RegionChoiceError,
+} from "@/lib/region-scope/regionGrant"
 import { requireRole } from "@/lib/auth/requireRole"
 import bcrypt from "bcryptjs"
 import { AuthError } from "@/lib/auth/requireAuth"
@@ -16,7 +26,7 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        await requireRole(req, [10, 20, 69])
+        const authUser = await requireRole(req, [10, 20, 69])
 
         await dbConnect()
 
@@ -29,7 +39,12 @@ export async function GET(
             )
         }
 
-        const user = await User.findById(id).select("-password").lean()
+        // HR and admin administer accounts in every region, so this read
+        // leaves the region scope for them. Everyone else stays scoped.
+        const user = await runWithoutRegionScopeIf(
+            canAdministerAllRegions(authUser.role),
+            () => User.findById(id).select("-password").lean()
+        )
 
         if (!user) {
             return NextResponse.json(
@@ -40,6 +55,12 @@ export async function GET(
 
         return NextResponse.json({ success: true, data: user }, { status: 200 })
     } catch (error: any) {
+        if (error instanceof RegionChoiceError) {
+            return NextResponse.json(
+                { success: false, message: error.message, field: error.field },
+                { status: error.statusCode }
+            )
+        }
         if (error instanceof AuthError) {
             return NextResponse.json(
                 { success: false, message: error.message },
@@ -75,7 +96,11 @@ export async function PATCH(
             )
         }
 
-        const targetUser = await User.findById(id)
+        // Same reason as the GET above.
+        const targetUser = await runWithoutRegionScopeIf(
+            canAdministerAllRegions(authUser.role),
+            () => User.findById(id)
+        )
 
         if (!targetUser) {
             return NextResponse.json(
@@ -119,7 +144,13 @@ export async function PATCH(
             }
 
             if (email !== targetUser.email) {
-                const existingUser = await User.findOne({ email, _id: { $ne: id } })
+                // Outside the region scope: the unique index on email is
+                // global, so a scoped check would miss a user in another
+                // region and the update would fail with a driver error
+                // instead of a clean 409.
+                const existingUser = await runWithoutRegionScope(() =>
+                    User.findOne({ email, _id: { $ne: id } }).select("_id")
+                )
 
                 if (existingUser) {
                     return NextResponse.json(
@@ -173,6 +204,31 @@ export async function PATCH(
             }
 
             updates.role = role
+        }
+
+        /* --------------------------------- regions -------------------------------- */
+
+        if (sent("regions")) {
+            // Changing your own regions is blocked for the same reason as
+            // changing your own role: removing your last region would lock
+            // you out of every list in the app, with no error to explain it.
+            if (String(targetUser._id) === String(authUser.id)) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        message: "You cannot change your own regions",
+                        field: "regions"
+                    },
+                    { status: 403 }
+                )
+            }
+
+            updates.regions = resolveGrantedRegions({
+                submitted: parseRegionsInput(formData.getAll("regions")),
+                granter: authUser.regions,
+                granterRole: authUser.role,
+                existing: (targetUser.regions ?? []) as never,
+            })
         }
 
         /* -------------------------------- isActive -------------------------------- */

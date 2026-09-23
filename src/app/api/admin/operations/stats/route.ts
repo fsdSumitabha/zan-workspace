@@ -6,21 +6,25 @@ import StatsSnapshot, {
 } from "@/models/StatsSnapshot"
 import { computeStats } from "@/lib/stats/computeStats"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
+import { statsSnapshotKey } from "@/lib/stats/snapshotKey"
 
 /**
  * GET /api/admin/operations/stats
  *
- * Returns the cached dashboard counters. Lazy refresh: if the cached
- * snapshot is missing or older than `TTL_MS`, the next request
- * recomputes (one set of `countDocuments` queries) and upserts the
- * snapshot. Subsequent reads are O(1) point lookups.
+ * Returns the cached dashboard counters, scoped to the regions the
+ * signed-in user can see. Lazy refresh: if the cached snapshot is missing
+ * or older than `TTL_MS`, the next request recomputes (one set of
+ * `countDocuments` queries) and upserts the snapshot. Subsequent reads are
+ * O(1) point lookups.
+ *
+ * There is one snapshot row per region set, so an admin who sees three
+ * regions and a US agent who sees one do not share a cache entry.
  *
  * Concurrency: if two requests find it stale at the same time, both
  * may compute and write. Numbers should be identical, so last-write-
  * wins is fine — no correctness issue, just one wasted recompute.
  */
 
-const SNAPSHOT_ID = "operations_stats"
 const TTL_MS = 60 * 60 * 1000 // 1 hour
 
 export async function GET(req: NextRequest) {
@@ -28,8 +32,12 @@ export async function GET(req: NextRequest) {
         await requireAuth(req)
         await dbConnect()
 
+        // One snapshot per region set. requireAuth has already put the
+        // user's regions in context, so this has to come after it.
+        const snapshotId = statsSnapshotKey()
+
         const existing = (await StatsSnapshot.findById(
-            SNAPSHOT_ID
+            snapshotId
         ).lean()) as IStatsSnapshot | null
 
         const isFresh =
@@ -43,7 +51,7 @@ export async function GET(req: NextRequest) {
         // Stale or missing — recompute, then upsert.
         const computed = await computeStats()
         const fresh = (await StatsSnapshot.findByIdAndUpdate(
-            SNAPSHOT_ID,
+            snapshotId,
             { $set: computed },
             { upsert: true, new: true, setDefaultsOnInsert: true }
         ).lean()) as IStatsSnapshot

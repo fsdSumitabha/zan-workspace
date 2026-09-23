@@ -1,6 +1,7 @@
 import { USER_ROLE_META, UserRole } from "@/constants/userRoles"
 import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import Tooltip from "./tooltip/Tooltip"
+import RegionBadges from "./region/RegionBadge"
 
 interface UserCardProps {
     user: {
@@ -8,6 +9,7 @@ interface UserCardProps {
         name: string
         email: string
         role: UserRole
+        regions?: string[]
         isActive: boolean
         avatar?: string
         lastLoginAt?: string
@@ -116,6 +118,15 @@ export default function UserCard({ user }: UserCardProps) {
                     </p>
                     <TimeAgo date={user.createdAt} />
                 </div>
+            </div>
+
+            {/* Regions. An account with none sees an empty app, so the
+                missing case is shown in red rather than hidden. */}
+            <div className="mt-3 flex items-center gap-2 text-sm">
+                <span className="text-gray-500 dark:text-neutral-400">
+                    Regions :
+                </span>
+                <RegionBadges regions={user.regions} />
             </div>
 
             {/* Footer */}

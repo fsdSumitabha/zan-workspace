@@ -12,6 +12,7 @@ import { EVENT_CODE } from "@/constants/eventTypes"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { phoneLookupCondition, validatePhone } from "@/lib/phone"
 import { getRegion } from "@/lib/region"
+import { resolveWriteRegion, RegionChoiceError } from "@/lib/region-scope/resolveWriteRegion"
 
 export async function GET(req: NextRequest) {
     try {
@@ -154,10 +155,15 @@ export async function POST(req: NextRequest) {
             )
         }
 
+        // `body` is spread into the document, so `region` has to be
+        // replaced with a checked value. Otherwise a request could name
+        // any region and it would be saved as sent.
+        const region = resolveWriteRegion(body.region, authUser)
+
         const client = await auditedCreate(
             Client,
             1,
-            body,
+            { ...body, region },
             authUser.id
         )
 
@@ -174,6 +180,12 @@ export async function POST(req: NextRequest) {
             { status: 201 }
         )
     } catch (error: any) {
+        if (error instanceof RegionChoiceError) {
+            return NextResponse.json(
+                { success: false, message: error.message, field: error.field },
+                { status: error.statusCode }
+            )
+        }
         if (error instanceof AuthError) {
             return NextResponse.json(
                 {
