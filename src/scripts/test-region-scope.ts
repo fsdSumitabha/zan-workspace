@@ -88,8 +88,12 @@ async function main() {
         { name: "find as US", run: () => asUS(countFind), want: usLive, wantText: `${usLive}` },
         { name: "countDocuments as US", run: () => asUS(() => Lead.countDocuments({})), want: usLive, wantText: `${usLive}` },
 
-        // Admin holds every region, so it sees the sum.
-        { name: "countDocuments as admin", run: () => asAdmin(() => Lead.countDocuments({})), want: inLive + usLive, wantText: `${inLive + usLive}` },
+        // Admin holds every region, so it sees every live lead. Use allLive,
+        // not inLive + usLive. The sum of two regions forgets the third, and
+        // asAdmin holds AE as well, so a single AE lead made that check fail
+        // while the code was correct. Same reason as the US note above: a
+        // test that encodes today's data is a test that will lie to you later.
+        { name: "countDocuments as admin", run: () => asAdmin(() => Lead.countDocuments({})), want: allLive, wantText: `${allLive}` },
         { name: "find as admin", run: () => asAdmin(countFind), want: allLive, wantText: `${allLive}` },
 
         // The bypass really does bypass the region filter. It does not bypass
