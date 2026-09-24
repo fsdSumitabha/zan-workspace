@@ -3,14 +3,16 @@
 import Link from "next/link"
 import { Image } from "@imagekit/next"
 import RegionSwitcher from "@/components/admin/operations/region/RegionSwitcher"
-import { User, LogOut, Home, Target, Handshake, FolderKanban, CalendarClock, UserRoundCog, Activity, BarChart3 } from "lucide-react"
+import { User, LogOut, Home, Target, Handshake, FolderKanban, CalendarClock, UserRoundCog, Activity, BarChart3, PhoneCall } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
+import { LEAD_SOURCE_ACCESS_ROLES } from "@/constants/leadSourceRoles"
 
 const navItems = [
     { name: "Dashboard", href: "/admin/operations", icon: Home, roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 65, 69, 70, 80] },
     { name: "Leads", href: "/admin/operations/leads", icon: Target, roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 65, 69, 70, 80] },
+    { name: "Lead Sources", href: "/admin/operations/lead-sources", icon: PhoneCall, roles: LEAD_SOURCE_ACCESS_ROLES },
     { name: "Clients", href: "/admin/operations/clients", icon: Handshake, roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 69, 70, 80] },
     { name: "Projects", href: "/admin/operations/projects", icon: FolderKanban, roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 70, 80] },
     { name: "Meetings", href: "/admin/operations/meetings", icon: CalendarClock, roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 65, 69, 70, 80] },

@@ -234,9 +234,14 @@ export function regionScopePlugin(
         }
     })
 
-    schema.pre("insertMany", function (next, docs: unknown) {
+    // Mongoose 9 calls this with (docs, options) and no `next`. The old
+    // (next, docs) form called the docs array as a function, so every
+    // insertMany on a scoped model threw "next is not a function".
+    // insertMany still runs the pre("validate") hook above on each document,
+    // so the region checks there apply to bulk inserts too.
+    schema.pre("insertMany", function (docs: unknown) {
         const ctx = getRegionContext()
-        if (ctx?.bypass || !ctx?.writeRegion) return next()
+        if (ctx?.bypass || !ctx?.writeRegion) return
 
         if (Array.isArray(docs)) {
             for (const doc of docs) {
@@ -244,7 +249,6 @@ export function regionScopePlugin(
                 if (!row[field]) row[field] = ctx.writeRegion
             }
         }
-        next()
     })
 }
 

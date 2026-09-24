@@ -19,10 +19,10 @@ const DEBOUNCE_MS = 300
 const MIN_DASHBOARD_QUERY = 2
 
 type Mode =
-    | { kind: "entity"; entity: "leads" | "clients" | "projects" | "meetings" }
+    | { kind: "entity"; entity: (typeof ENTITY_PATHS)[number] }
     | { kind: "dashboard" }
 
-const ENTITY_PATHS = ["leads", "clients", "projects", "meetings"] as const
+const ENTITY_PATHS = ["leads", "clients", "projects", "meetings", "lead-sources"] as const
 
 function resolveMode(pathname: string): Mode {
     for (const entity of ENTITY_PATHS) {
@@ -35,7 +35,7 @@ function resolveMode(pathname: string): Mode {
 
 function placeholderFor(mode: Mode): string {
     if (mode.kind === "entity") {
-        return `Search ${mode.entity}…`
+        return `Search ${mode.entity.replace("-", " ")}…`
     }
     return "Search leads, clients, projects, meetings…"
 }

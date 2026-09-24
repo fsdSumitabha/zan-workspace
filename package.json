@@ -13,6 +13,7 @@
     "db:test-region-scope": "tsx src/scripts/test-region-scope.ts",
     "db:test-region-writes": "tsx src/scripts/test-region-writes.ts",
     "db:test-region-grant": "tsx src/scripts/test-region-grant.ts",
+    "test:lead-source-sheet": "tsx src/scripts/test-lead-source-sheet.ts",
     "mig:00-rehearse": "tsx src/scripts/region-migration/00-rehearse-from-backup.ts",
     "mig:01-users": "tsx src/scripts/region-migration/01-users.ts",
     "mig:02-leads-region": "tsx src/scripts/region-migration/02-leads-region.ts",
@@ -49,8 +50,10 @@
     "react-dom": "19.2.3",
     "react-dropzone": "^15.0.0",
     "react-phone-number-input": "^3.4.18",
+    "read-excel-file": "^9.3.10",
     "recharts": "^3.8.1",
     "sonner": "^2.0.7",
+    "write-excel-file": "^4.1.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
