@@ -14,6 +14,8 @@ import "@/models/Document";
 import "@/models/Quotation";
 import "@/models/ActivityLog";
 import "@/models/StatsSnapshot";
+import "@/models/LeadSource";
+import "@/models/LeadSourceUpload";
 
 const MONGODB_URI = process.env.MONGODB_URI as string;
 

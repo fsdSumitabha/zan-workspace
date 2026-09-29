@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { FolderKanban, Home, Target, UserRoundCog, Handshake, } from "lucide-react";
+import { FolderKanban, Home, Target, UserRoundCog, Handshake, PhoneCall, } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { LEAD_SOURCE_ACCESS_ROLES } from "@/constants/leadSourceRoles";
 import styles from "@/assets/css/MobileNav.module.css";
 
 
@@ -24,6 +25,14 @@ const navItems: Array<{
         href: "/admin/operations/leads",
         roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 65, 69, 70, 80],
         icon: Target,
+    },
+    {
+        // "Calls", not "Lead Sources". The label shows under the active
+        // icon, and the long name runs into the next icon on a small phone.
+        name: "Calls",
+        href: "/admin/operations/lead-sources",
+        roles: LEAD_SOURCE_ACCESS_ROLES,
+        icon: PhoneCall,
     },
     {
         name: "Clients",

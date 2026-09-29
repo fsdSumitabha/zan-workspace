@@ -128,3 +128,41 @@ body {
     height: 100%;
     animation: growLine 0.6s ease-out forwards;
 }
+/* Lead source callback reminders. The clock shakes when a callback is close
+   and rings when it is due. The due chip also pulses, so it is seen from the
+   corner of the eye. See CallbackMenu.tsx. */
+@keyframes ls-ring {
+    0%, 55%, 100% { transform: rotate(0deg); }
+    5%, 15%, 25%  { transform: rotate(-16deg); }
+    10%, 20%, 30% { transform: rotate(16deg); }
+    35%           { transform: rotate(-6deg); }
+    40%           { transform: rotate(6deg); }
+}
+
+@keyframes ls-pulse {
+    0%   { box-shadow: 0 0 0 0 rgb(225 29 72 / 0.55); }
+    70%  { box-shadow: 0 0 0 8px rgb(225 29 72 / 0); }
+    100% { box-shadow: 0 0 0 0 rgb(225 29 72 / 0); }
+}
+
+.ls-ring {
+    transform-origin: 50% 15%;
+    animation: ls-ring 1.6s ease-in-out infinite;
+}
+
+.ls-ring-slow {
+    transform-origin: 50% 15%;
+    animation: ls-ring 3.2s ease-in-out infinite;
+}
+
+.ls-callback-due {
+    animation: ls-pulse 1.6s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ls-ring,
+    .ls-ring-slow,
+    .ls-callback-due {
+        animation: none;
+    }
+}

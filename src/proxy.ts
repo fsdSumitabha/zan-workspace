@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { jwtVerify, type JWTPayload } from "jose"
+import { LEAD_SOURCE_ACCESS_ROLES, LEAD_SOURCE_MANAGE_ROLES } from "@/constants/leadSourceRoles"
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 
@@ -24,6 +25,10 @@ const routePermissions: Array<{ pattern: RegExp; roles: number[] }> = [
     { pattern: new RegExp(`^/admin/operations/leads/${OBJECT_ID}/edit(/|$)`), roles: [10,45, 60, 69, 70] },
     { pattern: new RegExp(`^/admin/operations/clients/${OBJECT_ID}/edit(/|$)`), roles: [10,45, 60, 69, 70] },
     { pattern: new RegExp(`^/admin/operations/projects/${OBJECT_ID}/edit(/|$)`), roles: [10,45, 60, 70] },
+    // Lead sources. The first match wins, so the manager pages come first.
+    // Role lists live in src/constants/leadSourceRoles.ts.
+    { pattern: /^\/admin\/operations\/lead-sources\/(upload|uploads)(\/|$)/, roles: LEAD_SOURCE_MANAGE_ROLES },
+    { pattern: /^\/admin\/operations\/lead-sources(\/|$)/, roles: LEAD_SOURCE_ACCESS_ROLES },
 ]
 
 function getRequiredRoles(pathname: string): number[] | null {

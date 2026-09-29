@@ -40,6 +40,10 @@ function getEntityHref(
             return `/admin/operations/projects/${entityId}`
         case ENTITY_TYPE.USER:
             return `/admin/operations/users/${entityId}`
+        case ENTITY_TYPE.LEAD_SOURCE:
+            return `/admin/operations/lead-sources/${entityId}`
+        case ENTITY_TYPE.LEAD_SOURCE_UPLOAD:
+            return `/admin/operations/lead-sources/uploads/${entityId}`
         default:
             return null
     }
@@ -57,6 +61,8 @@ const ENTITY_BADGE: Record<number, string> = {
     [ENTITY_TYPE.MEETING]: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-300 border-cyan-500/30",
     [ENTITY_TYPE.DOCUMENT]: "bg-sky-500/10 text-sky-600 dark:text-sky-300 border-sky-500/30",
     [ENTITY_TYPE.QUOTATION]: "bg-orange-500/10 text-orange-600 dark:text-orange-300 border-orange-500/30",
+    [ENTITY_TYPE.LEAD_SOURCE]: "bg-teal-500/10 text-teal-600 dark:text-teal-300 border-teal-500/30",
+    [ENTITY_TYPE.LEAD_SOURCE_UPLOAD]: "bg-lime-500/10 text-lime-700 dark:text-lime-300 border-lime-500/30",
 }
 
 const NEUTRAL_BADGE =

@@ -27,4 +27,18 @@ export const ENTITY_AUDIT_CONFIG: Partial<Record<EntityType, EntityAuditConfig>>
         // here as an extra belt-and-braces guard. `lastLoginAt` is noisy.
         skipFields: ["password", "lastLoginAt"],
     },
+    9: {
+        // Lead source. `activity` is its own timeline, so a diff of it would
+        // copy the whole array into the log on every note. The last-note
+        // fields only repeat the newest timeline entry. `data` and
+        // `importNotes` are the sheet row, written once at upload and never
+        // changed. A Map also compares badly between a lean read and a
+        // document, which logged a change that did not happen.
+        skipFields: ["activity", "lastNote", "lastNoteAt", "lastActivityAt", "data", "importNotes"],
+    },
+    10: {
+        // Lead source upload. `rows` holds a copy of every sheet row for the
+        // report, up to a few megabytes. Logging it would copy it again.
+        skipFields: ["rows", "columns", "missingColumns"],
+    },
 }

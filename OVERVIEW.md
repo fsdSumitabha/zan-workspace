@@ -22,6 +22,7 @@ Other features:
 - **Dashboard and stats.** Recent activity, side-panel counts, and a charts page.
 - **Global search** across leads, clients, projects and meetings.
 - **PWA.** The web UI can be installed on a phone.
+- **Lead sources.** Cold-calling lists uploaded from Excel. Each row gets a person and a day. Good calls are converted to leads. See `docs/lead-sources.md`.
 
 ---
 
@@ -36,6 +37,7 @@ Other features:
 | UI | lucide-react, clsx, sonner, framer-motion, dayjs, react-dropzone |
 | Charts | chart.js with react-chartjs-2, recharts |
 | Phone numbers | libphonenumber-js, react-phone-number-input |
+| Excel | read-excel-file, write-excel-file (lead source uploads and reports) |
 | Integrations | ImageKit (files), Nodemailer (mail), Google Calendar (Meet links), Facebook Lead Ads |
 
 ---
@@ -71,9 +73,10 @@ Every status, type and role is a number in `src/constants`. Labels and colors li
 | Constant | Values |
 |---|---|
 | `LEAD_STATUS` | NEW 10, CONTACTED 20, MEETING 30, DISCUSSION 40, NEGOTIATION 50, CONVERTED 60, LOST 70 |
+| `LEAD_SOURCE_STATUS` | NEW 10, NOT_REACHED 20, CALL_BACK 30, INTERESTED 40, NOT_INTERESTED 50, CONVERTED 70. No pipeline order. 60 was WRONG_NUMBER, now part of NOT_INTERESTED. Do not reuse it. |
 | `CLIENT_STATUS` | ACTIVE 1, INACTIVE 2, ON_HOLD 3, COMPLETED 4 |
 | `PROJECT_STATUS` | DISCUSSION 110 … CLOSED 180 (8 steps) |
-| `ENTITY_TYPE` | LEAD 0, CLIENT 1, PROJECT 2, USER 3, INTERACTION 4, MEETING 5, DOCUMENT 6, CALL 7, QUOTATION 8 |
+| `ENTITY_TYPE` | LEAD 0, CLIENT 1, PROJECT 2, USER 3, INTERACTION 4, MEETING 5, DOCUMENT 6, CALL 7, QUOTATION 8, LEAD_SOURCE 9, LEAD_SOURCE_UPLOAD 10 |
 | `INTERACTION_TYPE` | Meetings 2010–2050, NOTE 2110, CALL 2210, DOCUMENT 2310, QUOTATION 2410, STATUS_CHANGED 2510 |
 | `EVENT_TYPE` | Lead 1000–1020, Client 1100–1110, Project 1200–1210, plus every interaction code |
 | Roles | Admin 10, Ops Manager 15, HR 20, Project Manager 30, Developers 40–45, Digital Marketer 50, BDE 60, Accountant 70, Support 80, System 90 |
@@ -93,6 +96,8 @@ All models are in `src/models`. Users, leads, clients and projects use soft dele
 | `Notification` | One row per recipient, with `seenAt` and `readAt` |
 | `ActivityLog` | `oldData` and `newData` for every audited write |
 | `StatsSnapshot` | Cached counts for the side panel |
+| `LeadSource` | One row of a cold-calling sheet, with a person, a day, a callback time and a timeline. Kept apart from `Lead` |
+| `LeadSourceUpload` | One uploaded sheet, with a copy of every row and its result for the report |
 
 ### 3.5 Cross-cutting systems
 
@@ -161,6 +166,7 @@ All admin routes are under `/api/admin/operations`.
 | Timeline | `interactions`, `interactions/[id]`, `notes`, `calls`, `quotations` |
 | Meetings | `meetings`, `meetings/[id]/status`, `meetings/[id]/reschedule` |
 | Users | `users`, `users/[id]`, `users/picker` |
+| Lead sources | `lead-sources`, `/[id]`, `/status`, `/notes`, `/callback`, `/convert`, `bulk`, `assignees`, `template`, `uploads`, `uploads/[id]`, `/download` |
 | Dashboard | `/` (feed), `stats`, `overall-stats`, `search`, `activity-logs`, `/meta`, `/heatmap` |
 | Notifications | `/api/notifications`, `seen`, `read-all`, `[id]/read` |
 | Public | `/api/public/leads`, `/api/public/booking`, `/api/public/booking/slots`, `/api/webhooks/facebook/leads` |
@@ -177,6 +183,7 @@ All admin routes are under `/api/admin/operations`.
 | `/admin/operations/leads`, `clients`, `projects` | List, create, detail with timeline, edit. Leads also have convert. |
 | `/admin/operations/meetings`, `notifications`, `overall-stats` | Meeting list, notification feed, charts |
 | `/admin/operations/users`, `profile`, `activity-logs` | User admin, own profile, audit log |
+| `/admin/operations/lead-sources`, `/upload`, `/uploads` | Cold-calling list by day and person, sheet upload, upload reports |
 
 `admin/operations/layout.tsx` wraps every CRM page. It holds the sidebar, search bar, notification bell, side panels and mobile nav.
 List state lives in the URL (`?page=`, `?search=`, filters). A reload or a shared link opens the same view.
