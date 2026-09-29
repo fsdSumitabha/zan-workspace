@@ -19,7 +19,8 @@ export interface LeadSourceRow {
     uploadId: string | null
     rowNumber: number | null
     convertedLeadId: string | null
-    assignee: { _id: string; name: string } | null
+    /** `avatar` is an ImageKit URL, or "" when the person has none. */
+    assignee: { _id: string; name: string; avatar: string } | null
     /** Values of the sheet columns marked `inList` in leadSourceSheet.ts. */
     listInfo: string[]
     /** Today view only. 0 callback due, 1 today, 2 pending from an earlier day. */

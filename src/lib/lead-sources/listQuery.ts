@@ -207,15 +207,15 @@ export function listPipeline(
         ...sortStages(params.view, params.today, now),
         { $skip: (params.page - 1) * params.limit },
         { $limit: params.limit },
-        // The raw lookup is fine here: it copies one name for rows the
-        // caller may already see, and the assignee holds their region.
+        // The raw lookup is fine here: it copies one name and avatar for rows
+        // the caller may already see, and the assignee holds their region.
         {
             $lookup: {
                 from: usersCollection,
                 localField: "assignedTo",
                 foreignField: "_id",
                 as: "assigneeDocs",
-                pipeline: [{ $project: { name: 1 } }],
+                pipeline: [{ $project: { name: 1, avatar: 1 } }],
             },
         },
         { $project: project },

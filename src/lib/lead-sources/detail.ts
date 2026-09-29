@@ -31,7 +31,7 @@ export async function loadSourceDetail(id: string, user: AuthUser): Promise<Lead
     const _id = parseObjectId(id, "lead source id")
 
     const source = await LeadSource.findOne({ _id, ...accessFilter(user) })
-        .populate("assignedTo", "name")
+        .populate("assignedTo", "name avatar")
         .lean<RawDetail>()
 
     if (!source) throw new LeadSourceError("Lead source not found.", 404)

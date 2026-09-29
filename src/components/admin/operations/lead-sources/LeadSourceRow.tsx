@@ -1,7 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Image } from "@imagekit/next"
 import clsx from "clsx"
 import { ArrowUpRight, CalendarClock } from "lucide-react"
 import { useRegion } from "@/contexts/RegionContext"
@@ -32,6 +34,44 @@ interface Props {
 function initials(name: string): string {
     const parts = name.trim().split(/\s+/)
     return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase() || "?"
+}
+
+/**
+ * Who the source is assigned to: their avatar, or their initials when they
+ * have no avatar or it fails to load. The parent keys this by the avatar URL,
+ * so a new URL gets a fresh try.
+ */
+function AssigneeChip({ assignee }: { assignee: Row["assignee"] }) {
+    const [broken, setBroken] = useState(false)
+    const showImage = !!assignee?.avatar && !broken
+
+    return (
+        <span
+            title={assignee ? `Assigned to ${assignee.name}` : "Not assigned"}
+            className={clsx(
+                "hidden h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px] font-semibold sm:inline-flex",
+                assignee
+                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"
+                    : "border border-dashed border-neutral-300 text-neutral-400 dark:border-neutral-600"
+            )}
+        >
+            {showImage ? (
+                <Image
+                    src={assignee.avatar}
+                    alt=""
+                    width={28}
+                    height={28}
+                    transformation={[{ width: 56, height: 56 }]}
+                    className="h-full w-full object-cover"
+                    onError={() => setBroken(true)}
+                />
+            ) : assignee ? (
+                initials(assignee.name)
+            ) : (
+                "?"
+            )}
+        </span>
+    )
 }
 
 /**
@@ -184,19 +224,7 @@ export default function LeadSourceRow({
                     </span>
                 )}
 
-                {showAssignee && (
-                    <span
-                        title={row.assignee ? `Assigned to ${row.assignee.name}` : "Not assigned"}
-                        className={clsx(
-                            "hidden h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold sm:inline-flex",
-                            row.assignee
-                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"
-                                : "border border-dashed border-neutral-300 text-neutral-400 dark:border-neutral-600"
-                        )}
-                    >
-                        {row.assignee ? initials(row.assignee.name) : "?"}
-                    </span>
-                )}
+                {showAssignee && <AssigneeChip key={row.assignee?.avatar ?? ""} assignee={row.assignee} />}
 
                 <StatusMenu
                     sourceId={row._id}

@@ -91,7 +91,7 @@ async function updateOne(
         fields: resolveTrackedFields(LeadSource.schema, ENTITY_TYPE.LEAD_SOURCE),
     })
 
-    await after.populate("assignedTo", "name")
+    await after.populate("assignedTo", "name avatar")
     return serializeRow(after.toObject({ flattenMaps: true }) as unknown as RawSourceRow)
 }
 

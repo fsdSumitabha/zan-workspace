@@ -17,6 +17,7 @@ type Id = { toString(): string }
 interface RawAssignee {
     _id: Id
     name?: string
+    avatar?: string
 }
 
 export interface RawSourceRow {
@@ -74,7 +75,9 @@ export function serializeRow(doc: RawSourceRow): LeadSourceRow {
         uploadId: doc.uploadId ? doc.uploadId.toString() : null,
         rowNumber: doc.rowNumber ?? null,
         convertedLeadId: doc.convertedLeadId ? doc.convertedLeadId.toString() : null,
-        assignee: assignee ? { _id: assignee._id.toString(), name: assignee.name || "" } : null,
+        assignee: assignee
+            ? { _id: assignee._id.toString(), name: assignee.name || "", avatar: assignee.avatar?.trim() || "" }
+            : null,
         listInfo: [...new Set(listInfo)],
         ...(doc.section !== undefined ? { section: doc.section } : {}),
     }

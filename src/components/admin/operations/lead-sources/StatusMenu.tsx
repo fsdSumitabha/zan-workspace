@@ -116,14 +116,17 @@ export default function StatusMenu({ sourceId, name, status, onUpdated, disabled
                 className={clsx(
                     "inline-flex items-center gap-1 rounded-md font-semibold whitespace-nowrap shadow-sm transition",
                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
-                    size === "sm" ? "px-2 py-1 text-[11px]" : "px-3 py-1.5 text-sm",
+                    // One width for every status on the list, so the items to its left
+                    // stay in a straight column. Wide enough for "Not Interested"
+                    // with the saving spinner.
+                    size === "sm" ? "px-2 py-1 text-[11px] sm:w-[7.75rem]" : "px-3 py-1.5 text-sm",
                     meta.color,
                     locked ? "cursor-default" : "hover:brightness-110"
                 )}
             >
-                {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
-                {meta.label}
-                {!locked && <ChevronDown className="h-3 w-3 opacity-80" />}
+                {saving ? <Loader2 className="h-3 w-3 shrink-0 animate-spin" /> : null}
+                <span className="truncate">{meta.label}</span>
+                {!locked && <ChevronDown className="ml-auto h-3 w-3 shrink-0 opacity-80" />}
             </button>
 
             <Popover open={open} onClose={() => toggle(false)} anchorRef={buttonRef} label={`Status of ${name}`} width={330}>
