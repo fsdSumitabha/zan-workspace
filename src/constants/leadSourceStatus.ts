@@ -1,5 +1,9 @@
 /**
- * Status of one lead source, the result of cold calling it.
+ * Status of one lead source, the result of the latest call to it.
+ *
+ * Each status covers several things that can happen on a call. The note on
+ * the status change says which one it was. Not Reached means no one
+ * answered. Call Back, Interested and Not Interested mean someone did.
  *
  * Simpler than LEAD_STATUS on purpose. There is no pipeline and no order.
  * Any status can follow any other, except CONVERTED. Only the convert route
@@ -7,14 +11,22 @@
  *
  * `closed` statuses drop out of the working views (Today, Upcoming, No day).
  * They stay in Closed and All.
+ *
+ * 60 was Wrong Number. It is now part of Not Interested. Do not reuse 60,
+ * because an old database can still hold it.
  */
 export const LEAD_SOURCE_STATUS = {
+    /** Not called yet. */
     NEW: 10,
-    NO_ANSWER: 20,
+    /** No one answered: no answer, busy, switched off, voicemail, invalid number, incoming not available. */
+    NOT_REACHED: 20,
+    /** They asked us to call at another time. */
     CALL_BACK: 30,
+    /** They want to go ahead. */
     INTERESTED: 40,
+    /** Not interested, working with someone else, no need, do not call, wrong number. */
     NOT_INTERESTED: 50,
-    WRONG_NUMBER: 60,
+    /** Now a lead. */
     CONVERTED: 70,
 } as const
 
@@ -26,11 +38,10 @@ export const LEAD_SOURCE_STATUS_META: Record<
     { label: string; color: string; dot: string; closed: boolean }
 > = {
     10: { label: "New", color: "bg-slate-500 text-white", dot: "bg-slate-400", closed: false },
-    20: { label: "No Answer", color: "bg-amber-500 text-amber-950", dot: "bg-amber-500", closed: false },
+    20: { label: "Not Reached", color: "bg-amber-500 text-amber-950", dot: "bg-amber-500", closed: false },
     30: { label: "Call Back", color: "bg-violet-600 text-white", dot: "bg-violet-500", closed: false },
     40: { label: "Interested", color: "bg-emerald-600 text-white", dot: "bg-emerald-500", closed: false },
     50: { label: "Not Interested", color: "bg-rose-600 text-white", dot: "bg-rose-500", closed: true },
-    60: { label: "Wrong Number", color: "bg-stone-600 text-white", dot: "bg-stone-500", closed: true },
     70: { label: "Converted", color: "bg-blue-600 text-white", dot: "bg-blue-500", closed: true },
 }
 

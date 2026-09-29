@@ -417,7 +417,7 @@ function EmptyState({ view, isManager, filtered }: { view: LeadSourceView; isMan
     } else if (view === "unscheduled") {
         body = "Every open source has a day."
     } else if (view === "closed") {
-        body = "Sources marked Not Interested, Wrong Number or Converted show up here."
+        body = "Sources marked Not Interested or Converted show up here."
     }
 
     return (

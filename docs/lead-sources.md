@@ -1,7 +1,7 @@
 # Lead sources
 
 Bulk cold-calling lists, uploaded from Excel.
-Last updated 2026-09-24.
+Last updated 2026-09-28.
 
 A lead source is one row of an uploaded sheet: one number to call.
 It is kept apart from the Lead model on purpose.
@@ -15,7 +15,7 @@ A manager uploads a sheet. Each good row becomes a lead source.
 Each source has a person (who calls it) and a day (when to call it). Both can be empty.
 The person opens **Lead Sources** and sees the sources for today, with due callbacks at the top.
 They call, pick the result, and add a short note.
-Sources that go well are converted to leads. The others close as Not Interested or Wrong Number.
+Sources that go well are converted to leads. The others close as Not Interested.
 
 ---
 
@@ -62,15 +62,19 @@ Rules that move a source to another day:
 
 In `src/constants/leadSourceStatus.ts`. There is no pipeline and no order. Any status can follow any other.
 
-| Code | Status | Closed |
-|---|---|---|
-| 10 | New | no |
-| 20 | No Answer | no |
-| 30 | Call Back | no |
-| 40 | Interested | no |
-| 50 | Not Interested | yes |
-| 60 | Wrong Number | yes |
-| 70 | Converted | yes. Set only by the convert route. |
+Each status covers several things that can happen on a call. The note on the status change says which one it was.
+Not Reached means no one answered. Call Back, Interested and Not Interested mean someone did.
+
+| Code | Status | What happened on the call | Closed |
+|---|---|---|---|
+| 10 | New | Not called yet | no |
+| 20 | Not Reached | No answer, busy ("speaking to someone else"), switched off, voicemail, invalid number, incoming not available | no |
+| 30 | Call Back | They asked us to call at another time | no |
+| 40 | Interested | They want to go ahead | no |
+| 50 | Not Interested | Not interested, working with someone else, no need, do not call, wrong number | yes |
+| 70 | Converted | Now a lead | yes. Set only by the convert route. |
+
+Code 60 was Wrong Number. It is now part of Not Interested. Do not reuse 60, because an old database can still hold it.
 
 Closed sources leave the working views (Today, Upcoming, No day). They stay in Closed and All.
 
@@ -124,7 +128,7 @@ The page does not notify anyone yet. See section 11.
 | Today | Open sources with a day of today or earlier | Due callbacks, then today's (timed callbacks first, then New first), then earlier days ("left over"), newest first |
 | Upcoming | Open sources with a later day | By day |
 | No day | Open sources with no day | Newest upload first, in sheet order |
-| Closed | Not Interested, Wrong Number, Converted | Last changed first |
+| Closed | Not Interested, Converted | Last changed first |
 | All | Everything | Newest upload first, in sheet order |
 
 Filters: status for everyone. Person and one exact day for managers. The header search box matches the
@@ -293,7 +297,8 @@ All under `/api/admin/operations/lead-sources`. Same response shape as the rest 
 2. **Reminders outside the page.** A due callback shows only while the list is open.
    The next step is a notification to the assignee when a callback falls due. That needs a scheduled job,
    because nothing runs on the server at the callback time today.
-3. **Do Not Call.** US cold calling has legal do-not-call rules. Today "Not Interested" is the closest status.
+3. **Do Not Call.** US cold calling has legal do-not-call rules. Today a do-not-call request is marked Not Interested,
+   and only the note says why.
    A separate closed status, and a check against it on upload, would be a small change in
    `leadSourceStatus.ts` and `upload.ts`.
 4. **Editing a source.** Name, phone and email cannot be edited yet. They come from the sheet.

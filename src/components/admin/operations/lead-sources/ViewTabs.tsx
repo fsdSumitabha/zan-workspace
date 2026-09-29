@@ -8,7 +8,7 @@ const TABS: Array<{ view: Exclude<LeadSourceView, "day">; label: string; hint: s
     { view: "today", label: "Today", hint: "Today's sources, callbacks that are due, and sources left over from earlier days" },
     { view: "upcoming", label: "Upcoming", hint: "Open sources set for a later day" },
     { view: "unscheduled", label: "No day", hint: "Open sources that have no day yet" },
-    { view: "closed", label: "Closed", hint: "Not Interested, Wrong Number and Converted" },
+    { view: "closed", label: "Closed", hint: "Not Interested and Converted" },
     { view: "all", label: "All", hint: "Every lead source" },
 ]
 

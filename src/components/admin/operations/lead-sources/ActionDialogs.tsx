@@ -133,7 +133,7 @@ export function DayDialog({ open, onClose, ids, onDone }: CommonProps) {
 }
 
 export function StatusDialog({ open, onClose, ids, onDone }: CommonProps) {
-    const [status, setStatus] = useState<LeadSourceStatus>(LEAD_SOURCE_STATUS.NO_ANSWER)
+    const [status, setStatus] = useState<LeadSourceStatus>(LEAD_SOURCE_STATUS.NOT_REACHED)
     const [note, setNote] = useState("")
     const [saving, setSaving] = useState(false)
 

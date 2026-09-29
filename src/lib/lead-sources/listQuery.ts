@@ -24,7 +24,7 @@ import { LIST_INFO_KEYS } from "./serialize"
  *                days ("pending").
  *   upcoming     Open sources with a later day.
  *   unscheduled  Open sources with no day.
- *   closed       Not Interested, Wrong Number and Converted.
+ *   closed       Not Interested and Converted.
  *   all          Everything.
  *   day          One exact day, any status. Managers use it to plan.
  *
