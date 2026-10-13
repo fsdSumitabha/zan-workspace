@@ -4,11 +4,12 @@ import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
 import { runWithoutRegionScope } from "@/lib/region-scope"
 import { verifyToken } from "@/lib/auth/verifyToken"
+import { readAuthToken } from "@/lib/auth/requestCredentials"
 import { imagekit } from "@/lib/imagekit/imagekit"
 
 export async function POST(req: NextRequest) {
     try {
-        const token = req.cookies.get("auth_token")?.value
+        const token = readAuthToken(req)
 
         if (!token) {
             return NextResponse.json(

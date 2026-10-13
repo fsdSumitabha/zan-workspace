@@ -3,10 +3,10 @@ import { beginAuditContext } from "@/lib/activity-log/auditContext"
 import {
     beginRegionContext,
     narrowToActiveRegion,
-    ACTIVE_REGION_COOKIE,
 } from "@/lib/region-scope"
 import { getUserFromRequest, AuthUser } from "./getUserFromRequest"
 import { AuthError } from "./AuthError"
+import { readActiveRegion } from "./requestCredentials"
 
 export { AuthError }
 
@@ -57,10 +57,11 @@ export async function requireAuth(req: NextRequest): Promise<AuthUser> {
     // Narrowing them here is the whole region switch: every route, every
     // query and every stamped write follows, with no other change anywhere.
     //
-    // The cookie can only narrow. The result is always a subset of what the
-    // user row says, so the cookie never has to be trusted.
+    // The cookie (or the mobile app's X-Active-Region header) can only
+    // narrow. The result is always a subset of what the user row says, so
+    // neither ever has to be trusted.
     const selection = narrowToActiveRegion(
-        req.cookies.get(ACTIVE_REGION_COOKIE)?.value,
+        readActiveRegion(req),
         user.regions
     )
 

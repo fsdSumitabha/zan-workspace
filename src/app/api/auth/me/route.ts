@@ -7,15 +7,15 @@ import User from "@/models/User"
 import {
     runWithoutRegionScope,
     narrowToActiveRegion,
-    ACTIVE_REGION_COOKIE,
 } from "@/lib/region-scope"
+import { readActiveRegion, readAuthToken } from "@/lib/auth/requestCredentials"
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 
 export async function GET(req: NextRequest) {
     try {
-        // 1. Get token from cookie
-        const token = req.cookies.get("auth_token")?.value
+        // 1. Get token from the cookie, or the Bearer header
+        const token = readAuthToken(req)
 
         // 2. No token → not logged in
         if (!token) {
@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
         ) as RegionCode[]
 
         const selection = narrowToActiveRegion(
-            req.cookies.get(ACTIVE_REGION_COOKIE)?.value,
+            readActiveRegion(req),
             accountRegions
         )
 

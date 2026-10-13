@@ -123,6 +123,10 @@ export async function POST(req: NextRequest) {
         await user.save({ validateModifiedOnly: true })
 
         // 11. Return success (NO password)
+        //
+        // `token` is for the mobile app, which cannot use the httpOnly cookie
+        // and sends it back as Authorization: Bearer. The web app ignores the
+        // body and keeps using the cookie.
         return NextResponse.json(
             {
                 success: true,
@@ -132,7 +136,8 @@ export async function POST(req: NextRequest) {
                     name: user.name,
                     email: user.email,
                     role: user.role,
-                    regions: user.regions ?? []
+                    regions: user.regions ?? [],
+                    token
                 }
             },
             { status: 200 }

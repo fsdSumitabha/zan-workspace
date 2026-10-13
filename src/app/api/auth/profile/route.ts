@@ -4,6 +4,7 @@ import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
 import { runWithoutRegionScope } from "@/lib/region-scope"
 import { verifyToken } from "@/lib/auth/verifyToken"
+import { readAuthToken } from "@/lib/auth/requestCredentials"
 
 type PopulatedCreatedBy = {
     _id: unknown
@@ -14,7 +15,7 @@ type PopulatedCreatedBy = {
 
 export async function GET(req: NextRequest) {
     try {
-        const token = req.cookies.get("auth_token")?.value
+        const token = readAuthToken(req)
 
         if (!token) {
             return NextResponse.json(

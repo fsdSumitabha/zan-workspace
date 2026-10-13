@@ -4,6 +4,7 @@ import dbConnect from "@/lib/db/dbConnect"
 import User from "@/models/User"
 
 import { verifyToken, AuthTokenPayload } from "./verifyToken"
+import { readAuthToken } from "./requestCredentials"
 import { runWithoutRegionScope } from "@/lib/region-scope"
 import type { RegionCode } from "@/lib/region"
 
@@ -19,15 +20,16 @@ export interface AuthUser {
 }
 
 /**
- * Extracts user from request using JWT cookie
+ * Extracts user from request using the JWT cookie, or an Authorization:
+ * Bearer header when the cookie is absent (the mobile app)
  * Returns user or null (never throws for missing auth)
  */
 export async function getUserFromRequest(
     req: NextRequest
 ): Promise<AuthUser | null> {
     try {
-        // 1. Read token from cookie
-        const token = req.cookies.get("auth_token")?.value
+        // 1. Read token from the cookie, or the Bearer header
+        const token = readAuthToken(req)
 
         if (!token) {
             return null
