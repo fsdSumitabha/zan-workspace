@@ -3,8 +3,9 @@ import mongoose from "mongoose"
 import dbConnect from "@/lib/db/dbConnect"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { sendPush } from "@/lib/notifications/sendPush"
+import { PUSH_CHANNEL } from "@/constants/pushChannels"
 
-// Sends a test push to every browser of the signed-in user.
+// Sends a test push to every browser and phone of the signed-in user.
 export async function POST(req: NextRequest) {
     try {
         const authUser = await requireAuth(req)
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest) {
             title: "Test notification",
             body: "Push notifications work on this device.",
             url: "/admin/operations/notifications",
+            channel: PUSH_CHANNEL.GENERAL,
         })
 
         return NextResponse.json({ success: true, ...result })

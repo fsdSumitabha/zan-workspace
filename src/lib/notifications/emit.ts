@@ -8,7 +8,7 @@ import type { NotificationChannel } from "@/constants/notificationChannels"
 const MAX_RECIPIENTS = 500
 
 // Used when the caller does not pass `channels`. In-App is always on (see dispatch.ts).
-const DEFAULT_CHANNELS: NotificationChannel[] = [4]   // Web Push
+const DEFAULT_CHANNELS: NotificationChannel[] = [4]   // Push: browsers and the phone app
 
 export async function emitNotification(input: EmitInput): Promise<void> {
     try {
