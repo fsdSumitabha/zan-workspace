@@ -8,6 +8,7 @@ import UpcomingMeetingsPanel from "@/components/admin/operations/UpcomingMeeting
 import OperationsMobileNav from "@/components/admin/operations/MobileNav";
 import OperationsMobileTopBar from "@/components/admin/operations/MobileTopBar";
 import NotificationBell from "@/components/admin/operations/NotificationBell";
+import PushListener from "@/components/admin/operations/PushListener";
 
 export const metadata: Metadata = {
     title: "Zan Services CRM",
@@ -59,6 +60,9 @@ export default function OperationsLayout({
                 {/* Mobile bottom nav (twitter-like) */}
                 <OperationsMobileNav />
             </div>
+
+            {/* Push notifications: renders nothing, mounted once */}
+            <PushListener />
         </div>
     );
 }

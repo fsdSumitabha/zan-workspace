@@ -26,7 +26,12 @@ interface FeedResponse {
     unread?: number
 }
 
-const POLL_INTERVAL_MS = 30_000
+// Push messages refresh the bell at once (see PushListener). The timer is a
+// backup for browsers without push, and it skips hidden tabs.
+const POLL_INTERVAL_MS = 60_000
+
+// PushListener fires this event when a push message arrives.
+export const NOTIFICATIONS_REFRESH_EVENT = "notifications:refresh"
 
 export default function NotificationBell() {
     const [open, setOpen] = useState(false)
@@ -58,8 +63,20 @@ export default function NotificationBell() {
 
     useEffect(() => {
         fetchNotifications()
-        const t = setInterval(fetchNotifications, POLL_INTERVAL_MS)
-        return () => clearInterval(t)
+
+        // Poll only while the tab is visible. Catch up when it becomes visible again.
+        const poll = () => {
+            if (document.visibilityState === "visible") fetchNotifications()
+        }
+        const t = setInterval(poll, POLL_INTERVAL_MS)
+        document.addEventListener("visibilitychange", poll)
+        window.addEventListener(NOTIFICATIONS_REFRESH_EVENT, fetchNotifications)
+
+        return () => {
+            clearInterval(t)
+            document.removeEventListener("visibilitychange", poll)
+            window.removeEventListener(NOTIFICATIONS_REFRESH_EVENT, fetchNotifications)
+        }
     }, [])
 
     useEffect(() => {

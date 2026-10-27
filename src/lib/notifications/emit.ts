@@ -3,8 +3,12 @@ import { resolveRecipients } from "./resolveRecipients"
 import { renderMessage } from "./render"
 import { dispatchNotification } from "./dispatch"
 import type { EmitInput, DispatchContext } from "../../types/notification"
+import type { NotificationChannel } from "@/constants/notificationChannels"
 
 const MAX_RECIPIENTS = 500
+
+// Used when the caller does not pass `channels`. In-App is always on (see dispatch.ts).
+const DEFAULT_CHANNELS: NotificationChannel[] = [4]   // Web Push
 
 export async function emitNotification(input: EmitInput): Promise<void> {
     try {
@@ -38,7 +42,7 @@ export async function emitNotification(input: EmitInput): Promise<void> {
             actorOid,
             recipients,
             message,
-            channels: input.channels ?? [],
+            channels: input.channels ?? DEFAULT_CHANNELS,
             meta: input.meta,
         }
 

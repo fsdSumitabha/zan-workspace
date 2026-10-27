@@ -1,14 +1,15 @@
-const CACHE = "zan-crm-v1";
+const CACHE = "zan-crm-v2";
 const OFFLINE_URL = "/offline.html";
 
+// Every file here must exist. If one is missing, the whole install fails.
+// Push notifications use their own worker: /firebase-messaging-sw.js
 const PRE_CACHE_ASSETS = [
     OFFLINE_URL,
     "/icon-192.png",
     "/icon-512.png",
-    "/icons/target.svg",
-    "/icons/handshake.svg",
-    "/icons/folder-kanban.svg",
-    "/icons/calendar-clock.svg"
+    "/icons/target.png",
+    "/icons/handshake.png",
+    "/icons/calendar-clock.png"
 ];
 
 // Take control immediately on install/activate

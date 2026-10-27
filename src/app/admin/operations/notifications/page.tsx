@@ -7,6 +7,7 @@ import { Bell, Check, CheckCheck, ChevronLeft, ChevronRight, Loader2 } from "luc
 import { toast } from "sonner"
 import TimeAgo from "@/components/admin/operations/dayjs/TimeAgo"
 import NotificationBadge from "@/components/admin/operations/NotificationBadge"
+import PushSettingsCard from "@/components/admin/operations/PushSettingsCard"
 
 interface Row {
     _id: string
@@ -163,6 +164,8 @@ export default function NotificationsPage() {
                     )}
                 </div>
             </header>
+
+            <PushSettingsCard />
 
             <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
                 Notifications older than 30 days are automatically removed.
