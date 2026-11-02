@@ -368,6 +368,7 @@ export async function POST(req: NextRequest) {
                     entityType: meeting.entityType,
                     entityId: meeting.entityId,
                     scheduledAt: meeting.scheduledAt,
+                    region: meeting.region,
                 },
                 parentName,
             },

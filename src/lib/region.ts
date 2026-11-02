@@ -22,12 +22,16 @@ export interface RegionConfig {
     // Country used for phone numbers typed without a "+country code",
     // and for old saved numbers that have no country code.
     phoneCountry: CountryCode
+    // Time zone for times the server writes into text, such as "Tomorrow at
+    // 11:30 AM" in a notification. The server itself runs in UTC on Vercel.
+    // The US has several zones. New York is used until the US team says otherwise.
+    timeZone: string
 }
 
 export const REGIONS: Record<RegionCode, RegionConfig> = {
-    IN: { code: "IN", label: "India", phoneCountry: "IN" },
-    US: { code: "US", label: "United States", phoneCountry: "US" },
-    AE: { code: "AE", label: "United Arab Emirates", phoneCountry: "AE" },
+    IN: { code: "IN", label: "India", phoneCountry: "IN", timeZone: "Asia/Kolkata" },
+    US: { code: "US", label: "United States", phoneCountry: "US", timeZone: "America/New_York" },
+    AE: { code: "AE", label: "United Arab Emirates", phoneCountry: "AE", timeZone: "Asia/Dubai" },
 }
 
 export const DEFAULT_REGION: RegionCode = "IN"

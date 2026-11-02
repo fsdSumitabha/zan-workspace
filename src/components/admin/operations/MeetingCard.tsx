@@ -46,7 +46,8 @@ export default function MeetingCard({
     const [completeOpen, setCompleteOpen] = useState(false)
     const [outcome, setOutcome] = useState("")
     const [submittingComplete, setSubmittingComplete] = useState(false)
-    const [markingMissed, setMarkingMissed] = useState(false)
+    // The status being saved by Cancel or Missed, or null when neither is busy.
+    const [closing, setClosing] = useState<number | null>(null)
     const [outcomeExpanded, setOutcomeExpanded] = useState(false)
 
     const submitComplete = async () => {
@@ -100,24 +101,27 @@ export default function MeetingCard({
     const isRescheduled = meeting.status === MEETING_STATUS.RESCHEDULED
     const showCancel = isScheduled && canClose
     const showComplete = isScheduled && canClose && temporalStatus === "PAST"
+    const showMissed = showComplete
 
-    const markCancelled = async () => {
-        if (markingMissed) return
-        setMarkingMissed(true)
+    // Cancel (any time) and Missed (after the meeting day) close the meeting
+    // without a note. Completed needs one, see submitComplete.
+    const closeMeeting = async (status: number, fallbackMessage: string) => {
+        if (closing !== null) return
+        setClosing(status)
         try {
             const res = await fetch(`/api/admin/operations/meetings/${meeting._id}/status`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: MEETING_STATUS.CANCELLED }),
+                body: JSON.stringify({ status }),
             })
             const json = await res.json()
-            if (!res.ok || !json?.success) throw new Error(json?.message || "Failed to cancel meeting")
-            toast.success(json.message || "Meeting cancelled")
+            if (!res.ok || !json?.success) throw new Error(json?.message || "Failed to update meeting")
+            toast.success(json.message || fallbackMessage)
             onChanged?.()
         } catch (err: any) {
-            toast.error(err?.message || "Failed to cancel meeting")
+            toast.error(err?.message || "Failed to update meeting")
         } finally {
-            setMarkingMissed(false)
+            setClosing(null)
         }
     }
     // Rescheduled wins over the green/red temporal dot so the state is
@@ -299,9 +303,15 @@ export default function MeetingCard({
 
                     <div className="flex items-center gap-2 flex-wrap justify-end">
                         {showCancel && !completeOpen && (
-                            <button type="button" onClick={markCancelled} disabled={markingMissed} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-red-500/40 text-red-600 dark:text-red-400 hover:bg-red-500/10 transition disabled:opacity-50">
+                            <button type="button" onClick={() => closeMeeting(MEETING_STATUS.CANCELLED, "Meeting cancelled")} disabled={closing !== null} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-red-500/40 text-red-600 dark:text-red-400 hover:bg-red-500/10 transition disabled:opacity-50">
                                 <Icons.XCircle className="w-3 h-3" />
-                                {markingMissed ? "Cancelling…" : "Cancel"}
+                                {closing === MEETING_STATUS.CANCELLED ? "Cancelling…" : "Cancel"}
+                            </button>
+                        )}
+                        {showMissed && !completeOpen && (
+                            <button type="button" onClick={() => closeMeeting(MEETING_STATUS.MISSED, "Meeting marked as missed")} disabled={closing !== null} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-neutral-400/50 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-500/10 transition disabled:opacity-50">
+                                <Icons.CalendarOff className="w-3 h-3" />
+                                {closing === MEETING_STATUS.MISSED ? "Saving…" : "Missed"}
                             </button>
                         )}
                         {showComplete && !completeOpen && (

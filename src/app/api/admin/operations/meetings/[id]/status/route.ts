@@ -16,6 +16,16 @@ import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { resolveParentName } from "@/lib/notifications/resolveParentName"
 
+// The statuses that close a meeting, and what each one writes: the timeline
+// title, the notification event and the reply message.
+const CLOSE_STATUS = {
+    [MEETING_STATUS.CANCELLED]: { title: "Meeting cancelled", event: EVENT_CODE.MEETING_CANCELLED, message: "Meeting cancelled" },
+    [MEETING_STATUS.MISSED]: { title: "Meeting missed", event: EVENT_CODE.MEETING_MISSED, message: "Meeting marked as missed" },
+    [MEETING_STATUS.COMPLETED]: { title: "Meeting completed", event: EVENT_CODE.MEETING_COMPLETED, message: "Meeting marked as completed" },
+}
+
+type CloseStatus = keyof typeof CLOSE_STATUS
+
 export async function PATCH(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }
@@ -40,9 +50,10 @@ export async function PATCH(
             outcome?: string
         }
 
-        if (status !== MEETING_STATUS.CANCELLED && status !== MEETING_STATUS.COMPLETED) {
-            return NextResponse.json({ success: false, message: "status must be CANCELLED or COMPLETED" }, { status: 400 })
+        if (typeof status !== "number" || !(status in CLOSE_STATUS)) {
+            return NextResponse.json({ success: false, message: "status must be CANCELLED, MISSED or COMPLETED" }, { status: 400 })
         }
+        const close = CLOSE_STATUS[status as CloseStatus]
 
         const trimmedOutcome = (outcome ?? "").trim()
 
@@ -55,9 +66,10 @@ export async function PATCH(
             return NextResponse.json({ success: false, message: "Meeting not found" }, { status: 404 })
         }
 
-        // COMPLETED only valid once the meeting time has passed. CANCELLED is allowed any time before close.
-        if (status === MEETING_STATUS.COMPLETED && meeting.scheduledAt.getTime() > Date.now()) {
-            return NextResponse.json({ success: false, message: "Cannot mark a future meeting as completed" }, { status: 409 })
+        // COMPLETED and MISSED are only valid once the meeting time has passed. CANCELLED is allowed any time before close.
+        if (status !== MEETING_STATUS.CANCELLED && meeting.scheduledAt.getTime() > Date.now()) {
+            const label = status === MEETING_STATUS.COMPLETED ? "completed" : "missed"
+            return NextResponse.json({ success: false, message: `Cannot mark a future meeting as ${label}` }, { status: 409 })
         }
 
         if (
@@ -90,9 +102,9 @@ export async function PATCH(
             )
         }
 
-        const interactionType = status as typeof INTERACTION_TYPE.MEETING_CANCELLED | typeof INTERACTION_TYPE.MEETING_COMPLETED
+        const interactionType = status as typeof INTERACTION_TYPE.MEETING_CANCELLED | typeof INTERACTION_TYPE.MEETING_MISSED | typeof INTERACTION_TYPE.MEETING_COMPLETED
 
-        const friendlyTitle = status === MEETING_STATUS.COMPLETED ? "Meeting completed" : "Meeting cancelled"
+        const friendlyTitle = close.title
 
         const interaction = await auditedCreate(
             Interaction,
@@ -132,17 +144,17 @@ export async function PATCH(
 
         const parentName = await resolveParentName(meeting.entityType, String(meeting.entityId))
         await emitNotification({
-            type: status === MEETING_STATUS.COMPLETED ? EVENT_CODE.MEETING_COMPLETED : EVENT_CODE.MEETING_CANCELLED,
+            type: close.event,
             entityType: ENTITY_TYPE.MEETING,
             entityId: meeting._id,
             actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
-            payload: { meeting: { _id: meeting._id, title: meeting.title, entityType: meeting.entityType, entityId: meeting.entityId, scheduledAt: meeting.scheduledAt }, parentName, outcome: trimmedOutcome || undefined },
+            payload: { meeting: { _id: meeting._id, title: meeting.title, entityType: meeting.entityType, entityId: meeting.entityId, scheduledAt: meeting.scheduledAt, region: meeting.region }, parentName, outcome: trimmedOutcome || undefined },
             extraRecipients: Array.isArray(meeting.attendees) ? meeting.attendees.map((a: any) => String(a)) : undefined,
         })
 
         return NextResponse.json({
             success: true,
-            message: status === MEETING_STATUS.COMPLETED ? "Meeting marked as completed" : "Meeting cancelled",
+            message: close.message,
             data: { id: String(updated._id), status: updated.status, outcome: updated.outcome },
         }, { status: 200 })
     } catch (error) {

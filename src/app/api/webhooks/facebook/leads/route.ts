@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse, after } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import Lead from "@/models/Lead"
 import { verifyFacebookSignature } from "@/lib/webhooks/facebook/verify-signature"
@@ -9,6 +9,8 @@ import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { phoneLookupCondition, validatePhone } from "@/lib/phone"
 import { getRegion } from "@/lib/region"
 import { enterRegionContext } from "@/lib/region-scope"
+import { emitNotification } from "@/lib/notifications/emit"
+import { EVENT_CODE } from "@/constants/eventTypes"
 
 // Prevent any caching/static optimization on this route
 export const dynamic = "force-dynamic"
@@ -50,9 +52,14 @@ export async function POST(req: NextRequest) {
     //    so Meta doesn't retry forever and create duplicates.
     const payload = JSON.parse(rawBody) as FacebookWebhookPayload
 
-    // Fire and forget — don't await before responding
-    processLeads(payload).catch((err) =>
-        console.error("[fb-webhook] processing failed:", err)
+    // Process after the reply. after() keeps the function alive on Vercel
+    // until processLeads finishes. A plain fire-and-forget promise can be
+    // frozen halfway once the response is sent, losing the lead and its
+    // notification.
+    after(() =>
+        processLeads(payload).catch((err) =>
+            console.error("[fb-webhook] processing failed:", err)
+        )
     )
 
     return NextResponse.json({ received: true }, { status: 200 })
@@ -121,7 +128,7 @@ async function processLeads(payload: FacebookWebhookPayload) {
                 }
 
                 // System-created (no auth user). Audit row will have null userId.
-                await auditedCreate(
+                const created = await auditedCreate(
                     Lead,
                     ENTITY_TYPE.LEAD,
                     {
@@ -135,6 +142,15 @@ async function processLeads(payload: FacebookWebhookPayload) {
                     },
                     null
                 )
+
+                // Runs in the deploy region set above. emitNotification never throws.
+                await emitNotification({
+                    type: EVENT_CODE.LEAD_CREATED,
+                    entityType: ENTITY_TYPE.LEAD,
+                    entityId: created._id,
+                    actor: null,
+                    payload: { lead: { _id: created._id, name, source: "facebook" } },
+                })
             } catch (err) {
                 console.error(`[fb-webhook] failed lead ${leadgen_id}:`, err)
             }

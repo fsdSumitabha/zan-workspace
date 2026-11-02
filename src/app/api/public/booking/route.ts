@@ -65,23 +65,25 @@ function readString(raw: Record<string, unknown>, key: string): string {
     return typeof value === "string" ? value.trim() : ""
 }
 
+// Finds the booker's lead by phone or email, or creates one. `isNew` is true
+// only when this call created it, so a returning visitor is not a "New lead".
 async function resolveLeadId(
     input: { name: string; email: string; phone: string },
     actorId: string
-): Promise<string> {
+): Promise<{ leadId: string; isNew: boolean }> {
     const byPhone = await Lead.findOne({
         phone: phoneLookupCondition(input.phone, getRegion().phoneCountry),
     })
         .select("_id")
         .lean<{ _id: unknown }>()
-    if (byPhone) return String(byPhone._id)
+    if (byPhone) return { leadId: String(byPhone._id), isNew: false }
 
     const byEmail = await Lead.findOne({
         email: { $regex: `^${escapeRegex(input.email)}$`, $options: "i" },
     })
         .select("_id")
         .lean<{ _id: unknown }>()
-    if (byEmail) return String(byEmail._id)
+    if (byEmail) return { leadId: String(byEmail._id), isNew: false }
 
     try {
         const lead = await auditedCreate(
@@ -96,7 +98,7 @@ async function resolveLeadId(
             },
             actorId
         )
-        return String(lead._id)
+        return { leadId: String(lead._id), isNew: true }
     } catch (err) {
         // Duplicate phone: either a concurrent request won the race, or the
         // phone belongs to a soft-deleted lead (hidden from normal finds).
@@ -123,7 +125,7 @@ async function resolveLeadId(
                 if (ctx && leadRegion && !ctx.regions.includes(leadRegion)) {
                     ctx.regions = [...ctx.regions, leadRegion]
                 }
-                return String(existing._id)
+                return { leadId: String(existing._id), isNew: false }
             }
         }
         throw err
@@ -229,7 +231,20 @@ export async function POST(req: NextRequest) {
 
         await dbConnect()
 
-        const leadId = await resolveLeadId({ name, email, phone }, actorId)
+        const { leadId, isNew } = await resolveLeadId({ name, email, phone }, actorId)
+
+        // A new lead gets its own "New lead" notification, apart from the
+        // meeting notification below. No team member acted, so there is no
+        // actor. emitNotification never throws.
+        if (isNew) {
+            await emitNotification({
+                type: EVENT_CODE.LEAD_CREATED,
+                entityType: ENTITY_TYPE.LEAD,
+                entityId: leadId,
+                actor: null,
+                payload: { lead: { _id: leadId, name, source: "booking-page" } },
+            })
+        }
 
         const hostEmail = (process.env.BOOKING_HOST_EMAIL || DEFAULT_HOST_EMAIL).toLowerCase()
         // The host comes from config, not from the booking. It is looked
@@ -327,7 +342,8 @@ export async function POST(req: NextRequest) {
                 type: EVENT_CODE.MEETING_SCHEDULED,
                 entityType: ENTITY_TYPE.MEETING,
                 entityId: meeting._id,
-                actor: { id: actorId, name: "Booking page" },
+                // The visitor booked it. The text names them, see render.ts.
+                actor: null,
                 payload: {
                     meeting: {
                         _id: meeting._id,
@@ -335,8 +351,10 @@ export async function POST(req: NextRequest) {
                         entityType: meeting.entityType,
                         entityId: meeting.entityId,
                         scheduledAt: meeting.scheduledAt,
+                        region: meeting.region,
                     },
                     parentName: name,
+                    source: "booking-page",
                 },
                 extraRecipients: attendeeIds.length ? attendeeIds : undefined,
             })

@@ -13,9 +13,10 @@ export const NOTIFICATION_RULES: Partial<Record<EventType, UserRole[]>> = {
     1210: [ 10, 30, 45, 60 ],   // Project Status changed
 
     2010: [ 10, 30, 45, 60 ],   // Meeting Scheduled
-    2020: [ 10, 30, 45, 60 ],   // Meeting Completed
+    2020: [ 10, 30, 45, 60 ],   // Meeting Rescheduled
     2030: [ 10, 30, 45, 60 ],   // Meeting Cancelled
-    2040: [ 10, 30, 45, 60 ],  // Meeting Rescheduled
+    2040: [ 10, 30, 45, 60 ],   // Meeting Missed
+    2050: [ 10, 30, 45, 60 ],   // Meeting Completed
 
     2110: [ 10, 30, 45, 60 ],   // Note Added
     
@@ -25,5 +26,7 @@ export const NOTIFICATION_RULES: Partial<Record<EventType, UserRole[]>> = {
     
     2410: [ 10, 30, 45, 60, 70 ],  // Quotation Sent - also notify accountants
 
-    2510: [ 10, 30, 45, 60 ],   // Status Changed - generic catch-all for important status changes
+    // 2510 (Status Changed) has no rule on purpose. It is the timeline entry
+    // that a stage change writes. The stage change itself notifies as 1020,
+    // 1110 or 1210, so a rule here would send every stage change twice.
 } as const

@@ -95,7 +95,7 @@ export async function POST(
             actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
             payload: {
                 lead: { _id: lead._id, name: lead.name },
-                client: { _id: createdClient._id, name: createdClient.name },
+                client: { _id: createdClient._id, name: createdClient.name, company: createdClient.company },
             },
         })
 

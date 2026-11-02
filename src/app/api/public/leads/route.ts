@@ -8,6 +8,9 @@ import { checkRateLimit } from "@/lib/security/rateLimit"
 import { phoneLookupCondition, validatePhone } from "@/lib/phone"
 import { getRegion } from "@/lib/region"
 import { enterRegionContext } from "@/lib/region-scope"
+import { emitNotification } from "@/lib/notifications/emit"
+import { EVENT_CODE } from "@/constants/eventTypes"
+import { ENTITY_TYPE } from "@/constants/entityTypes"
 
 const RATE_LIMIT = 5 
 const RATE_WINDOW_MS = 60 * 60 * 1000 
@@ -191,6 +194,17 @@ export async function POST(req: NextRequest) {
             },
             zanservicesId
         )
+
+        // Runs in the deploy region set above, so only that region's team
+        // gets it. No team member acted, so there is no actor.
+        // emitNotification never throws.
+        await emitNotification({
+            type: EVENT_CODE.LEAD_CREATED,
+            entityType: ENTITY_TYPE.LEAD,
+            entityId: lead._id,
+            actor: null,
+            payload: { lead: { _id: lead._id, name: lead.name, source: lead.source } },
+        })
 
         
         
