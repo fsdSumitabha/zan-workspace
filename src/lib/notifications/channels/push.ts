@@ -5,7 +5,7 @@ import type { DispatchContext } from "../../../types/notification"
 
 export async function dispatchPush(ctx: DispatchContext): Promise<void> {
     const label = NOTIFICATION_CHANNEL[4].label
-    const { title, body, url } = ctx.message
+    const { title, body, url, imageUrl } = ctx.message
     const { sent, failed } = await sendPush(ctx.recipients, {
         title,
         body,
@@ -14,6 +14,7 @@ export async function dispatchPush(ctx: DispatchContext): Promise<void> {
         type: ctx.type,
         entityType: ctx.entityType,
         entityId: String(ctx.entityId),
+        imageUrl,
     })
     console.log(`[notifications] ${label} type=${ctx.type} sent=${sent} failed=${failed}`)
 }

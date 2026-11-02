@@ -90,7 +90,8 @@ function bodyLine(...parts: unknown[]): string | undefined {
 }
 
 function parentUrlFromMeeting(meeting: any): string | undefined {
-    if (!meeting?.entityType || !meeting?.entityId) return undefined
+    // Not `!meeting.entityType`: a lead's code is 0.
+    if (meeting?.entityType == null || !meeting?.entityId) return undefined
     const id = String(meeting.entityId)
     switch (meeting.entityType) {
         case 0: return leadUrl(id)

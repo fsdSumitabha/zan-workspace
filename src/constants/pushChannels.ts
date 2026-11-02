@@ -12,7 +12,7 @@ export const PUSH_LEVEL = {
     URGENT: 10,
     /** Sound, no pop-up. */
     DEFAULT: 20,
-    /** No sound. It shows in the notification list only. */
+    /** No sound. It shows in the notification list only. No channel uses it today. */
     SILENT: 30,
 } as const
 
@@ -87,15 +87,15 @@ export const PUSH_CHANNEL_META: Record<
     30: {
         id: "new_leads",
         label: "New leads",
-        description: "A new lead comes in from the website, Facebook or the booking page.",
-        level: PUSH_LEVEL.DEFAULT,
+        description: "Someone adds a lead, or one comes in from the website, Facebook or the booking page.",
+        level: PUSH_LEVEL.URGENT,
         group: PUSH_CHANNEL_GROUP.PIPELINE,
     },
     40: {
         id: "new_records",
         label: "New clients and projects",
         description: "A lead becomes a client, or someone adds a client or project.",
-        level: PUSH_LEVEL.DEFAULT,
+        level: PUSH_LEVEL.URGENT,
         group: PUSH_CHANNEL_GROUP.PIPELINE,
     },
     50: {
@@ -109,28 +109,28 @@ export const PUSH_CHANNEL_META: Record<
         id: "stage_changes",
         label: "Stage changes",
         description: "A lead, client or project moves to a new stage.",
-        level: PUSH_LEVEL.SILENT,
+        level: PUSH_LEVEL.DEFAULT,
         group: PUSH_CHANNEL_GROUP.PIPELINE,
     },
     70: {
         id: "notes",
         label: "Notes",
         description: "Someone adds a note to a lead, client or project.",
-        level: PUSH_LEVEL.SILENT,
+        level: PUSH_LEVEL.DEFAULT,
         group: PUSH_CHANNEL_GROUP.TEAM,
     },
     80: {
         id: "logged_calls",
         label: "Logged calls",
         description: "Someone logs a call with a lead or client.",
-        level: PUSH_LEVEL.SILENT,
+        level: PUSH_LEVEL.DEFAULT,
         group: PUSH_CHANNEL_GROUP.TEAM,
     },
     90: {
         id: "documents",
         label: "Documents",
         description: "Someone uploads a document to a lead, client or project.",
-        level: PUSH_LEVEL.SILENT,
+        level: PUSH_LEVEL.DEFAULT,
         group: PUSH_CHANNEL_GROUP.TEAM,
     },
     100: {

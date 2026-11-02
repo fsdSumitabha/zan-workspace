@@ -13,6 +13,7 @@ export interface PushMessage {
     type?: EventType            // the event behind it. A test push has none.
     entityType?: number         // ENTITY_TYPE code of the record the event is about
     entityId?: string
+    imageUrl?: string           // a picture for the notification, e.g. a person's avatar. Most have none.
 }
 
 export interface PushResult {
@@ -36,8 +37,8 @@ const DEAD_DEVICE_CODES = [
 /**
  * Sends one message to every browser and phone of the given users.
  *
- * It sends data only: title, body and url, plus channel, type, entityType and
- * entityId for the phone app. Each platform shows it in its own way:
+ * It sends data only: title, body and url, plus channel, type, entityType,
+ * entityId and imageUrl for the phone app. Each platform shows it in its own way:
  * - Browser: the service worker at /firebase-messaging-sw.js turns it into a
  *   system notification. If a CRM tab is open on screen, Firebase passes it to
  *   that tab instead (see PushListener). Browsers ignore the extra fields.
@@ -58,6 +59,7 @@ export async function sendPush(userIds: Types.ObjectId[], message: PushMessage):
     if (message.type !== undefined) data.type = String(message.type)
     if (message.entityType !== undefined) data.entityType = String(message.entityType)
     if (message.entityId) data.entityId = message.entityId
+    if (message.imageUrl) data.imageUrl = message.imageUrl
 
     const apns = getApnsConfig(message)
     const fids = devices.map((d) => d.fid)
