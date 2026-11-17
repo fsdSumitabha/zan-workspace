@@ -13,7 +13,8 @@ export async function resolveParentName(entityType: number, entityId: string | u
         if (entityType === ENTITY_TYPE.CLIENT) {
             const doc = await Client.findById(entityId).select("name company").lean<{ name?: string; company?: string }>()
             if (!doc) return undefined
-            return doc.company ? `${doc.name} (${doc.company})` : doc.name
+            // A client is known by its company. A client with no company goes by the contact's name.
+            return doc.company || doc.name
         }
         if (entityType === ENTITY_TYPE.PROJECT) {
             const doc = await Project.findById(entityId).select("title").lean<{ title?: string }>()

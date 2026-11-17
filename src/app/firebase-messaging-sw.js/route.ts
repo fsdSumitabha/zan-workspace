@@ -1,5 +1,6 @@
 import { SDK_VERSION } from "firebase/app"
 import { firebaseConfig } from "@/lib/firebase/firebase"
+import { PUSH_CHANNEL } from "@/constants/pushChannels"
 
 /**
  * The push service worker. Firebase looks for it at /firebase-messaging-sw.js.
@@ -19,12 +20,18 @@ importScripts("https://www.gstatic.com/firebasejs/${SDK_VERSION}/firebase-messag
 firebase.initializeApp(${JSON.stringify(firebaseConfig)});
 const messaging = firebase.messaging();
 
-// The server sends data only: title, body and url.
+// The server sends data only: title, body, url, the channel and the record's id.
 messaging.onBackgroundMessage((payload) => {
     const data = payload.data || {};
+    // One notification per record, as on the phone: a new update replaces the last one and alerts again.
+    const tag = data.entityId ? data.channel + "-" + data.entityId : "";
     return self.registration.showNotification(data.title || "Zan CRM", {
         body: data.body,
         icon: "/icon-192.png",
+        tag,
+        renotify: Boolean(tag),
+        // A due callback stays on screen until someone acts on it.
+        requireInteraction: data.channel === "${PUSH_CHANNEL.CALLBACKS}",
         data: { url: data.url || "/admin/operations/notifications" },
     });
 });

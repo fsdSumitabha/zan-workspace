@@ -146,7 +146,7 @@ export async function PATCH(
             entityType: ENTITY_TYPE.CLIENT,
             entityId: client._id,
             actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
-            payload: { client: { _id: client._id, name: client.name }, oldStatus, newStatus: status, remarks },
+            payload: { client: { _id: client._id, name: client.name, company: client.company }, oldStatus, newStatus: status, remarks },
         })
 
         return NextResponse.json(

@@ -41,7 +41,8 @@ const DEAD_DEVICE_CODES = [
  * entityId and imageUrl for the phone app. Each platform shows it in its own way:
  * - Browser: the service worker at /firebase-messaging-sw.js turns it into a
  *   system notification. If a CRM tab is open on screen, Firebase passes it to
- *   that tab instead (see PushListener). Browsers ignore the extra fields.
+ *   that tab instead (see PushListener). The worker uses channel and entityId
+ *   to replace an older notification about the same record. It ignores the rest.
  * - Android: the app shows it on the Android channel for `channel`.
  * - iOS: iOS shows the `apns` alert itself (see getApnsConfig).
  */
@@ -128,6 +129,8 @@ function getApnsConfig(message: PushMessage): ApnsConfig {
             "apns-push-type": "alert",
             "apns-priority": "10",
             "apns-expiration": String(Math.floor(Date.now() / 1000) + TTL_SECONDS),
+            // One notification per record: a new update replaces the last one.
+            ...(message.entityId ? { "apns-collapse-id": `${meta.id}-${message.entityId}` } : {}),
         },
         payload: { aps },
     }

@@ -224,7 +224,8 @@ export default function NotificationBell() {
                                     }`}>
                                         <NotificationBadge badge={row.badge} size="sm" />
                                         <div className="flex-1 min-w-0">
-                                            <div className={`text-xs truncate ${isUnread ? "font-semibold text-neutral-900 dark:text-white" : "font-medium text-neutral-700 dark:text-neutral-300"}`}>
+                                            {/* The title wraps, as on the notifications page and the phone. It ends with the record's name. */}
+                                            <div className={`text-xs break-words ${isUnread ? "font-semibold text-neutral-900 dark:text-white" : "font-medium text-neutral-700 dark:text-neutral-300"}`}>
                                                 {row.title}
                                             </div>
                                             {row.body && (

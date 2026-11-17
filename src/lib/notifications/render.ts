@@ -35,6 +35,12 @@ function projectUrl(id: string): string {
     return `/admin/operations/projects/${id}`
 }
 
+// A client is known by its company. A client with no company goes by the
+// contact's name. resolveParentName follows the same rule.
+function clientLabel(client: any): string | undefined {
+    return client?.company || client?.name
+}
+
 // "Robin Sharma" → "Robin". The name goes into the text when the notification
 // is sent, so a later name change does not rewrite old notifications.
 function firstName(actor: NotificationActor | null): string {
@@ -146,16 +152,17 @@ export function renderMessage(
             }
         }
         case 1100: { // CLIENT_CREATED
-            const name = payload.client?.name ?? "Unnamed"
+            const name = clientLabel(payload.client) ?? "Unnamed"
             return {
                 badge: "user-plus",
                 title: clip(`${by} added a client: ${name}`, TITLE_MAX),
-                body: bodyLine(payload.client?.company),
+                // The title names the company, so the body names the contact person.
+                body: bodyLine(payload.client?.company && payload.client?.name),
                 url: clientUrl(String(payload.client?._id ?? "")),
             }
         }
         case 1110: { // CLIENT_STATUS_CHANGED
-            const name = payload.client?.name ?? "a client"
+            const name = clientLabel(payload.client) ?? "a client"
             const to = statusLabel(CLIENT_STATUS_META, payload.newStatus)
             const from = statusLabel(CLIENT_STATUS_META, payload.oldStatus)
             return {

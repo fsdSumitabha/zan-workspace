@@ -1,0 +1,88 @@
+Bring the phone repo's notes up to the web repo, after web-sync-0fb667b.patch.
+
+Base: zanverse main at 0fb667b.
+Apply from the zanverse repo root:
+    git apply --check /path/to/zan-workspace/docs/phone-patch/phone-sync-0fb667b.patch
+    git apply /path/to/zan-workspace/docs/phone-patch/phone-sync-0fb667b.patch
+
+What it changes:
+- .gitattributes keeps every .patch file LF on checkout. one-notification-per-record.patch does
+  not apply to the web repo because its checkout has CRLF line endings.
+- docs/BACKEND_CHANGES.md: item 6 names the patch that adds it. A new state note says what the
+  web repo has now, including the new notification text. It also joins row 6 to the table above
+  it. A blank line had split it off.
+- src/api/endpoints.ts and src/hooks/useSheetColumns.ts: the comments no longer say the columns
+  route is missing. The code is unchanged. It still falls back on a 404 from an older server.
+
+Comments and docs only. The phone already shows data.title and data.body as the server sends
+them, so the new text and the company names need no app change.
+
+diff --git a/.gitattributes b/.gitattributes
+new file mode 100644
+index 0000000..b59a443
+--- /dev/null
++++ b/.gitattributes
+@@ -0,0 +1,3 @@
++# Patch files stay LF on every checkout. In the web repo (core.autocrlf=true), git apply takes an LF patch
++# for files saved with LF or with CRLF. A CRLF patch fails on every file saved with LF.
++*.patch text eol=lf
+diff --git a/docs/BACKEND_CHANGES.md b/docs/BACKEND_CHANGES.md
+index b41a751..4e6190d 100644
+--- a/docs/BACKEND_CHANGES.md
++++ b/docs/BACKEND_CHANGES.md
+@@ -20,8 +20,7 @@ the jar is cleared. The app therefore sends the JWT as a header, which the API d
+ | 3 | Return the signed JWT in the login response body | `/api/auth/login` — it already returns `{ id, name, email, role, regions }` and the web ignores the body, so adding `token` breaks nothing |
+ | 4 | Accept the active region as `X-Active-Region` when the `active_region` cookie is absent | wherever `narrowToActiveRegion(...)` reads the cookie. Safe by construction: the value can only narrow to regions the user already holds, and unknown values are ignored |
+ | 5 | Confirm the two `.xlsx` routes authenticate through the helper, so they inherit the Bearer fallback | `GET /api/admin/operations/lead-sources/template` and `GET /api/admin/operations/lead-sources/uploads/:id/download` |
+-
+-| 6 | Add `GET /api/admin/operations/lead-sources/columns`, returning `{ success: true, data: { columns: [{ key, label, headers, required }], rules: { maxFileMb, maxRows } } }` read from `LEAD_SOURCE_COLUMNS` and `LEAD_SOURCE_SHEET_RULES` in `src/config/leadSourceSheet.ts`, behind `requireRole(req, LEAD_SOURCE_MANAGE_ROLES)` | a new `src/app/api/admin/operations/lead-sources/columns/route.ts` |
++| 6 | Add `GET /api/admin/operations/lead-sources/columns`, returning `{ success: true, data: { columns: [{ key, label, headers, required }], rules: { maxFileMb, maxRows } } }` read from `LEAD_SOURCE_COLUMNS` and `LEAD_SOURCE_SHEET_RULES` in `src/config/leadSourceSheet.ts`, behind `requireRole(req, LEAD_SOURCE_MANAGE_ROLES)`. `docs/backend-patch/web-sync-0fb667b.patch` adds it | a new `src/app/api/admin/operations/lead-sources/columns/route.ts` |
+ 
+ Without 1–3 the app cannot log in at all. Without 4 every list silently shows the wrong region's data. Without 5 the app
+ can upload a sheet but never download the report it produced. Without 6 the upload screen cannot show the expected
+@@ -80,6 +79,17 @@ phone needs: `{ fid, platform, appVersion }` on POST,
+ data, with the channel list in `src/constants/pushChannels.ts`. The token-based spec below is kept as history only; do
+ not build it.
+ 
++**State (2026-11-16).** `docs/backend-patch/web-sync-0fb667b.patch` brings the web repo up to this repo's `0fb667b`.
++It makes the changes of `one-notification-per-record.patch`: one browser notification per record, a callback push
++that stays on screen, and `apns-collapse-id`. It also adds the item 6 route, and the web bell wraps long titles as the
++phone does. Use it instead of `one-notification-per-record.patch`. That file is checked out with CRLF line endings,
++and `git apply` then refuses the web's service worker route, which is saved with LF. `.gitattributes` now keeps every
++`.patch` file LF on checkout.
++
++The server's notification text changed too. Each title starts with the first name of the team member who acted, for
++example "Robin scheduled a meeting with Kaveri Foods". A client is named by its company, or by the contact's name when
++it has no company. The phone shows `data.title` and `data.body` as they come, so it needs no change for this.
++
+ The original spec, for the web repo, in its own file names. Every path is relative to
+ `github.com/fsdSumitabha/zan-workspace`.
+ 
+diff --git a/src/api/endpoints.ts b/src/api/endpoints.ts
+index fa08208..24f5489 100644
+--- a/src/api/endpoints.ts
++++ b/src/api/endpoints.ts
+@@ -42,7 +42,7 @@ export const ACTIVITY_LOGS_API = `${OPERATIONS_API}/activity-logs`
+ export const LEAD_SOURCES_API = "/api/admin/operations/lead-sources"
+ export const LEAD_SOURCE_UPLOADS_API = `${LEAD_SOURCES_API}/uploads`
+ export const LEAD_SOURCE_TEMPLATE_API = `${LEAD_SOURCES_API}/template`
+-/** Not on the dev API yet: BACKEND_CHANGES.md item 6. The upload screen falls back on a 404. */
++/** BACKEND_CHANGES.md item 6. A server without it answers 404, and the upload screen falls back. */
+ export const LEAD_SOURCE_COLUMNS_API = `${LEAD_SOURCES_API}/columns`
+ 
+ export const NOTIFICATIONS_API = {
+diff --git a/src/hooks/useSheetColumns.ts b/src/hooks/useSheetColumns.ts
+index efe1b87..bc4e227 100644
+--- a/src/hooks/useSheetColumns.ts
++++ b/src/hooks/useSheetColumns.ts
+@@ -18,8 +18,8 @@ interface SheetRules {
+ 
+ /**
+  * The expected header row and the upload limits, from the server's leadSourceSheet.ts, so the phone never shows a
+- * stale copy. The route is BACKEND_CHANGES.md item 6. Until it exists, `columns` stays null and the limits fall
+- * back to the local copy.
++ * stale copy. The route is BACKEND_CHANGES.md item 6. On a server without it, `columns` stays null and the limits
++ * fall back to the local copy.
+  */
+ export function useSheetColumns() {
+     const [columns, setColumns] = useState<SheetColumnInfo[] | null>(null)
