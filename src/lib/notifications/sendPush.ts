@@ -2,7 +2,7 @@ import type { Types } from "mongoose"
 import type { ApnsConfig, Aps } from "firebase-admin/messaging"
 import PushDevice from "@/models/PushDevice"
 import { adminMessaging } from "@/lib/firebase/admin"
-import { PUSH_CHANNEL_META, PUSH_LEVEL, type PushChannel } from "@/constants/pushChannels"
+import { PUSH_CHANNEL, PUSH_CHANNEL_META, PUSH_LEVEL, type PushChannel } from "@/constants/pushChannels"
 import type { EventType } from "@/constants/eventTypes"
 
 export interface PushMessage {
@@ -103,6 +103,18 @@ export async function sendPush(userIds: Types.ObjectId[], message: PushMessage):
 }
 
 /**
+ * The id that makes a new push replace the last one about the same record.
+ * It is the phone app's notification id, so iOS and Android replace the same
+ * notification: `<channel id>-<entityId>`. A callback push takes the id of the
+ * phone's own reminder for that source, `callback-<sourceId>`
+ * (zanverse src/lib/push/reminders.ts), so the two never show at once.
+ */
+function getCollapseId(channel: PushChannel, entityId: string): string {
+    if (channel === PUSH_CHANNEL.CALLBACKS) return `callback-${entityId}`
+    return `${PUSH_CHANNEL_META[channel].id}-${entityId}`
+}
+
+/**
  * The iOS part of the message. iOS shows the alert itself, even when the app
  * is closed. iOS has no channels, so the channel decides three things here:
  * - thread-id groups the alerts, one group per channel.
@@ -130,7 +142,7 @@ function getApnsConfig(message: PushMessage): ApnsConfig {
             "apns-priority": "10",
             "apns-expiration": String(Math.floor(Date.now() / 1000) + TTL_SECONDS),
             // One notification per record: a new update replaces the last one.
-            ...(message.entityId ? { "apns-collapse-id": `${meta.id}-${message.entityId}` } : {}),
+            ...(message.entityId ? { "apns-collapse-id": getCollapseId(message.channel, message.entityId) } : {}),
         },
         payload: { aps },
     }
