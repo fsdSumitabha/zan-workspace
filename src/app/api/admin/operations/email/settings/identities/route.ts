@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
                 },
                 $setOnInsert: { region, fromEmail, createdBy: user.id },
             },
-            { upsert: true, returnDocument: "after", new: true, runValidators: true }
+            { upsert: true, returnDocument: "after", runValidators: true }
         ).lean<IEmailSenderIdentity>()
 
         if (!saved) {

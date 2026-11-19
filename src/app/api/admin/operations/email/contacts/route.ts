@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
                     createdBy: user.id,
                 },
             },
-            { upsert: true, returnDocument: "after", new: true, runValidators: true }
+            { upsert: true, returnDocument: "after", runValidators: true }
         ).lean<IEmailContact>()
 
         if (!saved) {

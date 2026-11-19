@@ -119,7 +119,7 @@ export async function getDeliverySettings(
     const row = await EmailDeliveryConfig.findOneAndUpdate(
         { region },
         { $setOnInsert: { region, ...DELIVERY_DEFAULTS } },
-        { upsert: true, returnDocument: "after", new: true }
+        { upsert: true, returnDocument: "after" }
     ).lean<IEmailDeliveryConfig>()
 
     if (!row) return { ...DELIVERY_DEFAULTS }

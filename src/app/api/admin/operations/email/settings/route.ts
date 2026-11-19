@@ -212,7 +212,7 @@ async function saveProvider(
     const saved = await EmailProviderConfig.findOneAndUpdate(
         { region, providerKey },
         { $set: update, $setOnInsert: { region, createdBy: userId } },
-        { upsert: true, returnDocument: "after", new: true, runValidators: true }
+        { upsert: true, returnDocument: "after", runValidators: true }
     )
         .select("+passCipher")
         .lean<IEmailProviderConfig>()

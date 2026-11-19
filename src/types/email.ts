@@ -284,3 +284,78 @@ export interface ContactImportResult {
     /** Row number and reason, for the ones that did not import. */
     problems: Array<{ row: number; value: string; reason: string }>
 }
+
+/* ------------------------------------------------------------------ */
+/* Campaigns                                                           */
+/* ------------------------------------------------------------------ */
+
+export interface CampaignCountsView {
+    total: number
+    pending: number
+    queued: number
+    processing: number
+    submitted: number
+    delivered: number
+    failed: number
+    bounced: number
+    suppressed: number
+    cancelled: number
+    unknown: number
+}
+
+export interface CampaignEngagementView {
+    uniqueOpens: number
+    totalOpens: number
+    uniqueClicks: number
+    totalClicks: number
+    unsubscribes: number
+    complaints: number
+}
+
+export interface EmailCampaignRow {
+    _id: string
+    name: string
+    description: string
+    status: number
+    subject: string
+    preheader: string
+    templateId: string | null
+    templateVersionId: string | null
+    senderIdentityId: string | null
+    audienceId: string | null
+
+    /** UTC. The only field any query uses. */
+    scheduledAt: string | null
+    /** What the person typed, e.g. "2026-12-01T09:30". */
+    scheduleWall: string
+    /** The IANA zone they chose. */
+    scheduleZone: string
+
+    counts: CampaignCountsView
+    engagement: CampaignEngagementView
+    /** 0 to 100. Only meaningful once a snapshot exists. */
+    progress: number
+
+    startedAt: string | null
+    finishedAt: string | null
+    haltedReason: string
+    failureReason: string
+
+    /**
+     * Statuses this campaign can move to, from the one transition map. The
+     * buttons shown and the moves the server accepts cannot drift apart.
+     */
+    allowedActions: number[]
+
+    createdBy: string | null
+    createdAt: string
+    updatedAt: string
+}
+
+/** What a campaign action returns. */
+export interface CampaignActionResult {
+    campaign: EmailCampaignRow
+    /** Set when the action produced a recipient snapshot. */
+    recipients?: number
+    message: string
+}

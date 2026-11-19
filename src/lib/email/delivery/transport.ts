@@ -34,6 +34,26 @@ interface Cached {
 let cached: Cached | null = null
 
 /**
+ * A transporter supplied by a test, used instead of a real connection.
+ *
+ * The seam exists because the worker builds its own transporter from the
+ * stored provider settings, which is right for production and impossible
+ * to test against without a mail server. A simulation sets this to a
+ * transport that records instead of sending.
+ *
+ * It is ignored unless NODE_ENV is not "production", so a stray call in
+ * deployed code cannot silently stop real mail going out.
+ */
+let injected: Transporter | null = null
+
+export function setTestTransport(transporter: Transporter | null): void {
+    if (process.env.NODE_ENV === "production") {
+        throw new Error("setTestTransport must never be called in production.")
+    }
+    injected = transporter
+}
+
+/**
  * The transporter for a provider, built once and reused.
  *
  * Changing any connection setting changes the fingerprint, so the old pool
@@ -41,6 +61,8 @@ let cached: Cached | null = null
  * next send without a deploy.
  */
 export function getTransport(provider: ProviderWithSecret): Transporter {
+    if (injected && process.env.NODE_ENV !== "production") return injected
+
     const key = configFingerprint({
         host: provider.host,
         port: provider.port,
