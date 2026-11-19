@@ -37,6 +37,7 @@ import { attemptsFor, classifySmtpError, shouldSuppressOnFailure } from "@/lib/e
 import { nextAttemptAt, throttleWaitMs } from "@/lib/email/delivery/backoff"
 import { buildMessageId, sendingDomainOf } from "@/lib/email/delivery/messageId"
 import { sendOne, unsubscribeUrlFor } from "@/lib/email/delivery/send"
+import { trackingReady } from "@/lib/email/tracking/token"
 import { getQueue } from "@/lib/email/queue"
 import { jobEndpoint, workerId as newWorkerId } from "./auth"
 import { closeCampaignIfDone } from "@/lib/email/campaign/close"
@@ -412,6 +413,9 @@ async function sendToOne(
             fallbacks: context.fallbacks,
             unsubscribeUrl: unsubscribeUrlFor(context.origin, job.trackingToken),
             postalAddress: context.postalAddress,
+            origin: context.origin,
+            trackClicks: context.trackClicks,
+            trackOpens: context.trackOpens,
         })
 
         await CampaignRecipient.updateOne(
@@ -543,6 +547,8 @@ interface SendContext {
     fallbacks: Record<string, string>
     origin: string
     region: string
+    trackClicks: boolean
+    trackOpens: boolean
 }
 
 async function loadContext(
@@ -600,6 +606,15 @@ async function loadContext(
                 : ((campaign.mergeFallbacks ?? {}) as Record<string, string>),
         origin,
         region: campaign.region,
+
+        /**
+         * Tracking needs a signing secret. Without EMAIL_TRACKING_SECRET a
+         * link would be rewritten through a redirect that then refuses its
+         * own signature, so the reader would get a dead link. Better to
+         * send an untracked email that works.
+         */
+        trackClicks: trackingReady(),
+        trackOpens: trackingReady(),
     }
 }
 

@@ -2,6 +2,7 @@ import type { Transporter } from "nodemailer"
 import type { Types } from "mongoose"
 import type { ICampaignRecipient } from "@/models/CampaignRecipient"
 import { renderMerge, renderMergeText, renderSubject } from "@/lib/email/personalise/render"
+import { injectTracking } from "@/lib/email/tracking/inject"
 import { buildMessageId } from "./messageId"
 
 /**
@@ -37,6 +38,10 @@ export interface SendInput {
     unsubscribeUrl: string
     /** The sender's postal address, for the footer token. */
     postalAddress: string
+    /** Where the tracking routes live. */
+    origin: string
+    trackClicks: boolean
+    trackOpens: boolean
 }
 
 export interface SendOutcome {
@@ -68,9 +73,28 @@ export async function sendOne(input: SendInput): Promise<SendOutcome> {
         },
     }
 
-    const html = renderMerge(input.html, merge).text
+    const merged = renderMerge(input.html, merge).text
     const text = renderMergeText(input.text, merge).text
     const subject = renderSubject(input.subject, merge).text
+
+    /**
+     * Tracking is injected AFTER the merge fields are filled.
+     *
+     * The order matters. A link such as `{{cta_url}}` is only a real URL
+     * once the merge has run, and rewriting before that would leave the
+     * tracker pointing at a literal `{{cta_url}}`. Doing it after means
+     * every link that resolved to something real gets tracked, and the
+     * ones that did not are left alone.
+     *
+     * The unsubscribe URL is deliberately not rewritten; see inject.ts.
+     */
+    const { html } = injectTracking({
+        html: merged,
+        recipientToken: recipient.trackingToken ?? "",
+        origin: input.origin,
+        trackClicks: input.trackClicks && Boolean(recipient.trackingToken),
+        trackOpens: input.trackOpens && Boolean(recipient.trackingToken),
+    })
 
     const info = await input.transporter.sendMail({
         from: { name: input.from.name, address: input.from.address },

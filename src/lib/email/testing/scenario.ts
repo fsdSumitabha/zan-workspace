@@ -7,6 +7,7 @@ import EmailSenderIdentity from "@/models/EmailSenderIdentity"
 import EmailProviderConfig from "@/models/EmailProviderConfig"
 import EmailDeliveryConfig from "@/models/EmailDeliveryConfig"
 import EmailDeliveryAttempt from "@/models/EmailDeliveryAttempt"
+import EmailTrackingEvent from "@/models/EmailTrackingEvent"
 import EmailSuppression from "@/models/EmailSuppression"
 import EmailRateCounter from "@/models/EmailRateCounter"
 import EmailDispatchLock from "@/models/EmailDispatchLock"
@@ -15,6 +16,7 @@ import EmailAudience from "@/models/EmailAudience"
 import { CAMPAIGN_STATUS, RECIPIENT_STATUS } from "@/constants/emailStatus"
 import { DELIVERY_DEFAULTS } from "@/lib/email/config/deliveryConfig"
 import { encryptSecret } from "@/lib/email/config/crypto"
+import { buildTrackingToken } from "@/lib/email/campaign/snapshot"
 import { clearCollections } from "./db"
 
 /**
@@ -66,6 +68,9 @@ export const ALL_EMAIL_MODELS = [
     EmailDispatchLock,
     EmailContact,
     EmailAudience,
+    // Easy to forget, and leaving it out makes events accumulate across
+    // tests so a count that should be 1 comes back as 9.
+    EmailTrackingEvent,
 ]
 
 export interface ScenarioOptions {
@@ -209,7 +214,16 @@ export async function seedScenario(
             attempts: 0,
             maxAttempts: options.maxAttemptsTransient ?? 5,
             queuedAt: now,
-            trackingToken: `tok${i}-${Date.now().toString(36)}`,
+            /**
+             * The same shape the real snapshot produces: 32 hex
+             * characters. `recipientByToken` refuses anything else, so a
+             * token with a hyphen in it would never resolve and the
+             * tracking tests would pass against nothing.
+             */
+            trackingToken: buildTrackingToken(
+                campaign._id as Types.ObjectId,
+                email
+            ),
         }
     })
 
