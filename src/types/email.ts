@@ -211,3 +211,76 @@ export interface CompileResponse {
     warnings: string[]
     htmlBytes: number
 }
+
+/* ------------------------------------------------------------------ */
+/* Audiences, contacts and suppression                                 */
+/* ------------------------------------------------------------------ */
+
+export interface EmailAudienceRow {
+    _id: string
+    name: string
+    description: string
+    /** The closed rule shape. Sent back unchanged when editing. */
+    rules: Record<string, unknown>
+    /**
+     * The count when it was last saved, and when that was. An audience is
+     * a definition, not a list, so this moves as records change. A campaign
+     * always recounts at send time.
+     */
+    lastCount: number | null
+    lastCountedAt: string | null
+    createdAt: string
+    updatedAt: string
+}
+
+export interface EmailContactRow {
+    _id: string
+    email: string
+    firstName: string
+    lastName: string
+    company: string
+    marketingConsent: boolean
+    consentSource: string
+    consentAt: string | null
+    consentWithdrawnAt: string | null
+    tags: string[]
+    customFields: Record<string, string>
+    createdAt: string
+}
+
+export interface EmailSuppressionRow {
+    _id: string
+    email: string
+    emailNormalized: string
+    reason: number
+    note: string
+    sourceCampaignId: string | null
+    createdAt: string
+}
+
+/** How many a set of rules reaches, and where everyone else went. */
+export interface AudiencePreviewView {
+    matchedTotal: number
+    matched: { leads: number; clients: number; contacts: number; manual: number }
+    eligibleTotal: number
+    breakdown: Array<{
+        key: string
+        label: string
+        count: number
+        samples: string[]
+    }>
+    sample: Array<{ email: string; name: string; sourceType: number }>
+    truncated: boolean
+    warning?: string
+}
+
+/** The result of importing a contact spreadsheet. */
+export interface ContactImportResult {
+    fileName: string
+    rowsRead: number
+    created: number
+    updated: number
+    skipped: number
+    /** Row number and reason, for the ones that did not import. */
+    problems: Array<{ row: number; value: string; reason: string }>
+}
