@@ -2,6 +2,11 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { jwtVerify, type JWTPayload } from "jose"
 import { LEAD_SOURCE_ACCESS_ROLES, LEAD_SOURCE_MANAGE_ROLES } from "@/constants/leadSourceRoles"
+import {
+    EMAIL_ACCESS_ROLES,
+    EMAIL_ADMIN_ROLES,
+    EMAIL_AUTHOR_ROLES,
+} from "@/constants/emailRoles"
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 
@@ -29,6 +34,15 @@ const routePermissions: Array<{ pattern: RegExp; roles: number[] }> = [
     // Role lists live in src/constants/leadSourceRoles.ts.
     { pattern: /^\/admin\/operations\/lead-sources\/(upload|uploads)(\/|$)/, roles: LEAD_SOURCE_MANAGE_ROLES },
     { pattern: /^\/admin\/operations\/lead-sources(\/|$)/, roles: LEAD_SOURCE_ACCESS_ROLES },
+    // Email marketing. The first match wins, so settings comes before the
+    // catch-all. Role lists live in src/constants/emailRoles.ts.
+    //
+    // The MJML editor is at /admin/email-studio, outside /operations, because
+    // the operations layout is a fixed three-column grid with a sticky side
+    // panel and a full-screen editor cannot live inside it.
+    { pattern: /^\/admin\/operations\/email\/settings(\/|$)/, roles: EMAIL_ADMIN_ROLES },
+    { pattern: /^\/admin\/operations\/email(\/|$)/, roles: EMAIL_ACCESS_ROLES },
+    { pattern: /^\/admin\/email-studio(\/|$)/, roles: EMAIL_AUTHOR_ROLES },
 ]
 
 function getRequiredRoles(pathname: string): number[] | null {
