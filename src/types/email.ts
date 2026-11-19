@@ -116,3 +116,98 @@ export interface SmtpTestResult {
     message: string
     testedAt: string
 }
+
+/* ------------------------------------------------------------------ */
+/* Templates                                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * One row of the template library.
+ *
+ * It deliberately carries no MJML and no HTML. A library of forty
+ * templates would otherwise be megabytes. The editor asks for a full
+ * version by its own endpoint.
+ */
+export interface EmailTemplateRow {
+    _id: string
+    name: string
+    description: string
+    category: number
+    tags: string[]
+    thumbnailUrl: string
+    currentVersionId: string | null
+    /** The current version number, or 0 when nothing is published yet. */
+    currentVersion: number
+    versionCount: number
+    /** True when there are unsaved editor changes newer than the version. */
+    hasDraft: boolean
+    draftSavedAt: string | null
+    createdAt: string
+    updatedAt: string
+}
+
+export interface EmailTemplateVersionView {
+    _id: string
+    templateId: string
+    version: number
+    /** Empty unless the endpoint was asked for the source. */
+    mjml: string
+    html: string
+    linkHosts: string[]
+    mergeTokens: string[]
+    compileWarnings: string[]
+    htmlBytes: number
+    note: string
+    createdAt: string
+}
+
+/** What the editor loads when it opens a template. */
+export interface EmailEditorPayload {
+    template: EmailTemplateRow
+    /** The draft if there is one, otherwise the current version's MJML. */
+    mjml: string
+    /** True when `mjml` came from the autosaved draft, not a saved version. */
+    fromDraft: boolean
+    currentVersion: EmailTemplateVersionView | null
+    versions: EmailTemplateVersionView[]
+    mergeTokens: Array<{
+        key: string
+        label: string
+        sample: string
+        description: string
+    }>
+    starterBlocks: Array<{
+        id: string
+        label: string
+        category: string
+        content: string
+    }>
+    assets: EmailAssetView[]
+    canEdit: boolean
+}
+
+export interface EmailAssetView {
+    _id: string
+    name: string
+    url: string
+    thumbnailUrl: string
+    width: number | null
+    height: number | null
+    sizeBytes: number
+    mimeType: string
+    altTextDefault: string
+    category: number
+    tags: string[]
+    createdAt: string
+}
+
+/** The result of compiling MJML on the server. */
+export interface CompileResponse {
+    html: string
+    text: string
+    linkHosts: string[]
+    mergeTokens: string[]
+    unknownTokens: string[]
+    warnings: string[]
+    htmlBytes: number
+}
