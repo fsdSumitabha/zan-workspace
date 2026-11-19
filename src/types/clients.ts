@@ -9,6 +9,9 @@ export interface Client {
 
     status: ClientStatus
 
+    /** Sales region code: "IN", "US" or "AE". */
+    region?: string
+
     createdAt: string
     updatedAt: string
 

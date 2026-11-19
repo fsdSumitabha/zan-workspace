@@ -3,6 +3,8 @@
 import { Building2, Calendar, Folder, User, UserCog } from "lucide-react"
 
 import type { SearchEntity, SearchHit } from "./types"
+import { formatMeetingShort } from "@/lib/time/meetingTime"
+import { useViewerZone } from "@/components/admin/operations/time/useViewerZone"
 
 const ICON: Record<SearchEntity, typeof User> = {
     LEAD: User,
@@ -34,6 +36,14 @@ export default function SearchResultRow({
     onHover,
 }: Props) {
     const Icon = ICON[hit.type]
+    const viewerZone = useViewerZone()
+
+    // A meeting shows its time in the reader's zone: "Tomorrow, 1:30 PM IST".
+    const at = hit.at ? new Date(hit.at) : null
+    const subtitle =
+        at && !Number.isNaN(at.getTime())
+            ? [formatMeetingShort(at, viewerZone), hit.subtitle].filter(Boolean).join(" · ")
+            : hit.subtitle
 
     return (
         <button
@@ -59,9 +69,9 @@ export default function SearchResultRow({
                 <span className="block text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
                     {hit.title}
                 </span>
-                {hit.subtitle && (
+                {subtitle && (
                     <span className="block text-xs text-neutral-500 dark:text-neutral-400 truncate">
-                        {hit.subtitle}
+                        {subtitle}
                     </span>
                 )}
             </span>

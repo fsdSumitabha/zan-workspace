@@ -36,6 +36,8 @@ export function isGoogleCalendarConfigured(): boolean {
 
 let cachedClient: calendar_v3.Calendar | null = null
 
+const GOOGLE_TIMEOUT_MS = 10_000
+
 function getCalendarClient(): calendar_v3.Calendar {
     if (cachedClient) return cachedClient
 
@@ -52,6 +54,9 @@ function getCalendarClient(): calendar_v3.Calendar {
     cachedClient = calendar({
         version: "v3",
         auth: oauth2 as unknown as calendar_v3.Options["auth"],
+        // A request that hangs fails after this long, instead of holding the
+        // API call until Vercel stops the function halfway through its work.
+        timeout: GOOGLE_TIMEOUT_MS,
     })
     return cachedClient
 }
@@ -64,6 +69,13 @@ function getCalendarId(): string {
 export function getDefaultTimeZone(): string {
     return process.env.GOOGLE_CALENDAR_TIMEZONE || "Asia/Kolkata"
 }
+
+/** Length of a meeting made in the CRM. Booking-page meetings set their own. */
+export const DEFAULT_MEETING_MINUTES = 60
+
+// A private property on every event the CRM makes, holding the meeting's id.
+// It lets the CRM find its event again even when the event id was not saved.
+const CRM_MEETING_KEY = "crmMeetingId"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -127,7 +139,10 @@ export async function createMeetEvent(
     }
 
     // Defaults to 1 hour, which is what CRM-scheduled meetings have always used.
-    const end = new Date(start.getTime() + (input.durationMinutes ?? 60) * 60_000)
+    const end = new Date(start.getTime() + (input.durationMinutes ?? DEFAULT_MEETING_MINUTES) * 60_000)
+    // The zone only decides how Google writes the time in the invite. The
+    // moment itself is the UTC instant above. The CRM passes the client's
+    // zone, so the client's invite shows the client's own clock time.
     const timeZone = input.timeZone ?? getDefaultTimeZone()
 
     const requestBody: calendar_v3.Schema$Event = {
@@ -144,6 +159,9 @@ export async function createMeetEvent(
                 conferenceSolutionKey: { type: "hangoutsMeet" },
             },
         },
+        ...(input.requestId
+            ? { extendedProperties: { private: { [CRM_MEETING_KEY]: input.requestId } } }
+            : {}),
     }
 
     const res = await cal.events.insert({
@@ -163,9 +181,12 @@ export async function createMeetEvent(
 export interface RescheduleInput {
     googleEventId: string
     startISO: string
+    /** Leave out to keep the event's current length. */
     durationMinutes?: number
     timeZone?: string
     sendUpdates?: "all" | "externalOnly" | "none"
+    /** Tags an older event with its meeting id, so it is found directly next time. */
+    crmMeetingId?: string
 }
 
 export async function rescheduleMeetEvent(
@@ -179,8 +200,30 @@ export async function rescheduleMeetEvent(
             `[google-calendar] Invalid startISO: ${String(input.startISO)}`
         )
     }
-    const durationMinutes = input.durationMinutes ?? 30
-    const end = new Date(start.getTime() + durationMinutes * 60_000)
+
+    // Keep the event's own length. A CRM meeting is 60 minutes and a
+    // booking-page meeting 30. This used to reset every event to 30.
+    let durationMs = (input.durationMinutes ?? 0) * 60_000
+    if (durationMs <= 0) {
+        const current = await cal.events.get({
+            calendarId: getCalendarId(),
+            eventId: input.googleEventId,
+            fields: "status,start,end",
+        })
+        // Deleted in Google itself. A patch would move a cancelled event and
+        // tell nobody, so report it as gone instead.
+        if (current.data.status === "cancelled") {
+            throw Object.assign(
+                new Error("[google-calendar] The event was deleted in Google Calendar"),
+                { status: 410 }
+            )
+        }
+        const s = current.data.start?.dateTime
+        const e = current.data.end?.dateTime
+        durationMs = s && e ? new Date(e).getTime() - new Date(s).getTime() : 0
+        if (!(durationMs > 0)) durationMs = DEFAULT_MEETING_MINUTES * 60_000
+    }
+    const end = new Date(start.getTime() + durationMs)
     const timeZone = input.timeZone ?? getDefaultTimeZone()
 
     // PATCH only touches the fields we send; the existing Meet link is preserved.
@@ -192,6 +235,9 @@ export async function rescheduleMeetEvent(
         requestBody: {
             start: { dateTime: start.toISOString(), timeZone },
             end: { dateTime: end.toISOString(), timeZone },
+            ...(input.crmMeetingId
+                ? { extendedProperties: { private: { [CRM_MEETING_KEY]: input.crmMeetingId } } }
+                : {}),
         },
     })
 
@@ -202,16 +248,101 @@ export async function rescheduleMeetEvent(
 // Cancel
 // ---------------------------------------------------------------------------
 
+/**
+ * Deletes the event. With sendUpdates "all", Google emails every guest that
+ * the meeting is cancelled and takes it off their calendars.
+ *
+ * An event that is already gone counts as cancelled, so a second try after a
+ * timeout does not fail.
+ */
 export async function cancelMeetEvent(
     googleEventId: string,
     sendUpdates: "all" | "externalOnly" | "none" = "all"
-): Promise<void> {
+): Promise<"cancelled" | "already-gone"> {
     const cal = getCalendarClient()
-    await cal.events.delete({
-        calendarId: getCalendarId(),
-        eventId: googleEventId,
-        sendUpdates,
+    try {
+        await cal.events.delete({
+            calendarId: getCalendarId(),
+            eventId: googleEventId,
+            sendUpdates,
+        })
+        return "cancelled"
+    } catch (err) {
+        if (isGoogleGoneError(err)) return "already-gone"
+        throw err
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Find the event of a meeting
+// ---------------------------------------------------------------------------
+
+export interface FindMeetEventInput {
+    /** The CRM meeting's id. It is also the Meet request id it was made with. */
+    crmMeetingId: string
+    /** The meeting title, which is the event summary. */
+    title?: string
+    /** Times the event may start at. Checked in order. */
+    starts: Date[]
+}
+
+/**
+ * Finds the Google event of a CRM meeting, or returns null.
+ *
+ * Until 19 Nov 2026 the meetings route saved the event id under a field the
+ * model did not have, so Mongoose dropped it, and older meetings have no id.
+ * This finds their events another way:
+ *
+ * 1. Events made since then carry the meeting id as a private property.
+ * 2. Older events were made with the meeting id as their Meet request id.
+ *    They are looked up by start time and matched on that id, or on the title
+ *    when exactly one event at that time has it.
+ */
+export async function findMeetEventId(input: FindMeetEventInput): Promise<string | null> {
+    const cal = getCalendarClient()
+    const calendarId = getCalendarId()
+
+    const tagged = await cal.events.list({
+        calendarId,
+        privateExtendedProperty: [`${CRM_MEETING_KEY}=${input.crmMeetingId}`],
+        showDeleted: false,
+        maxResults: 5,
+        fields: "items(id,status)",
     })
+    const hit = (tagged.data.items ?? []).find((e) => e.id && e.status !== "cancelled")
+    if (hit?.id) return hit.id
+
+    for (const at of input.starts) {
+        if (Number.isNaN(at.getTime())) continue
+        // Events that are running during the first minute after `at`. The
+        // exact start is compared below.
+        const res = await cal.events.list({
+            calendarId,
+            timeMin: at.toISOString(),
+            timeMax: new Date(at.getTime() + 60_000).toISOString(),
+            singleEvents: true,
+            showDeleted: false,
+            maxResults: 50,
+            fields: "items(id,status,summary,start,conferenceData(createRequest(requestId)))",
+        })
+        const items = (res.data.items ?? []).filter(
+            (e) =>
+                e.id &&
+                e.status !== "cancelled" &&
+                e.start?.dateTime &&
+                new Date(e.start.dateTime).getTime() === at.getTime()
+        )
+
+        const byRequest = items.find(
+            (e) => e.conferenceData?.createRequest?.requestId === input.crmMeetingId
+        )
+        if (byRequest?.id) return byRequest.id
+
+        const byTitle = input.title ? items.filter((e) => e.summary === input.title) : []
+        if (byTitle.length === 1 && byTitle[0].id) return byTitle[0].id
+    }
+
+    return null
 }
 
 // ---------------------------------------------------------------------------
@@ -373,6 +504,19 @@ export function isGoogleAuthError(err: unknown): boolean {
         e?.response?.data?.error === "invalid_grant" ||
         Boolean(e?.message?.includes("invalid_grant"))
     )
+}
+
+/** The HTTP status of a Google API error, when it has one. */
+export function googleErrorStatus(err: unknown): number | undefined {
+    const e = err as { status?: number; code?: number | string; response?: { status?: number } }
+    const status = e?.response?.status ?? e?.status ?? (typeof e?.code === "number" ? e.code : undefined)
+    return typeof status === "number" ? status : undefined
+}
+
+/** True when Google says the event does not exist (404) or was deleted (410). */
+export function isGoogleGoneError(err: unknown): boolean {
+    const status = googleErrorStatus(err)
+    return status === 404 || status === 410
 }
 
 // ---------------------------------------------------------------------------

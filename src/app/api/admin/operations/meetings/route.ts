@@ -6,6 +6,9 @@ import Interaction from "@/models/Interaction"
 import User from "@/models/User"
 import { ENTITY_TYPE, ENTITY_TYPE_META } from "@/constants/entityTypes"
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
+import { MEETING_STATUS } from "@/constants/meetingStatus"
+import { MEETING_TYPE } from "@/constants/meetingTypes"
+import { MEETING_MANAGE_ROLES } from "@/constants/meetingRoles"
 import Lead from "@/models/Lead"
 import Client from "@/models/Client"
 import Project from "@/models/Project"
@@ -14,9 +17,17 @@ import { AuthError, requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
 import { auditedCreate, auditedUpdateByNumericEntityType } from "@/lib/activity-log"
 import { escapeRegex } from "@/lib/search/escapeRegex"
-import { createMeetEvent, isGoogleCalendarConfigured } from "@/lib/google/calendar/calendar"
+import {
+    cancelMeetEvent,
+    createMeetEvent,
+    isGoogleAuthError,
+    isGoogleCalendarConfigured,
+} from "@/lib/google/calendar/calendar"
 import { resolveAttendeeEmails } from "@/lib/google/calendar/attendees"
 import { resolveEntityEmail } from "@/lib/google/calendar/resolveEntityEmail"
+import { parseMeetingStart } from "@/lib/time/meetingTime"
+import { resolveViewerZone } from "@/lib/time/viewerZone"
+import { addDaysToKey, dateKeyInZone, dayRangeInZone, normalizeTimeZone, zoneForRegion } from "@/lib/time/zone"
 
 import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
@@ -28,7 +39,7 @@ export async function GET(req: NextRequest) {
         // the handler runs on, and two things break: a 401 becomes an
         // unhandled rejection instead of a response, and the region context is
         // still empty when the query runs, so the list comes back empty.
-        await requireAuth(req)
+        const authUser = await requireAuth(req)
 
         await dbConnect()
 
@@ -59,24 +70,21 @@ export async function GET(req: NextRequest) {
             ]
         }
 
-        // Temporal quick-range on scheduledAt.
+        // Temporal quick-range on scheduledAt. "Today" is the viewer's
+        // calendar day, not the server's: Vercel runs in UTC, so a UTC "today"
+        // starts at 5:30 AM in India and at 4:00 AM in Dubai.
         if (range) {
             const now = new Date()
+            const zone = resolveViewerZone(req, authUser)
+            const todayKey = dateKeyInZone(now, zone)
+            const today = dayRangeInZone(todayKey, zone)
 
-            if (range === "today") {
-                const start = new Date(now)
-                start.setHours(0, 0, 0, 0)
-                const end = new Date(now)
-                end.setHours(23, 59, 59, 999)
-                query.scheduledAt = { $gte: start, $lte: end }
-            } else if (range === "last7") {
+            if (range === "today" && today) {
+                query.scheduledAt = { $gte: today.start, $lt: today.end }
+            } else if (range === "last7" && today) {
                 // Last 7 days, today inclusive.
-                const start = new Date(now)
-                start.setDate(start.getDate() - 6)
-                start.setHours(0, 0, 0, 0)
-                const end = new Date(now)
-                end.setHours(23, 59, 59, 999)
-                query.scheduledAt = { $gte: start, $lte: end }
+                const first = dayRangeInZone(addDaysToKey(todayKey, -6), zone)
+                query.scheduledAt = { $gte: first?.start ?? today.start, $lt: today.end }
             } else if (range === "upcoming") {
                 query.scheduledAt = { $gte: now }
             }
@@ -204,11 +212,33 @@ export async function GET(req: NextRequest) {
 }
 
 export const runtime = "nodejs"
-const GOOGLE_MEET_TYPE = 0
+
+// A meeting may start up to this long ago. It covers a slow form and a
+// device clock that runs a little behind, not a meeting in the past.
+const PAST_GRACE_MS = 5 * 60_000
+
+function fail(message: string, status: number, field?: string) {
+    return NextResponse.json({ success: false, message, field }, { status })
+}
+
+/** The record the meeting is for. Null when it does not exist in the caller's regions. */
+async function findParent(entityType: number, entityId: string): Promise<{ region?: string } | null> {
+    const select = "region"
+    switch (entityType) {
+        case ENTITY_TYPE.LEAD:
+            return Lead.findById(entityId).select(select).lean<{ region?: string }>()
+        case ENTITY_TYPE.CLIENT:
+            return Client.findById(entityId).select(select).lean<{ region?: string }>()
+        case ENTITY_TYPE.PROJECT:
+            return Project.findById(entityId).select(select).lean<{ region?: string }>()
+        default:
+            return null
+    }
+}
 
 export async function POST(req: NextRequest) {
     try {
-        const authUser = await requireRole(req, [10, 15, 50, 60, 65, 69, 45, 70])
+        const authUser = await requireRole(req, MEETING_MANAGE_ROLES)
 
         await dbConnect()
 
@@ -217,20 +247,52 @@ export async function POST(req: NextRequest) {
         const {
             entityType,
             entityId,
-            title,
-            agenda,
             description,
-            meetingType,
-            scheduledAt,
-            status,
             attendees,
         } = body
+        const title = typeof body.title === "string" ? body.title.trim() : ""
+        const agenda = typeof body.agenda === "string" ? body.agenda.trim() : ""
+        const meetingType = Number(body.meetingType ?? MEETING_TYPE.ONLINE)
 
+        // Everything is checked before Google is called. Google emails the
+        // invite the moment the event exists, so a meeting that then fails
+        // to save would leave the client holding an invite to nothing.
         if (entityType === undefined || entityType === null || !entityId) {
-            return NextResponse.json(
-                { success: false, error: "entityType and entityId are required" },
-                { status: 400 }
-            )
+            return fail("entityType and entityId are required", 400)
+        }
+        if (
+            entityType !== ENTITY_TYPE.LEAD &&
+            entityType !== ENTITY_TYPE.CLIENT &&
+            entityType !== ENTITY_TYPE.PROJECT
+        ) {
+            return fail("Invalid entityType", 400)
+        }
+        if (!mongoose.Types.ObjectId.isValid(entityId)) {
+            return fail("Invalid entityId", 400)
+        }
+        if (!title) return fail("Give the meeting a title.", 400, "title")
+        if (!agenda) return fail("Write the agenda of the meeting.", 400, "agenda")
+        if (meetingType !== MEETING_TYPE.ONLINE && meetingType !== MEETING_TYPE.OFFLINE) {
+            return fail("Invalid meeting type", 400, "meetingType")
+        }
+
+        const parent = await findParent(entityType, entityId)
+        if (!parent) {
+            return fail(`${ENTITY_TYPE_META[entityType as 0 | 1 | 2].label} not found`, 404)
+        }
+
+        // The client's time zone. The web form sends it. The phone app does not
+        // yet, so the client's region decides for it.
+        const timeZone = normalizeTimeZone(body.timeZone) ?? zoneForRegion(parent.region)
+
+        // The form sends an exact moment ("...Z"). A time without a zone is
+        // read in the client's zone, never in the server's (UTC).
+        const start = parseMeetingStart(body.scheduledAt, timeZone)
+        if (!start) {
+            return fail("Pick a date and time for the meeting.", 400, "scheduledAt")
+        }
+        if (start.getTime() < Date.now() - PAST_GRACE_MS) {
+            return fail("That time has already passed. Pick a time in the future.", 400, "scheduledAt")
         }
 
         // Normalize attendees: keep only valid ObjectId strings, dedupe.
@@ -250,14 +312,16 @@ export async function POST(req: NextRequest) {
 
         let meetingLink: string | null = null
         let googleEventId: string | null = null
-        let conferenceStatus: string | null = null
-        let googleError: string | null = null
 
-        if (
-            meetingType === GOOGLE_MEET_TYPE &&
-            scheduledAt &&
-            isGoogleCalendarConfigured()
-        ) {
+        if (meetingType === MEETING_TYPE.ONLINE) {
+            // An online meeting needs a Meet link, and only Google makes one.
+            if (!isGoogleCalendarConfigured()) {
+                return fail(
+                    "Online meetings need Google Calendar, and it is not connected. Choose Offline, or ask an admin.",
+                    503
+                )
+            }
+
             try {
                 const attendeeEmails = await resolveAttendeeEmails(attendeeIds)
 
@@ -269,46 +333,71 @@ export async function POST(req: NextRequest) {
                 const event = await createMeetEvent({
                     summary: title,
                     description,
-                    startISO: new Date(scheduledAt).toISOString(),
+                    startISO: start.toISOString(),
+                    timeZone,
                     attendeeEmails: [...new Set(attendeeEmails)],
                     requestId: meetingId.toString(),
                     sendUpdates: "all",
                 })
 
-                meetingLink = event.meetingLink
-                googleEventId = event.googleEventId
-                conferenceStatus = event.conferenceStatus
+                googleEventId = event.googleEventId || null
+                meetingLink = event.meetingLink ?? event.htmlLink
             } catch (err) {
                 console.error("Google Calendar event creation failed:", err)
-                googleError =
-                    err instanceof Error
-                        ? err.message
-                        : "Unknown error while creating the Google Meet event."
+                return fail(
+                    isGoogleAuthError(err)
+                        ? "Google Calendar access has expired. An admin must reconnect it."
+                        : "Google Calendar did not create the meeting. Try again in a minute.",
+                    502
+                )
             }
         }
 
         // 1. Create Meeting
-        const meeting = await auditedCreate(
-            Meeting,
-            ENTITY_TYPE.MEETING,
-            {
-                _id: meetingId,
-                entityType,
-                entityId,
-                title,
-                agenda,
-                description,
-                meetingType,
-                meetingLink,
-                scheduledAt,
-                status,
-                attendees: attendeeIds,
-                googleEventId,
-                conferenceStatus,
-                createdBy: authUser.id,
-            },
-            authUser.id
-        )
+        let meeting
+        try {
+            meeting = await auditedCreate(
+                Meeting,
+                ENTITY_TYPE.MEETING,
+                {
+                    _id: meetingId,
+                    entityType,
+                    entityId,
+                    title,
+                    agenda,
+                    description,
+                    meetingType,
+                    meetingLink,
+                    scheduledAt: start,
+                    timeZone,
+                    // A new meeting is always scheduled.
+                    status: MEETING_STATUS.SCHEDULED,
+                    attendees: attendeeIds,
+                    // The id was saved as `googleEventId` before, a field the
+                    // model does not have, so Mongoose dropped it. That is why
+                    // cancel and reschedule never reached Google.
+                    external: googleEventId
+                        ? {
+                              provider: "GOOGLE",
+                              eventId: googleEventId,
+                              syncedAt: new Date(),
+                              syncedStatus: MEETING_STATUS.SCHEDULED,
+                          }
+                        : undefined,
+                    createdBy: authUser.id,
+                },
+                authUser.id
+            )
+        } catch (err) {
+            // Take the invite back, so the client does not keep an invite
+            // the CRM has no record of.
+            if (googleEventId) {
+                await cancelMeetEvent(googleEventId, "all").catch((cancelErr) =>
+                    console.error("Failed to roll back Google event:", cancelErr)
+                )
+            }
+            throw err
+        }
 
         // 2. Create Interaction (timeline entry)
         const interaction = await auditedCreate(
@@ -326,30 +415,16 @@ export async function POST(req: NextRequest) {
             authUser.id
         )
 
-        // 3. Prepare update payload
-        const updatePayload = {
-            lastInteractionAt: new Date(),
-            lastInteractionId: interaction._id,
-        }
-
-        switch (entityType) {
-            case ENTITY_TYPE.LEAD:
-            case ENTITY_TYPE.CLIENT:
-            case ENTITY_TYPE.PROJECT:
-                await auditedUpdateByNumericEntityType(
-                    entityType,
-                    entityId,
-                    updatePayload,
-                    authUser.id
-                )
-                break
-
-            default:
-                return NextResponse.json(
-                    { success: false, error: "Invalid entityType" },
-                    { status: 400 }
-                )
-        }
+        // 3. Point the parent at its latest interaction
+        await auditedUpdateByNumericEntityType(
+            entityType,
+            entityId,
+            {
+                lastInteractionAt: new Date(),
+                lastInteractionId: interaction._id,
+            },
+            authUser.id
+        )
 
         // 4. Emit notification
         const parentName = await resolveParentName(
@@ -368,6 +443,7 @@ export async function POST(req: NextRequest) {
                     entityType: meeting.entityType,
                     entityId: meeting.entityId,
                     scheduledAt: meeting.scheduledAt,
+                    timeZone: meeting.timeZone,
                     region: meeting.region,
                 },
                 parentName,
@@ -378,7 +454,7 @@ export async function POST(req: NextRequest) {
         })
 
         return NextResponse.json(
-            { success: true, data: meeting, googleError },
+            { success: true, data: meeting },
             { status: 201 }
         )
     } catch (error: any) {
@@ -386,13 +462,13 @@ export async function POST(req: NextRequest) {
 
         if (error instanceof AuthError) {
             return NextResponse.json(
-                { success: false, error: error.message },
+                { success: false, error: error.message, message: error.message },
                 { status: error.statusCode }
             )
         }
 
         return NextResponse.json(
-            { success: false, error: "Failed to create meeting" },
+            { success: false, error: "Failed to create meeting", message: "Failed to create meeting" },
             { status: 500 }
         )
     }

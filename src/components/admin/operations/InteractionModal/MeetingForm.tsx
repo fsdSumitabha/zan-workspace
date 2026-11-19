@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { Search, Check } from "lucide-react"
+import MeetingWhenField from "@/components/admin/operations/time/MeetingWhenField"
+import { useRegion } from "@/contexts/RegionContext"
+import { zoneForRegion } from "@/lib/time/zone"
 
 interface UserOption {
     _id: string
@@ -20,6 +23,8 @@ interface UsersPickerResponse {
 interface Props {
     entityId: string
     entityType?: number
+    /** The region of the lead, client or project. Gives the client's time zone. */
+    clientRegion?: string
     onClose: () => void
     onSuccess?: () => void
 }
@@ -27,14 +32,20 @@ interface Props {
 export default function MeetingForm({
     entityType,
     entityId,
+    clientRegion,
     onClose,
     onSuccess,
 }: Props) {
+    const region = useRegion()
     const [title, setTitle] = useState("")
     const [agenda, setAgenda] = useState("")
     const [description, setDescription] = useState("")
-    const [date, setDate] = useState("")
-    const [status, setStatus] = useState(2010) // MEETING_STATUS.SCHEDULED
+    // The exact moment picked, or null. Sent as an ISO string ending in "Z".
+    // The input's own value ("2026-11-19T13:30") has no zone, and the
+    // server read it as UTC: 1:30 PM IST became 7:00 PM IST.
+    const [start, setStart] = useState<Date | null>(null)
+    // The client's zone: from the client's region, unless changed in the form.
+    const [clientZone, setClientZone] = useState(() => zoneForRegion(clientRegion ?? region.code))
     const [meetingType, setMeetingType] = useState(0) // ONLINE
     const [loading, setLoading] = useState(false)
 
@@ -88,6 +99,24 @@ export default function MeetingForm({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        if (!title.trim()) {
+            toast.error("Give the meeting a title")
+            return
+        }
+        if (!agenda.trim()) {
+            toast.error("Write the agenda of the meeting")
+            return
+        }
+        if (!start) {
+            toast.error("Pick a date and time")
+            return
+        }
+        if (start.getTime() <= Date.now()) {
+            toast.error("Pick a time in the future")
+            return
+        }
+
         setLoading(true)
 
         const promise = fetch("/api/admin/operations/meetings", {
@@ -96,18 +125,19 @@ export default function MeetingForm({
             body: JSON.stringify({
                 entityType,
                 entityId,
-                title,
-                agenda,
+                title: title.trim(),
+                agenda: agenda.trim(),
                 description,
                 meetingType,
-                status,
-                scheduledAt: date,
+                // The exact moment, and the client's zone for showing it.
+                scheduledAt: start.toISOString(),
+                timeZone: clientZone,
                 attendees: [...selectedIds],
             }),
         }).then(async (res) => {
-            const data = await res.json()
-            if (!res.ok || !data.success) {
-                throw new Error(data.message || "Failed to schedule meeting")
+            const data = await res.json().catch(() => null)
+            if (!res.ok || !data?.success) {
+                throw new Error(data?.message || data?.error || "Failed to schedule meeting")
             }
             return data
         })
@@ -117,13 +147,17 @@ export default function MeetingForm({
             success: () => {
                 onSuccess?.()
                 onClose()
-                return "Meeting scheduled successfully"
+                return meetingType === 0
+                    ? "Meeting scheduled. Google emailed the invite."
+                    : "Meeting scheduled successfully"
             },
             error: (err) => err.message || "Something went wrong",
         })
 
         try {
             await promise
+        } catch {
+            // The toast above shows the error.
         } finally {
             setLoading(false)
         }
@@ -161,18 +195,15 @@ export default function MeetingForm({
                 />
             </div>
 
-            {/* Date */}
-            <div className="space-y-2">
-                <label className="text-sm text-neutral-800 dark:text-neutral-200">
-                    Meeting Date & Time
-                </label>
-                <input
-                    type="datetime-local"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-neutral-800 dark:border-neutral-700 text-gray-800 dark:text-gray-200 focus:outline-none"
-                />
-            </div>
+            {/* Date, time and time zone */}
+            <MeetingWhenField
+                label="Meeting Date & Time"
+                value={start}
+                onChange={setStart}
+                clientZone={clientZone}
+                onClientZoneChange={setClientZone}
+                disabled={loading}
+            />
 
             {/* Meeting Type */}
             <div className="space-y-2">

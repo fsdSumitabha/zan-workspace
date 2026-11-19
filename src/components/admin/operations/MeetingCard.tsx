@@ -9,46 +9,55 @@ import StatusBadge from "@/components/admin/operations/StatusBadge"
 
 import { MEETING_STATUS, MEETING_STATUS_META } from "@/constants/meetingStatus"
 import { MEETING_TYPE } from "@/constants/meetingTypes"
+import { canManageMeetings } from "@/constants/meetingRoles"
+import { meetingPageHref, meetingParentHref } from "@/lib/meetings/links"
 import MeetingLinkButton from "@/components/admin/operations/MeetingLinkButton"
 import RescheduleMeetingForm from "@/components/admin/operations/RescheduleMeetingForm"
+import MeetingTime from "@/components/admin/operations/time/MeetingTime"
+import { useViewerZone } from "@/components/admin/operations/time/useViewerZone"
+import { showGoogleResult } from "@/components/admin/operations/time/googleToast"
 import { getMeetingTemporalStatus } from "@/utils/MeetingTemporalStatus"
+import { hasMeetingStarted, meetingZone } from "@/lib/time/meetingTime"
+import { formatMoment } from "@/lib/time/zone"
 import { useAuth } from "@/contexts/AuthContext"
 import TemporalBadge from "./TemporalBadge "
 
-/**
- * Roles allowed to reschedule / close (mark missed/completed) a meeting.
- * Mirrors the backend PATCH roles on both reschedule and status routes.
- */
-const RESCHEDULE_ROLES = [10, 15, 60, 65, 69, 45, 70]
-const CLOSE_ROLES = RESCHEDULE_ROLES
-
-/** Friendly local-time date for the reschedule history rows. */
-function fmtDateTime(d: string | Date | undefined): string {
+/** A saved moment in the viewer's zone, with the zone name. */
+function fmtDateTime(d: string | Date | undefined, zone: string): string {
     if (!d) return "—"
     const dt = new Date(d)
     if (isNaN(dt.getTime())) return "—"
-    return dt.toLocaleString(undefined, {
-        dateStyle: "medium",
-        timeStyle: "short",
-    })
+    return formatMoment(dt, zone)
 }
+
+const REASON_MAX = 500
 
 export default function MeetingCard({
     item,
     onChanged,
+    linkToPage = true,
 }: {
     item: any
     onChanged?: () => void
+    /** Links the title to the meeting page. Off on the meeting page itself. */
+    linkToPage?: boolean
 }) {
 
     const [expanded, setExpanded] = useState(false)
     const [rescheduleOpen, setRescheduleOpen] = useState(false)
     const [completeOpen, setCompleteOpen] = useState(false)
+    const [cancelOpen, setCancelOpen] = useState(false)
     const [outcome, setOutcome] = useState("")
+    const [cancelReason, setCancelReason] = useState("")
     const [submittingComplete, setSubmittingComplete] = useState(false)
     // The status being saved by Cancel or Missed, or null when neither is busy.
     const [closing, setClosing] = useState<number | null>(null)
+    const [syncing, setSyncing] = useState(false)
     const [outcomeExpanded, setOutcomeExpanded] = useState(false)
+
+    const viewerZone = useViewerZone()
+
+    const meeting = item
 
     const submitComplete = async () => {
         const note = outcome.trim()
@@ -73,13 +82,14 @@ export default function MeetingCard({
         }
     }
 
+    // The same list as the API routes, so a button is shown only when the
+    // server will accept the press. It now includes 50 (Digital Marketer).
     const { user } = useAuth()
-    const canReschedule = !!user && RESCHEDULE_ROLES.includes(user.role)
-    const canClose = !!user && CLOSE_ROLES.includes(user.role)
+    const canManage = canManageMeetings(user?.role)
+    const canReschedule = canManage
+    const canClose = canManage
 
     const Icon = (Icons as any)[item.icon?.charAt(0).toUpperCase() + item.icon?.slice(1)] || Icons.Calendar
-
-    const meeting = item
 
     const agenda: string = meeting.agenda || ""
     const description: string = meeting.description || ""
@@ -91,32 +101,66 @@ export default function MeetingCard({
     const isLongOutcome = outcomeText.length > 140
     const outcomeClampClass = !outcomeExpanded && isLongOutcome ? "line-clamp-3" : ""
 
+    const clientZone = meetingZone(meeting)
+    const isOnline = meeting.meetingType === MEETING_TYPE.ONLINE
+    const started = hasMeetingStarted(meeting.scheduledAt)
+
     const temporalStatus = getMeetingTemporalStatus(meeting.scheduledAt)
-    const isCancelledOrMissed = meeting.status === MEETING_STATUS.CANCELLED || meeting.status === MEETING_STATUS.MISSED
+    const isCancelled = meeting.status === MEETING_STATUS.CANCELLED
+    const isCancelledOrMissed = isCancelled || meeting.status === MEETING_STATUS.MISSED
     const isCompleted = meeting.status === MEETING_STATUS.COMPLETED
     const isScheduled = meeting.status === MEETING_STATUS.SCHEDULED || meeting.status === MEETING_STATUS.RESCHEDULED
     const isUpcoming = isScheduled && temporalStatus === "UPCOMING"
     const isToday = isScheduled && temporalStatus === "TODAY"
 
     const isRescheduled = meeting.status === MEETING_STATUS.RESCHEDULED
-    const showCancel = isScheduled && canClose
-    const showComplete = isScheduled && canClose && temporalStatus === "PAST"
+    const panelOpen = completeOpen || cancelOpen
+    const showCancel = isScheduled && canClose && !panelOpen
+    // Once the start time has passed, not from the next day. A 10 AM meeting
+    // can be marked completed at 11 AM the same day. The API has always
+    // allowed this; the buttons waited for the day to change.
+    const showComplete = isScheduled && canClose && started && !panelOpen
     const showMissed = showComplete
 
-    // Cancel (any time) and Missed (after the meeting day) close the meeting
-    // without a note. Completed needs one, see submitComplete.
-    const closeMeeting = async (status: number, fallbackMessage: string) => {
+    // Google Calendar is behind the CRM. Either the last change failed, or
+    // the meeting was cancelled or moved before 19 Nov 2026, when the CRM did
+    // not tell Google. Only for meetings still ahead: a past event does no harm.
+    const external = meeting.external ?? {}
+    const needsGoogleChange = isCancelled || isRescheduled
+    const googleBehind =
+        isOnline &&
+        !started &&
+        (Boolean(external.syncError) || (needsGoogleChange && external.syncedStatus !== meeting.status))
+    const googleNotice = external.syncError
+        ? `Google Calendar was not updated. ${external.syncError}`
+        : isCancelled
+          ? "This meeting may still be in the guests' Google Calendar. It was cancelled before the CRM could tell Google."
+          : "Google Calendar may still show an older time. The meeting was moved before the CRM could tell Google."
+    const googleButton = isCancelled ? "Cancel in Google Calendar" : external.syncError ? "Try again" : "Update Google Calendar"
+
+    // Missed closes the meeting without a note. Cancelled can carry a reason.
+    // Completed needs a note, see submitComplete.
+    const closeMeeting = async (status: number, fallbackMessage: string, extra: Record<string, unknown> = {}) => {
         if (closing !== null) return
         setClosing(status)
         try {
             const res = await fetch(`/api/admin/operations/meetings/${meeting._id}/status`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status }),
+                body: JSON.stringify({ status, ...extra }),
             })
             const json = await res.json()
             if (!res.ok || !json?.success) throw new Error(json?.message || "Failed to update meeting")
-            toast.success(json.message || fallbackMessage)
+            if (status === MEETING_STATUS.CANCELLED) {
+                showGoogleResult(json.google, {
+                    done: json.message || fallbackMessage,
+                    googleDone: "Meeting cancelled. Google emailed the guests and took it off their calendars.",
+                })
+                setCancelOpen(false)
+                setCancelReason("")
+            } else {
+                toast.success(json.message || fallbackMessage)
+            }
             onChanged?.()
         } catch (err: any) {
             toast.error(err?.message || "Failed to update meeting")
@@ -124,6 +168,24 @@ export default function MeetingCard({
             setClosing(null)
         }
     }
+
+    const syncGoogle = async () => {
+        if (syncing) return
+        setSyncing(true)
+        try {
+            const res = await fetch(`/api/admin/operations/meetings/${meeting._id}/google-sync`, { method: "POST" })
+            const json = await res.json().catch(() => null)
+            if (!res.ok || !json?.success) throw new Error(json?.message || "Google Calendar was not updated")
+            toast.success(json.message || "Google Calendar updated")
+            onChanged?.()
+        } catch (err: any) {
+            toast.error(err?.message || "Google Calendar was not updated")
+            onChanged?.()
+        } finally {
+            setSyncing(false)
+        }
+    }
+
     // Rescheduled wins over the green/red temporal dot so the state is
     // immediately visible.
     const dotColor: "green" | "red" | "orange" | null = isRescheduled
@@ -134,12 +196,13 @@ export default function MeetingCard({
             ? "red"
             : null
 
-    // Dynamic entity route
-    const entityHref = `/admin//operations/${meeting.entity?.label?.toLowerCase()}s/${meeting.entityId}`
+    // The lead, client or project page. The old href had "//" in it.
+    const entityHref = meetingParentHref(meeting.entityType, meeting.entityId ? String(meeting.entityId) : undefined)
+    const pageHref = meetingPageHref(String(meeting._id))
 
     return (
         <div className={`relative flex gap-3 p-4 rounded-lg dark:rounded-xl bg-white dark:bg-neutral-900 shadow transition break-words border hover:border-neutral-400 hover:shadow-md ${isCancelledOrMissed ? "border-red-500 opacity-70" : isCompleted ? "border-green-500 opacity-80" : isToday ? "border-emerald-500" : isUpcoming ? "border-blue-500" : "border-slate-200 dark:border-neutral-800"}`}>
-            
+
             {dotColor && (
                 <span className="absolute flex h-2 w-2">
                     <span
@@ -174,11 +237,17 @@ export default function MeetingCard({
             <div className="flex-1 min-w-0 space-y-2">
 
                 {/* Header */}
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
 
                         <h3 className="font-bold text-neutral-800 dark:text-neutral-200 text-md">
-                            {meeting.title}
+                            {linkToPage ? (
+                                <Link href={pageHref} className="hover:underline">
+                                    {meeting.title}
+                                </Link>
+                            ) : (
+                                meeting.title
+                            )}
                         </h3>
 
                         {meeting.status && (
@@ -203,7 +272,7 @@ export default function MeetingCard({
                 </div>
 
                 {/* Entity Title (Clickable) */}
-                {meeting.entity?.title && (
+                {meeting.entity?.title && entityHref && (
                     <Link
                         href={entityHref}
                         className="text-sm font-medium text-neutral-600 hover:underline"
@@ -257,7 +326,7 @@ export default function MeetingCard({
                     </button>
                 )}
 
-                {/* Reschedule history — most recent last */}
+                {/* Reschedule history — most recent last. Each time in the viewer's zone. */}
                 {Array.isArray(meeting.rescheduleHistory) &&
                     meeting.rescheduleHistory.length > 0 && (
                         <div className="mt-1 rounded-md border border-amber-200 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-2.5 space-y-2">
@@ -273,60 +342,77 @@ export default function MeetingCard({
                                 (entry: any, i: number) => (
                                     <div
                                         key={entry._id || i}
-                                        className="text-xs text-neutral-700 dark:text-neutral-300"
+                                        className="text-xs text-neutral-700 dark:text-neutral-300 flex flex-wrap items-center gap-x-1.5"
                                     >
-                                        <div className="flex  justify-start items-center gap-1.5">
-                                            
-                                            <div className="line-through text-neutral-500 dark:text-neutral-500">
-                                                {fmtDateTime(entry.oldDate)}
-                                            </div>
-                                               {entry.reason && (
-                                            <p className="mt-0.5 italic text-neutral-600 dark:text-neutral-500">
-                                               | &ldquo;{entry.reason}&rdquo;
-                                            </p>
+                                        <span className="line-through text-neutral-500 dark:text-neutral-500">
+                                            {fmtDateTime(entry.oldDate, viewerZone)}
+                                        </span>
+                                        <Icons.ArrowRight className="w-3 h-3 text-neutral-400" aria-hidden />
+                                        <span>{fmtDateTime(entry.newDate, viewerZone)}</span>
+                                        {entry.reason && (
+                                            <span className="italic text-neutral-600 dark:text-neutral-500">
+                                                | &ldquo;{entry.reason}&rdquo;
+                                            </span>
                                         )}
-                                        </div>
-                                        
                                     </div>
                                 )
                             )}
                         </div>
                     )}
 
-                {/* Meta */}
-                <div className="flex items-center justify-between flex-wrap gap-3 text-xs text-gray-500 pt-1">
-
-                    {/* Left */}
-                    <div className="flex items-center gap-1">
-                        Scheduled: <TimeAgo date={meeting.scheduledAt} />
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                        {showCancel && !completeOpen && (
-                            <button type="button" onClick={() => closeMeeting(MEETING_STATUS.CANCELLED, "Meeting cancelled")} disabled={closing !== null} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-red-500/40 text-red-600 dark:text-red-400 hover:bg-red-500/10 transition disabled:opacity-50">
-                                <Icons.XCircle className="w-3 h-3" />
-                                {closing === MEETING_STATUS.CANCELLED ? "Cancelling…" : "Cancel"}
+                {/* Google Calendar is behind the CRM */}
+                {googleBehind && (
+                    <div className="rounded-md border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 p-2.5 flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-amber-800 dark:text-amber-300">
+                        <div className="flex items-start gap-1.5 flex-1">
+                            <Icons.AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden />
+                            <span>{googleNotice}</span>
+                        </div>
+                        {canManage && (
+                            <button
+                                type="button"
+                                onClick={syncGoogle}
+                                disabled={syncing}
+                                className="self-start sm:self-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-amber-500/60 hover:bg-amber-500/10 transition disabled:opacity-50 whitespace-nowrap"
+                            >
+                                <Icons.RefreshCw className={`w-3 h-3 ${syncing ? "animate-spin" : ""}`} />
+                                {syncing ? "Working…" : googleButton}
                             </button>
                         )}
-                        {showMissed && !completeOpen && (
+                    </div>
+                )}
+
+                {/* Meta */}
+                <div className="flex items-start justify-between flex-wrap gap-3 text-xs text-gray-500 pt-1">
+
+                    {/* Left: the time, in the viewer's zone, and the client's when it differs */}
+                    <MeetingTime at={meeting.scheduledAt} clientZone={clientZone} muted={isCancelled} />
+
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {showCancel && (
+                            <button type="button" onClick={() => setCancelOpen(true)} disabled={closing !== null} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-red-500/40 text-red-600 dark:text-red-400 hover:bg-red-500/10 transition disabled:opacity-50">
+                                <Icons.XCircle className="w-3 h-3" />
+                                Cancel
+                            </button>
+                        )}
+                        {showMissed && (
                             <button type="button" onClick={() => closeMeeting(MEETING_STATUS.MISSED, "Meeting marked as missed")} disabled={closing !== null} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-neutral-400/50 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-500/10 transition disabled:opacity-50">
                                 <Icons.CalendarOff className="w-3 h-3" />
                                 {closing === MEETING_STATUS.MISSED ? "Saving…" : "Missed"}
                             </button>
                         )}
-                        {showComplete && !completeOpen && (
+                        {showComplete && (
                             <button type="button" onClick={() => setCompleteOpen(true)} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition">
                                 <Icons.CheckCircle2 className="w-3 h-3" />
                                 Completed
                             </button>
                         )}
-                        {canReschedule && isScheduled && !rescheduleOpen && (
+                        {canReschedule && isScheduled && !rescheduleOpen && !panelOpen && (
                             <button type="button" onClick={() => setRescheduleOpen(true)} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md border border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition">
                                 <Icons.CalendarClock className="w-3 h-3" />
                                 Reschedule
                             </button>
                         )}
-                        {meeting.meetingType === MEETING_TYPE.ONLINE && meeting.meetingLink && isScheduled && (
+                        {isOnline && meeting.meetingLink && isScheduled && (
                             <MeetingLinkButton link={meeting.meetingLink} />
                         )}
                     </div>
@@ -337,12 +423,45 @@ export default function MeetingCard({
                     <RescheduleMeetingForm
                         meetingId={String(meeting._id)}
                         currentScheduledAt={meeting.scheduledAt}
+                        clientZone={clientZone}
+                        isOnline={isOnline}
                         onCancel={() => setRescheduleOpen(false)}
                         onSuccess={() => {
                             setRescheduleOpen(false)
                             onChanged?.()
                         }}
                     />
+                )}
+
+                {/* Cancel needs a second press: for an online meeting it emails the client. */}
+                {cancelOpen && (
+                    <div className="mt-2 rounded-lg border border-red-300 dark:border-red-500/30 bg-red-50/60 dark:bg-red-500/5 p-3 space-y-3">
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">
+                            <Icons.XCircle className="w-3.5 h-3.5" />
+                            Cancel this meeting?
+                        </div>
+                        <p className="text-xs text-neutral-700 dark:text-neutral-300">
+                            {isOnline
+                                ? "Google Calendar will email every guest that the meeting is cancelled, and take it off their calendars. The meeting stays in the CRM as cancelled."
+                                : "The meeting stays in the CRM as cancelled. Tell the guests yourself."}
+                        </p>
+                        <textarea
+                            value={cancelReason}
+                            onChange={(e) => setCancelReason(e.target.value.slice(0, REASON_MAX))}
+                            rows={2}
+                            placeholder="Reason (optional). The team sees it in the timeline and the notification."
+                            disabled={closing !== null}
+                            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-red-500/30 resize-none placeholder:text-neutral-400"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <button type="button" onClick={() => { setCancelOpen(false); setCancelReason("") }} disabled={closing !== null} className="px-3 py-1.5 text-xs rounded-md border border-slate-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition disabled:opacity-50">
+                                Keep meeting
+                            </button>
+                            <button type="button" onClick={() => closeMeeting(MEETING_STATUS.CANCELLED, "Meeting cancelled", { reason: cancelReason.trim() || undefined })} disabled={closing !== null} className="px-3 py-1.5 text-xs font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50">
+                                {closing === MEETING_STATUS.CANCELLED ? "Cancelling…" : "Cancel meeting"}
+                            </button>
+                        </div>
+                    </div>
                 )}
 
                 {completeOpen && (

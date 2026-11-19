@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server"
 import { ACTIVE_REGION_COOKIE } from "@/lib/region-scope"
+import { normalizeTimeZone } from "@/lib/time/zone"
 
 /**
  * Where a request's credentials come from.
@@ -35,4 +36,29 @@ export function readActiveRegion(req: NextRequest): string | undefined {
         req.headers.get(ACTIVE_REGION_HEADER) ||
         undefined
     )
+}
+
+export const TIME_ZONE_COOKIE = "tz"
+export const TIME_ZONE_HEADER = "x-time-zone"
+
+/**
+ * The time zone of the device that sent the request. The web app sets the
+ * `tz` cookie in the root layout. The phone app can send `X-Time-Zone`.
+ * Returns null when neither holds a real zone name.
+ *
+ * Not a credential. It only says which calendar day "today" is for this
+ * person, so a wrong value shows the wrong day and nothing more.
+ */
+export function readViewerTimeZone(req: NextRequest): string | null {
+    const raw =
+        req.cookies.get(TIME_ZONE_COOKIE)?.value ||
+        req.headers.get(TIME_ZONE_HEADER) ||
+        ""
+    let value = raw
+    try {
+        value = decodeURIComponent(raw)
+    } catch {
+        // A broken %-escape. normalizeTimeZone refuses it below.
+    }
+    return normalizeTimeZone(value)
 }

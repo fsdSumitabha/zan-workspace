@@ -17,6 +17,9 @@ export interface AuthUser {
 
     /** Read from the user row, never from the token. Can be empty. */
     regions: RegionCode[]
+
+    /** The zone of the browser this person last used. Can be empty. */
+    timeZone?: string
 }
 
 /**
@@ -60,7 +63,7 @@ export async function getUserFromRequest(
         // the bypass every request would deny itself and nobody could
         // sign in. It reads one user by id, so it leaks nothing.
         const user = await runWithoutRegionScope(() =>
-            User.findById(userId).select("_id name email role isActive regions")
+            User.findById(userId).select("_id name email role isActive regions timeZone")
         )
 
         if (!user) {
@@ -76,7 +79,8 @@ export async function getUserFromRequest(
             isActive: user.isActive,
             // Array.from, not the Mongoose array itself. Callers put this in
             // JWTs and query filters, and a Mongoose array breaks cloning.
-            regions: Array.from(user.regions ?? []).map(String) as RegionCode[]
+            regions: Array.from(user.regions ?? []).map(String) as RegionCode[],
+            timeZone: user.timeZone || undefined
         }
 
     } catch (error) {

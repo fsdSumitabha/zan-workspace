@@ -35,7 +35,14 @@ export interface Meeting {
      */
     attendees: string[] | MeetingAttendee[]
 
+    /** The exact moment, as an ISO string in UTC. */
     scheduledAt: string
+
+    /** The client's IANA time zone. Missing on meetings made before 19 Nov 2026. */
+    timeZone?: string
+
+    /** Sales region code: "IN", "US" or "AE". */
+    region?: string
 
     status: MeetingStatus
 
@@ -52,6 +59,9 @@ export interface Meeting {
     external?: {
         provider?: string
         eventId?: string
+        syncedAt?: string
+        syncedStatus?: number
+        syncError?: string
     }
 
     createdBy?: string

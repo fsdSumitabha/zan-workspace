@@ -6,6 +6,7 @@ import Meeting from "@/models/Meeting"
 import Interaction from "@/models/Interaction"
 
 import { MEETING_STATUS } from "@/constants/meetingStatus"
+import { MEETING_MANAGE_ROLES } from "@/constants/meetingRoles"
 import { INTERACTION_TYPE } from "@/constants/interactionTypes"
 import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { emitNotification } from "@/lib/notifications/emit"
@@ -15,22 +16,26 @@ import { resolveParentName } from "@/lib/notifications/resolveParentName"
 import { requireRole } from "@/lib/auth/requireRole"
 import { AuthError } from "@/lib/auth/requireAuth"
 import { auditedCreate, auditedFindByIdAndUpdate, auditedUpdateByNumericEntityType,} from "@/lib/activity-log"
+import { meetingZone, parseMeetingStart } from "@/lib/time/meetingTime"
+import { syncMeetingToGoogle } from "@/lib/google/calendar/syncMeeting"
 
 /**
  * PATCH /api/admin/operations/meetings/:id/reschedule
  *
- * Body: { scheduledAt: ISO date, reason: string }
+ * Body: { scheduledAt: ISO date with its zone, reason: string }
  *
  * Updates scheduledAt + status (→ RESCHEDULED), appends to
  * rescheduleHistory, writes a timeline Interaction on the parent
- * entity, and bumps the parent's lastInteractionAt/Id.
+ * entity, and bumps the parent's lastInteractionAt/Id. For an online
+ * meeting it then moves the Google Calendar event, and Google emails the
+ * guests the new time. The reply's `google` field says whether that worked.
  */
 export async function PATCH(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
     try {
-        const authUser = await requireRole(req, [10, 15, 45, 50, 60, 65, 69, 70])
+        const authUser = await requireRole(req, MEETING_MANAGE_ROLES)
 
         await dbConnect()
 
@@ -62,8 +67,18 @@ export async function PATCH(
             )
         }
 
-        const newDate = new Date(scheduledAt)
-        if (isNaN(newDate.getTime())) {
+        const meeting = await Meeting.findById(id)
+        if (!meeting) {
+            return NextResponse.json(
+                { success: false, message: "Meeting not found" },
+                { status: 404 }
+            )
+        }
+
+        // An exact moment ("...Z") is used as it is. A time without a zone is
+        // read in the client's zone, never in the server's (UTC).
+        const newDate = parseMeetingStart(scheduledAt, meetingZone(meeting))
+        if (!newDate) {
             return NextResponse.json(
                 { success: false, message: "Invalid scheduledAt" },
                 { status: 400 }
@@ -73,14 +88,6 @@ export async function PATCH(
             return NextResponse.json(
                 { success: false, message: "scheduledAt must be in the future" },
                 { status: 400 }
-            )
-        }
-
-        const meeting = await Meeting.findById(id)
-        if (!meeting) {
-            return NextResponse.json(
-                { success: false, message: "Meeting not found" },
-                { status: 404 }
             )
         }
 
@@ -131,7 +138,11 @@ export async function PATCH(
         }
 
         // Timeline entry on the parent entity (lead / client / project).
-        const friendlyTitle = `Meeting rescheduled to ${newDate.toLocaleString()}`
+        // No time in the title. The server wrote it with toLocaleString(),
+        // which on Vercel is UTC, so India read "8:00 AM" for 1:30 PM. The
+        // timeline card shows the old and new times from rescheduleHistory,
+        // each in the reader's own zone.
+        const friendlyTitle = "Meeting rescheduled"
 
         const interaction = await auditedCreate(
             Interaction,
@@ -171,9 +182,13 @@ export async function PATCH(
             entityType: ENTITY_TYPE.MEETING,
             entityId: meeting._id,
             actor: { id: authUser.id, name: (authUser as any).name, role: authUser.role },
-            payload: { meeting: { _id: meeting._id, title: meeting.title, entityType: meeting.entityType, entityId: meeting.entityId, scheduledAt: newDate, region: meeting.region }, parentName, oldDate, reason: trimmedReason },
+            payload: { meeting: { _id: meeting._id, title: meeting.title, entityType: meeting.entityType, entityId: meeting.entityId, scheduledAt: newDate, timeZone: meeting.timeZone, region: meeting.region }, parentName, oldDate, reason: trimmedReason },
             extraRecipients: Array.isArray(meeting.attendees) ? meeting.attendees.map((a: any) => String(a)) : undefined,
         })
+
+        // Move the Google event last, after every CRM write, so a slow Google
+        // can never leave the CRM half done. Google emails the guests.
+        const google = await syncMeetingToGoogle(updated)
 
         return NextResponse.json(
             {
@@ -184,6 +199,7 @@ export async function PATCH(
                     scheduledAt: updated.scheduledAt,
                     status: updated.status,
                 },
+                google,
             },
             { status: 200 }
         )

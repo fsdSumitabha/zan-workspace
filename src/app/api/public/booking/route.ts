@@ -18,6 +18,7 @@ import { checkRateLimit } from "@/lib/security/rateLimit"
 import { getClientIp } from "@/lib/security/clientIp"
 import { phoneLookupCondition, validatePhone } from "@/lib/phone"
 import { getRegion, type RegionCode } from "@/lib/region"
+import { normalizeTimeZone } from "@/lib/time/zone"
 import {
     cancelMeetEvent,
     createMeetEvent,
@@ -179,6 +180,10 @@ export async function POST(req: NextRequest) {
     const company = readString(raw, "company")
     const notes = readString(raw, "notes")
     const startISO = readString(raw, "start")
+    // The visitor's own zone, from their browser. It becomes the client's
+    // zone on the meeting, so their invite and the team's "client's time"
+    // show the visitor's clock. Missing or unknown: the office zone.
+    const visitorZone = normalizeTimeZone(readString(raw, "timeZone"))
 
     if (!name || name.length > NAME_MAX) {
         return fail("Please enter your name.", 400, "name")
@@ -270,12 +275,14 @@ export async function POST(req: NextRequest) {
             .join("\n")
 
         const meetingId = new mongoose.Types.ObjectId()
+        const clientZone = visitorZone ?? getBookingTimeZone()
 
         const event = await createMeetEvent({
             summary: title,
             description,
             startISO: slotKey,
             durationMinutes: BOOKING_RULES.slotMinutes,
+            timeZone: clientZone,
             attendeeEmails: [...new Set([email, hostEmail])],
             requestId: meetingId.toString(),
             sendUpdates: "all",
@@ -300,10 +307,16 @@ export async function POST(req: NextRequest) {
                 meetingType: MEETING_TYPE.ONLINE,
                 meetingLink,
                 scheduledAt: start,
+                timeZone: clientZone,
                 status: MEETING_STATUS.SCHEDULED,
                 attendees: attendeeIds,
                 external: googleEventId
-                    ? { provider: "GOOGLE", eventId: googleEventId }
+                    ? {
+                          provider: "GOOGLE",
+                          eventId: googleEventId,
+                          syncedAt: new Date(),
+                          syncedStatus: MEETING_STATUS.SCHEDULED,
+                      }
                     : undefined,
                 createdBy: actorId,
             },
@@ -351,6 +364,7 @@ export async function POST(req: NextRequest) {
                         entityType: meeting.entityType,
                         entityId: meeting.entityId,
                         scheduledAt: meeting.scheduledAt,
+                        timeZone: meeting.timeZone,
                         region: meeting.region,
                     },
                     parentName: name,

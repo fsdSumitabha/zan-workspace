@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
         // only their own row is touched, so nothing leaks.
         const user = await runWithoutRegionScope(() =>
             User.findById(userId).select(
-                "_id name email role isActive avatar regions"
+                "_id name email role isActive avatar regions timeZone"
             )
         )
 
@@ -109,7 +109,11 @@ export async function GET(req: NextRequest) {
                     // switcher from this, so a reload cannot show a different
                     // region from the one the API will actually use.
                     activeRegion: selection.active,
-                    avatar: user.avatar || ""
+                    avatar: user.avatar || "",
+
+                    // The browser compares this with its own zone and saves
+                    // its own when they differ. See AuthContext.
+                    timeZone: user.timeZone || null
                 }
             },
             { status: 200 }

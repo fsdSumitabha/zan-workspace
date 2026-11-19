@@ -10,21 +10,18 @@ import {
     Video,
     Users as UsersIcon,
 } from "lucide-react"
-import dayjs from "dayjs"
-import relativeTime from "dayjs/plugin/relativeTime"
-import calendar from "dayjs/plugin/calendar"
-
-import { ENTITY_TYPE } from "@/constants/entityTypes"
 import { MEETING_TYPE } from "@/constants/meetingTypes"
-
-dayjs.extend(relativeTime)
-dayjs.extend(calendar)
+import MeetingTime from "@/components/admin/operations/time/MeetingTime"
+import { meetingZone } from "@/lib/time/meetingTime"
+import { meetingPageHref } from "@/lib/meetings/links"
 
 interface MeetingItem {
     _id: string
     title: string
     agenda?: string
     scheduledAt: string
+    timeZone?: string
+    region?: string
     meetingType?: number
     entityType?: number
     entityId?: string
@@ -42,31 +39,6 @@ interface ApiResponse {
 }
 
 const VISIBLE_COUNT = 4
-
-function parentHref(type: number | undefined, id: string | undefined): string | null {
-    if (!id) return null
-    switch (type) {
-        case ENTITY_TYPE.LEAD:
-            return `/admin/operations/leads/${id}`
-        case ENTITY_TYPE.CLIENT:
-            return `/admin/operations/clients/${id}`
-        case ENTITY_TYPE.PROJECT:
-            return `/admin/operations/projects/${id}`
-        default:
-            return null
-    }
-}
-
-function smartDate(iso: string): string {
-    const d = dayjs(iso)
-    const now = dayjs()
-    const diffDays = d.startOf("day").diff(now.startOf("day"), "day")
-
-    if (diffDays === 0) return `Today, ${d.format("h:mm A")}`
-    if (diffDays === 1) return `Tomorrow, ${d.format("h:mm A")}`
-    if (diffDays > 1 && diffDays < 7) return d.format("ddd, h:mm A")
-    return d.format("MMM D, h:mm A")
-}
 
 export default function UpcomingMeetingsPanel() {
     const [meetings, setMeetings] = useState<MeetingItem[]>([])
@@ -143,7 +115,9 @@ export default function UpcomingMeetingsPanel() {
             {!loading && meetings.length > 0 && (
                 <ul className="divide-y divide-slate-200 dark:divide-neutral-800">
                     {meetings.map((m) => {
-                        const href = parentHref(m.entityType, m.entityId)
+                        // The meeting page, which has Join, Reschedule and
+                        // Cancel, and a link to the lead or client.
+                        const href = meetingPageHref(m._id)
                         const isOnline = m.meetingType === MEETING_TYPE.ONLINE
                         const Inner = (
                             <div className="px-3 py-2.5 flex items-start gap-2.5">
@@ -159,7 +133,12 @@ export default function UpcomingMeetingsPanel() {
                                         {m.title || m.agenda || "Untitled meeting"}
                                     </div>
                                     <div className="text-[10px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1 mt-0.5">
-                                        <span>{smartDate(m.scheduledAt)}</span>
+                                        {/* "Tomorrow, 1:30 PM IST". The client's time is in the tooltip. */}
+                                        <MeetingTime
+                                            at={m.scheduledAt}
+                                            clientZone={meetingZone(m)}
+                                            variant="line"
+                                        />
                                         {m.entity?.title && (
                                             <>
                                                 <span>·</span>

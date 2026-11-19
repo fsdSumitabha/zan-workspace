@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
 import { computeOverallStats } from "@/lib/stats/computeOverallStats"
+import { resolveViewerZone } from "@/lib/time/viewerZone"
 
 /**
  * GET /api/admin/operations/overall-stats
@@ -13,10 +14,11 @@ import { computeOverallStats } from "@/lib/stats/computeOverallStats"
  */
 export async function GET(req: NextRequest) {
     try {
-        await requireAuth(req)
+        const user = await requireAuth(req)
         await dbConnect()
 
-        const data = await computeOverallStats()
+        // "Meetings today" counts the viewer's own calendar day.
+        const data = await computeOverallStats(resolveViewerZone(req, user))
 
         return NextResponse.json({ success: true, data })
     } catch (error) {

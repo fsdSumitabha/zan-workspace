@@ -22,6 +22,14 @@ export const metadata: Metadata = {
     description: "Zan Services - leading web development, mobile app, AI & digital marketing company in Kolkata, India. 150+ projects delivered. Get a free consultation today.",
 };
 
+// Sends the browser's time zone with every request, as the `tz` cookie. It
+// runs before the page's own code, so even the first API call carries it.
+// The server reads it for "Today" filters and date ranges, because the
+// server's own clock is UTC. See docs/time-zones.md. Not a secret.
+const TIME_ZONE_COOKIE_SCRIPT =
+    "try{var z=Intl.DateTimeFormat().resolvedOptions().timeZone;" +
+    "if(z)document.cookie='tz='+encodeURIComponent(z)+';path=/;max-age=31536000;samesite=lax'}catch(e){}"
+
 export const viewport: Viewport = {
     themeColor: [
         { media: "(prefers-color-scheme: light)", color: "#4A6FA5" },
@@ -36,6 +44,9 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
+            <head>
+                <script dangerouslySetInnerHTML={{ __html: TIME_ZONE_COOKIE_SCRIPT }} />
+            </head>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} >
                 {/* RegionProvider reads the signed-in user, so it has to sit
                     inside AuthProvider. It used to be outside, when the region

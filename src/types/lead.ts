@@ -10,6 +10,9 @@ export interface Lead {
 
     status: LeadStatus
 
+    /** Sales region code: "IN", "US" or "AE". */
+    region?: string
+
     assignedTo?: string
     convertedClientId?: string
 

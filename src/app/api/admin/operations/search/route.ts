@@ -30,6 +30,8 @@ interface SearchHit {
     type: EntityType
     title: string
     subtitle?: string
+    /** Meetings only: the start time as an ISO moment. */
+    at?: string
     href: string
 }
 
@@ -168,19 +170,19 @@ export async function GET(req: NextRequest) {
                     agenda?: string
                     scheduledAt?: Date
                 }
-                const when = doc.scheduledAt
-                    ? new Date(doc.scheduledAt).toLocaleString(undefined, {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                      })
+                // The time goes out as the exact moment. The browser writes it
+                // in the reader's zone. toLocaleString() here used the server's
+                // zone, UTC on Vercel, with no zone name.
+                const at = doc.scheduledAt
+                    ? new Date(doc.scheduledAt).toISOString()
                     : undefined
                 return {
                     id: String(doc._id),
                     type: "MEETING",
                     title: doc.title,
-                    subtitle: when ?? doc.agenda,
-                    // No dedicated meeting detail page yet — link to the list.
-                    href: `/admin/operations/meetings`,
+                    subtitle: doc.agenda,
+                    at,
+                    href: `/admin/operations/meetings/${String(doc._id)}`,
                 }
             }),
             total: 0,

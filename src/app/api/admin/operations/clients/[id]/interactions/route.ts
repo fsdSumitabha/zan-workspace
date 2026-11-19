@@ -6,6 +6,7 @@ import Document from "@/models/Document"
 import Quotation from "@/models/Quotation"
 import Call from "@/models/Call"
 import { requireAuth, AuthError } from "@/lib/auth/requireAuth"
+import { MEETING_INTERACTION_TYPES } from "@/constants/meetingRoles"
 
 export async function GET(
     req: NextRequest,
@@ -23,7 +24,9 @@ export async function GET(
         const params = await context.params
         const clientId = params.id
 
-        const MEETING_TYPES = [2010, 2020, 2030, 2040]
+        // Includes COMPLETED (2050). Without it a completed meeting's entry
+        // had no meeting and the timeline card crashed.
+        const MEETING_TYPES = MEETING_INTERACTION_TYPES
         const DOCUMENT_TYPES = [2310]
         const QUOTATION_TYPES = [2410]
         const CALL_TYPES = [2210]

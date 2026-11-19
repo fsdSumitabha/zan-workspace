@@ -287,7 +287,9 @@ export default function BookingClient() {
             const res = await fetch("/api/public/booking", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...form, phone: phoneToSend, start: selectedSlot }),
+                // timeZone: the visitor's own zone. The meeting keeps it as
+                // the client's zone, so the team sees the visitor's clock too.
+                body: JSON.stringify({ ...form, phone: phoneToSend, start: selectedSlot, timeZone: visitorZone ?? undefined }),
             })
             const json = await res.json().catch(() => null)
 

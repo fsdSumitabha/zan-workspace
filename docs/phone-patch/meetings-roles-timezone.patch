@@ -1,0 +1,108 @@
+diff --git a/__tests__/meetings.test.tsx b/__tests__/meetings.test.tsx
+index d75e1c2..252c341 100644
+--- a/__tests__/meetings.test.tsx
++++ b/__tests__/meetings.test.tsx
+@@ -27,8 +27,10 @@ import {
+ jest.useFakeTimers({ now: new Date(2026, 9, 6, 10, 0, 0) })
+ 
+ const ADMIN = { id: "u1", name: "Asha Rao", email: "asha@zan.test", role: 10, regions: ["IN"], activeRegion: "IN" }
+-// 50 can open Meetings but may not reschedule or close.
++// 50 (Digital Marketer) may reschedule and close meetings, like the sales roles.
+ const MARKETER = { id: "u4", name: "Dev Patel", email: "dev@zan.test", role: 50, regions: ["IN"], activeRegion: "IN" }
++// 20 (HR) can open Meetings but may not reschedule or close.
++const HR = { id: "u5", name: "Meera Iyer", email: "meera@zan.test", role: 20, regions: ["IN"], activeRegion: "IN" }
+ const MEETINGS = "/api/admin/operations/meetings"
+ const LEAD_ID = "64b7f0c2a1b2c3d4e5f60718"
+ 
+@@ -352,13 +354,20 @@ describe("meetings list", () => {
+     })
+ 
+     it("shows no actions to a role outside the write roles", async () => {
+-        const renderer = await openMeetings(MARKETER)
++        const renderer = await openMeetings(HR)
+         const texts = getTexts(renderer)
+         for (const label of ["Reschedule", "Completed", "Missed", "Cancel"]) expect(texts).not.toContain(label)
+         expect(texts).toContain("Join")
+         await unmountApp(renderer)
+     })
+ 
++    it("shows the actions to a Digital Marketer", async () => {
++        const renderer = await openMeetings(MARKETER)
++        const texts = getTexts(renderer)
++        for (const label of ["Reschedule", "Cancel", "Completed", "Missed"]) expect(texts).toContain(label)
++        await unmountApp(renderer)
++    })
++
+     it("renders AccessDenied with the server's message on a 403", async () => {
+         const renderer = await openMeetings(ADMIN, [
+             {
+diff --git a/src/api/client.ts b/src/api/client.ts
+index 1a1b914..aad6868 100644
+--- a/src/api/client.ts
++++ b/src/api/client.ts
+@@ -104,9 +104,21 @@ function buildHeaders(token: string | null, hasJsonBody: boolean): Record<string
+     if (token) headers.Authorization = `Bearer ${token}`
+     const region = getActiveRegion()
+     if (region) headers["X-Active-Region"] = region
++    // The phone's time zone, e.g. "Asia/Dubai". The API reads it for "Today" filters and date ranges, because the
++    // server's clock is UTC. Not a credential. See zan-workspace docs/time-zones.md.
++    const timeZone = getDeviceTimeZone()
++    if (timeZone) headers["X-Time-Zone"] = timeZone
+     return headers
+ }
+ 
++function getDeviceTimeZone(): string | null {
++    try {
++        return Intl.DateTimeFormat().resolvedOptions().timeZone || null
++    } catch {
++        return null
++    }
++}
++
+ async function handleUnauthorized(message: string | undefined): Promise<void> {
+     // 1. Tell the person once. Parallel 401s share the id, so they show one toast.
+     notify.error(message || SESSION_EXPIRED_MESSAGE, { id: AUTH_TOAST_ID })
+diff --git a/src/components/meetings/MeetingActions.tsx b/src/components/meetings/MeetingActions.tsx
+index 6f238f1..7765d64 100644
+--- a/src/components/meetings/MeetingActions.tsx
++++ b/src/components/meetings/MeetingActions.tsx
+@@ -87,7 +87,7 @@ export default function MeetingActions(props: Props) {
+     }
+ 
+     function confirmCancel() {
+-        Alert.alert("Cancel this meeting?", "It is marked cancelled for everyone.", [
++        Alert.alert("Cancel this meeting?", "Google Calendar emails the guests of an online meeting. It stays in the CRM as cancelled.", [
+             { text: "Keep it", style: "cancel" },
+             {
+                 text: "Cancel meeting",
+diff --git a/src/components/meetings/MeetingCard.tsx b/src/components/meetings/MeetingCard.tsx
+index 4989f55..9a27175 100644
+--- a/src/components/meetings/MeetingCard.tsx
++++ b/src/components/meetings/MeetingCard.tsx
+@@ -26,8 +26,12 @@ export interface MeetingListItem extends Meeting {
+     entity?: { type: number; label: string; title: string }
+ }
+ 
+-/** Roles allowed to reschedule or close a meeting. Mirrors the backend PATCH roles on both routes. */
+-const RESCHEDULE_ROLES = [10, 15, 60, 65, 69, 45, 70]
++/**
++ * Roles allowed to reschedule or close a meeting. Mirrors MEETING_MANAGE_ROLES in the web's
++ * src/constants/meetingRoles.ts, which the API routes read. 50 (Digital Marketer) was missing here,
++ * so a marketer saw no buttons although the API accepted them.
++ */
++const RESCHEDULE_ROLES = [10, 15, 45, 50, 60, 65, 69, 70]
+ const CLOSE_ROLES = RESCHEDULE_ROLES
+ // The web clamps agenda + description over 110 characters to two lines.
+ const LONG_TEXT = 110
+@@ -66,7 +70,10 @@ function MeetingCard({ meeting, onChanged }: { meeting: MeetingListItem; onChang
+     const isScheduled = meeting.status === MEETING_STATUS.SCHEDULED || isRescheduled
+     const isUpcoming = isScheduled && temporal === "UPCOMING"
+     const isToday = isScheduled && temporal === "TODAY"
+-    const showComplete = isScheduled && canClose && temporal === "PAST"
++    // Once the start time has passed, not from the next day: a 10 AM meeting can be closed at 11 AM.
++    // The API has always allowed this.
++    const hasStarted = new Date(meeting.scheduledAt).getTime() <= Date.now()
++    const showComplete = isScheduled && canClose && hasStarted
+     // Rescheduled wins over the green and red dots, so that state is seen first.
+     const dot: DotColor | null = isRescheduled
+         ? "orange"
