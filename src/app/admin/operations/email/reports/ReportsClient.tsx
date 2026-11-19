@@ -79,8 +79,11 @@ export default function ReportsClient() {
                 throw new Error(json?.message || "Failed to load the reports")
             }
 
-            setRows(json.data.rows as Row[])
-            setTruncated(Boolean(json.data.truncated))
+            // Defaulted rather than trusted. A response whose shape drifts
+            // should show an empty table, not take the screen down with
+            // "cannot read properties of undefined".
+            setRows((json.data?.rows ?? []) as Row[])
+            setTruncated(Boolean(json.data?.truncated))
         },
         [router]
     )
@@ -140,18 +143,25 @@ export default function ReportsClient() {
         }
     )
 
+    /**
+     * The export link, built without `window`.
+     *
+     * This runs during render, and render happens on the server too. The
+     * first version read `window.location.origin` here, which threw
+     * "window is not defined" on the server and made React throw the
+     * server render away and start again in the browser. A relative URL
+     * needs no origin.
+     */
     const exportUrl = (() => {
-        const url = new URL(API, window.location.origin)
-        url.searchParams.set("format", "xlsx")
-        url.searchParams.set("limit", "100")
+        const query = new URLSearchParams({ format: "xlsx", limit: "100" })
 
         if (days > 0) {
             const from = new Date()
             from.setDate(from.getDate() - days)
-            url.searchParams.set("from", from.toISOString())
+            query.set("from", from.toISOString())
         }
 
-        return url.pathname + url.search
+        return `${API}?${query.toString()}`
     })()
 
     return (

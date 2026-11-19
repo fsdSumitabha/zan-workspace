@@ -69,8 +69,10 @@ export const DELIVERY_FIELD_HELP: Record<keyof DeliverySettings, string> = {
         "The most recipients one worker takes at a time. Higher is faster, " +
         "but a crash loses more progress.",
     sendConcurrency:
-        "How many emails are in flight at once inside one worker. Above 2 " +
-        "they just queue behind the single SMTP connection.",
+        "How many emails are in flight at once inside one worker. The sends " +
+        "themselves queue behind the single SMTP connection, so raising this " +
+        "only overlaps the database writes around each send. Leave it at 2 " +
+        "unless a campaign is slow and the provider is not the reason.",
     workerDurationBudgetMs:
         "How long a worker keeps taking new work before it hands over to the " +
         "next one. The Vercel limit is 300 seconds.",
