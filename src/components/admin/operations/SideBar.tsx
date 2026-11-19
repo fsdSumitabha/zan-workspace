@@ -57,7 +57,7 @@ const navItems: NavItem[] = [
             { name: "Audiences", href: "/admin/operations/email/audiences", roles: EMAIL_ACCESS_ROLES },
             { name: "Contacts", href: "/admin/operations/email/contacts", roles: EMAIL_ACCESS_ROLES },
             { name: "Assets", href: "/admin/operations/email/assets", roles: EMAIL_ACCESS_ROLES, soon: true },
-            { name: "Reports", href: "/admin/operations/email/reports", roles: EMAIL_ACCESS_ROLES, soon: true },
+            { name: "Reports", href: "/admin/operations/email/reports", roles: EMAIL_ACCESS_ROLES },
             { name: "Delivery Activity", href: "/admin/operations/email/activity", roles: EMAIL_ACCESS_ROLES },
             { name: "Suppression", href: "/admin/operations/email/suppression", roles: EMAIL_ACCESS_ROLES },
             { name: "Settings", href: "/admin/operations/email/settings", roles: EMAIL_ADMIN_ROLES },

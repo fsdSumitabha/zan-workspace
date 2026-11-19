@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import clsx from "clsx"
 import { Activity, RefreshCw, Search } from "lucide-react"
@@ -64,12 +64,23 @@ export default function ActivityClient() {
     const [outcome, setOutcome] = useState<AttemptOutcome | null>(null)
     const [search, setSearch] = useState("")
 
+    /**
+     * One campaign, when a report linked here.
+     *
+     * The API has always accepted this, so without reading it the link
+     * from a report would land on the whole log and quietly show every
+     * campaign's attempts under a heading about one.
+     */
+    const params = useSearchParams()
+    const campaignId = params.get("campaign") ?? ""
+
     const load = useCallback(
         async (h: number, o: AttemptOutcome | null, q: string) => {
             const url = new URL(API, window.location.origin)
             url.searchParams.set("hours", String(h))
             if (o !== null) url.searchParams.set("outcome", String(o))
             if (q) url.searchParams.set("search", q)
+            if (campaignId) url.searchParams.set("campaign", campaignId)
 
             const res = await fetch(url, {
                 credentials: "include",
@@ -88,7 +99,7 @@ export default function ActivityClient() {
             setLatency(json.latency ?? null)
             setTotal(json.pagination?.total ?? 0)
         },
-        [router]
+        [router, campaignId]
     )
 
     useEffect(() => {
@@ -132,6 +143,26 @@ export default function ActivityClient() {
                     Refresh
                 </button>
             </div>
+
+            {/* When a report linked here, say so. A filtered log that
+                looks unfiltered is read as the whole picture. */}
+            {campaignId && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-200">
+                    <span>
+                        Showing one campaign only
+                        {rows[0]?.campaignName
+                            ? `: ${rows[0].campaignName}`
+                            : ""}
+                        .
+                    </span>
+                    <Link
+                        href="/admin/operations/email/activity"
+                        className="font-medium underline"
+                    >
+                        Show every campaign
+                    </Link>
+                </div>
+            )}
 
             {/* Latency, which is what tells somebody whether the provider
                 is slow or whether something here is. */}

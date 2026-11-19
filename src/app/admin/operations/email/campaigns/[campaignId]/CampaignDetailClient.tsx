@@ -8,6 +8,7 @@ import clsx from "clsx"
 import {
     AlertTriangle,
     ArrowLeft,
+    BarChart3,
     Clock,
     HelpCircle,
     Loader2,
@@ -226,6 +227,18 @@ export default function CampaignDetailClient({
                             <RefreshCw size={12} className="animate-spin" />
                             live
                         </span>
+                    )}
+
+                    {/* Only once there is something to report. A report of
+                        a draft is an empty page with a heading. */}
+                    {!notStartedYet && (
+                        <Link
+                            href={`/admin/operations/email/campaigns/${campaignId}/report`}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                        >
+                            <BarChart3 size={14} />
+                            Report
+                        </Link>
                     )}
 
                     {actions.map((item) => (
