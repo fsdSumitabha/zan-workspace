@@ -17,6 +17,9 @@ export interface Project {
 
     status: ProjectStatus
 
+    /** Sales region code: "IN", "US" or "AE". */
+    region?: string
+
     budget?: number
 
     createdAt: string

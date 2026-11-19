@@ -8,6 +8,7 @@ import { LEAD_STATUS } from "@/constants/leadStatus"
 import { CLIENT_STATUS } from "@/constants/clientStatus"
 import { PROJECT_STATUS } from "@/constants/projectStatus"
 import { MEETING_STATUS } from "@/constants/meetingStatus"
+import { DEFAULT_TIME_ZONE, dateKeyInZone, dayRangeInZone } from "@/lib/time/zone"
 
 const RUNNING_PROJECT_STATUSES = [
     PROJECT_STATUS.CONFIRMED,
@@ -59,17 +60,17 @@ function firstSum(rows: Array<{ sum?: number }> | undefined): number {
  * projects, meetings, and users. Runs five `$facet` aggregations in
  * parallel — one collection scan per model.
  */
-export async function computeOverallStats() {
+export async function computeOverallStats(timeZone: string = DEFAULT_TIME_ZONE) {
     const now = new Date()
 
-    const todayStart = new Date(now)
-    todayStart.setHours(0, 0, 0, 0)
+    // "Today" is the viewer's calendar day. setHours() used the server's day,
+    // and the server runs in UTC, so India's "today" began at 5:30 AM.
+    // todayEnd is the start of tomorrow, so the match below uses $lt.
+    const today = dayRangeInZone(dateKeyInZone(now, timeZone), timeZone)
+    const todayStart = today?.start ?? now
+    const todayEnd = today?.end ?? now
 
-    const todayEnd = new Date(now)
-    todayEnd.setHours(23, 59, 59, 999)
-
-    const weekFromNow = new Date(now)
-    weekFromNow.setDate(weekFromNow.getDate() + 7)
+    const weekFromNow = new Date(now.getTime() + 7 * 86_400_000)
 
     const [leadAgg, clientAgg, projectAgg, meetingAgg, userAgg, leadMonthlyRows] =
         await Promise.all([
@@ -136,7 +137,7 @@ export async function computeOverallStats() {
                                 $match: {
                                     scheduledAt: {
                                         $gte: todayStart,
-                                        $lte: todayEnd,
+                                        $lt: todayEnd,
                                     },
                                 },
                             },

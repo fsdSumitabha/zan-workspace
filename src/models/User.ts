@@ -25,6 +25,9 @@ export interface IUser extends Document {
 
     avatar?: string
 
+    // The zone of the browser this person last used, e.g. "Asia/Dubai".
+    timeZone?: string
+
     deletedAt: Date | null
 
     createdAt: Date
@@ -93,6 +96,12 @@ const UserSchema = new Schema<IUser>(
         },
 
         avatar: String,
+
+        // The zone of the browser this person last used, as an IANA name.
+        // The browser saves it (POST /api/auth/timezone). Notifications use it
+        // to write meeting times in this person's own zone. Empty until they
+        // next open the web app; their region's zone is used until then.
+        timeZone: String,
 
         deletedAt: {
             type: Date,

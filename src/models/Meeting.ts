@@ -26,12 +26,16 @@ export interface IMeeting extends Document {
     meetingLink?: string
     attendees?: mongoose.Types.ObjectId[]
     scheduledAt: Date
+    timeZone?: string
     status: MeetingStatus
     outcome?: string
     rescheduleHistory?: IRescheduleEntry[]
     external?: {
         provider?: string
         eventId?: string
+        syncedAt?: Date
+        syncedStatus?: number
+        syncError?: string
     }
     createdBy?: mongoose.Types.ObjectId
 }
@@ -92,10 +96,19 @@ const MeetingSchema = new mongoose.Schema<IMeeting>({
         }
     ],
 
+    // The one exact moment of the meeting, saved in UTC.
     scheduledAt: {
         type: Date,
         required: true
     },
+
+    // The client's time zone, an IANA name such as "Asia/Dubai". It does not
+    // change the moment above. It says how to show that moment to the client,
+    // and it is the zone of the Google invite. The form takes it from the
+    // client's region unless someone changes it. Meetings made before
+    // 19 Nov 2026 have none, and meetingZone() then uses their region's zone.
+    // See docs/time-zones.md.
+    timeZone: String,
 
     status: {
         type: Number,
@@ -125,10 +138,17 @@ const MeetingSchema = new mongoose.Schema<IMeeting>({
         }
     ],
 
-    // Future integrations
+    // The Google Calendar event. See src/lib/google/calendar/syncMeeting.ts.
     external: {
         provider: String, // "GOOGLE"
-        eventId: String
+        eventId: String,
+        // When Google last matched this meeting, and the status it matched.
+        // A cancelled meeting whose syncedStatus is not CANCELLED may still
+        // sit in the guests' calendars.
+        syncedAt: Date,
+        syncedStatus: Number,
+        // Why the last change did not reach Google. Cleared when one does.
+        syncError: String
     },
 
     createdBy: {

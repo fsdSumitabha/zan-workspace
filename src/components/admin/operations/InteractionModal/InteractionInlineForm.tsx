@@ -10,6 +10,7 @@ export default function InteractionInlineForm({
     type,
     entityType,
     entityId,
+    clientRegion,
     onClose,
     onSuccess
 }: any) {
@@ -34,7 +35,7 @@ export default function InteractionInlineForm({
             )}
 
             {type === INTERACTION_TYPE.MEETING_SCHEDULED && (
-                <MeetingForm entityType={entityType} entityId={entityId} onClose={onClose} onSuccess={onSuccess} />
+                <MeetingForm entityType={entityType} entityId={entityId} clientRegion={clientRegion} onClose={onClose} onSuccess={onSuccess} />
             )}
 
             {type === INTERACTION_TYPE.NOTE_ADDED && (

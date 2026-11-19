@@ -222,6 +222,7 @@ export default function Page() {
                 onClose={handleClose}
                 entityType={2}
                 entityId={projectId}
+                clientRegion={project?.region}
                 onSuccess={fetchInteractions}
             />
 

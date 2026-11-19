@@ -1,15 +1,10 @@
-import dayjs from "dayjs"
-import utc from "dayjs/plugin/utc"
-import timezone from "dayjs/plugin/timezone"
 import { EVENT_TYPE, type EventType } from "@/constants/eventTypes"
 import { LEAD_STATUS_META } from "@/constants/leadStatus"
 import { CLIENT_STATUS_META } from "@/constants/clientStatus"
 import { PROJECT_STATUS_META } from "@/constants/projectStatus"
-import { REGIONS, getRegion, parseRegionCode } from "@/lib/region"
+import { meetingTimeWords, meetingZone } from "@/lib/time/meetingTime"
+import { normalizeTimeZone } from "@/lib/time/zone"
 import type { NotificationActor, RenderedMessage } from "../../types/notification"
-
-dayjs.extend(utc)
-dayjs.extend(timezone)
 
 // Android shows about 40 characters of a title on one line. The body gets one
 // line, and up to about three when the notification is opened. Longer text is
@@ -47,22 +42,24 @@ function firstName(actor: NotificationActor | null): string {
     return actor?.name?.trim().split(/\s+/)[0] || "Someone"
 }
 
-// The time is written in the meeting's region, not the server's. On Vercel the
-// server runs in UTC, and an 11:30 AM meeting in India used to read "6:00 AM".
-// Returns "tomorrow at 11:30 AM", lower case, to sit inside a sentence.
-function fmtMeetingTime(d: string | Date | undefined, region?: string): string {
+/** Who reads the text. Meeting texts are written for the reader's own zone. */
+export interface RenderOptions {
+    /** The reader's time zone. Without it, the client's zone is used. */
+    readerZone?: string
+}
+
+// The time is written in the reader's zone, with the zone's name, never in
+// the server's (UTC on Vercel). When the client is in another zone, the
+// client's time follows. emit.ts renders once per reader zone.
+// Returns "tomorrow at 1:30 PM IST (client: 12:00 PM GST)", lower case, to
+// sit inside a sentence.
+function fmtMeetingTime(meeting: any, readerZone?: string): string {
+    const d = meeting?.scheduledAt
     if (!d) return ""
-    const zone = region ? REGIONS[parseRegionCode(region)].timeZone : getRegion().timeZone
-    const day = dayjs(d).tz(zone)
-    const now = dayjs().tz(zone)
-    // Compare the calendar dates in that zone: "today" is today there.
-    const diff = dayjs(day.format("YYYY-MM-DD")).diff(dayjs(now.format("YYYY-MM-DD")), "day")
-    const time = day.format("h:mm A")
-    if (diff === 0) return `today at ${time}`
-    if (diff === 1) return `tomorrow at ${time}`
-    if (diff === -1) return `yesterday at ${time}`
-    if (diff > 1 && diff < 7) return `${day.format("dddd")} at ${time}`
-    return `${day.format("MMM D")} at ${time}`
+    const at = new Date(d)
+    if (Number.isNaN(at.getTime())) return ""
+    const clientZone = meetingZone(meeting)
+    return meetingTimeWords(at, normalizeTimeZone(readerZone) ?? clientZone, clientZone)
 }
 
 function capitalize(s: string): string {
@@ -116,6 +113,7 @@ export function renderMessage(
     type: EventType,
     payload: Record<string, any>,
     actor: NotificationActor | null,
+    opts: RenderOptions = {},
 ): RenderedMessage {
     const by = firstName(actor)
 
@@ -195,7 +193,7 @@ export function renderMessage(
         }
         case 2010: { // MEETING_SCHEDULED
             const who = payload.parentName ?? "a client"
-            const when = fmtMeetingTime(payload.meeting?.scheduledAt, payload.meeting?.region)
+            const when = fmtMeetingTime(payload.meeting, opts.readerZone)
             // A visitor on the booking page books it, not a team member.
             if (payload.source === "booking-page") {
                 return {
@@ -214,7 +212,7 @@ export function renderMessage(
         }
         case 2020: { // MEETING_RESCHEDULED
             const who = payload.parentName ?? "a client"
-            const when = fmtMeetingTime(payload.meeting?.scheduledAt, payload.meeting?.region)
+            const when = fmtMeetingTime(payload.meeting, opts.readerZone)
             return {
                 badge: "calendar-clock",
                 title: clip(`${by} rescheduled the meeting with ${who}`, TITLE_MAX),
@@ -224,17 +222,17 @@ export function renderMessage(
         }
         case 2030: { // MEETING_CANCELLED
             const who = payload.parentName ?? "a client"
-            const when = fmtMeetingTime(payload.meeting?.scheduledAt, payload.meeting?.region)
+            const when = fmtMeetingTime(payload.meeting, opts.readerZone)
             return {
                 badge: "calendar-x",
                 title: clip(`${by} cancelled the meeting with ${who}`, TITLE_MAX),
-                body: bodyLine(when && `Was set for ${when}`),
+                body: bodyLine(when && `Was set for ${when}`, payload.reason),
                 url: parentUrlFromMeeting(payload.meeting),
             }
         }
         case 2040: { // MEETING_MISSED
             const who = payload.parentName ?? "a client"
-            const when = fmtMeetingTime(payload.meeting?.scheduledAt, payload.meeting?.region)
+            const when = fmtMeetingTime(payload.meeting, opts.readerZone)
             return {
                 badge: "calendar-x",
                 title: clip(`${by} marked a missed meeting with ${who}`, TITLE_MAX),

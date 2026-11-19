@@ -10,6 +10,8 @@ export interface SearchHit {
     type: SearchEntity
     title: string
     subtitle?: string
+    /** Meetings only: the start time as an ISO moment. Shown in the reader's zone. */
+    at?: string
     href: string
 }
 

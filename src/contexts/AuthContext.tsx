@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { UserRole } from "@/constants/userRoles"
 import type { ActiveRegion, RegionCode } from "@/lib/region"
+import { getBrowserTimeZone } from "@/lib/time/zone"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -26,6 +27,9 @@ interface AuthUser {
 
     /** Public URL path under `/public`, e.g. `/uploads/avatars/...` */
     avatar?: string
+
+    /** The zone saved on the account, e.g. "Asia/Dubai". Null until a browser saves one. */
+    timeZone?: string | null
 }
 
 interface AuthContextType {
@@ -81,6 +85,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         fetchUser()
     }, [])
+
+    // Saves this browser's zone on the account when it differs, so
+    // notifications write meeting times in the zone this person is in now.
+    // Someone who flies from Kolkata to Dubai gets Dubai times from the next
+    // page load. Fire and forget: a failure only means the old zone stays.
+    const userId = user?.id
+    const savedZone = user?.timeZone
+    useEffect(() => {
+        if (!userId) return
+        const zone = getBrowserTimeZone()
+        if (savedZone === zone) return
+        fetch("/api/auth/timezone", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ timeZone: zone }),
+        }).catch(() => {})
+    }, [userId, savedZone])
 
     const refreshUser = async () => {
         setLoading(true)

@@ -3,27 +3,23 @@
 import { useEffect, useState } from "react"
 import { CalendarClock } from "lucide-react"
 import { toast } from "sonner"
+import MeetingWhenField from "@/components/admin/operations/time/MeetingWhenField"
+import { showGoogleResult } from "@/components/admin/operations/time/googleToast"
 
 interface Props {
     meetingId: string
     currentScheduledAt: string
+    /** The client's zone. Pass meetingZone(meeting). */
+    clientZone: string
+    /** Online meetings have a Google event, and Google emails the guests. */
+    isOnline?: boolean
     onCancel: () => void
     onSuccess: () => void
 }
 
-/** `new Date()` formatted as YYYY-MM-DDTHH:mm in the user's local TZ. */
-function nowLocalDatetime(): string {
-    const d = new Date()
-    const offset = d.getTimezoneOffset() * 60000
-    return new Date(d.getTime() - offset).toISOString().slice(0, 16)
-}
-
-/** ISO date → YYYY-MM-DDTHH:mm in local time, for prefilling the input. */
-function isoToLocalDatetime(iso: string): string {
+function toDate(iso: string): Date | null {
     const d = new Date(iso)
-    if (isNaN(d.getTime())) return ""
-    const offset = d.getTimezoneOffset() * 60000
-    return new Date(d.getTime() - offset).toISOString().slice(0, 16)
+    return isNaN(d.getTime()) ? null : d
 }
 
 const INPUT =
@@ -36,20 +32,19 @@ const INPUT =
 export default function RescheduleMeetingForm({
     meetingId,
     currentScheduledAt,
+    clientZone,
+    isOnline = false,
     onCancel,
     onSuccess,
 }: Props) {
-    const minDatetime = nowLocalDatetime()
-
-    const [scheduledAt, setScheduledAt] = useState(
-        isoToLocalDatetime(currentScheduledAt)
-    )
+    // The exact moment picked. The field shows it in the zone the person picks.
+    const [scheduledAt, setScheduledAt] = useState<Date | null>(() => toDate(currentScheduledAt))
     const [reason, setReason] = useState("")
     const [submitting, setSubmitting] = useState(false)
 
     // Re-init when the underlying meeting changes (rare; cheap).
     useEffect(() => {
-        setScheduledAt(isoToLocalDatetime(currentScheduledAt))
+        setScheduledAt(toDate(currentScheduledAt))
         setReason("")
     }, [currentScheduledAt])
 
@@ -62,14 +57,12 @@ export default function RescheduleMeetingForm({
             toast.error("Please provide a reason")
             return
         }
-
-        const newDate = new Date(scheduledAt)
-        if (isNaN(newDate.getTime())) {
-            toast.error("Invalid date")
+        if (scheduledAt.getTime() <= Date.now()) {
+            toast.error("New time must be in the future")
             return
         }
-        if (newDate.getTime() <= Date.now()) {
-            toast.error("New time must be in the future")
+        if (scheduledAt.getTime() === new Date(currentScheduledAt).getTime()) {
+            toast.error("Pick a time that is different from the current one")
             return
         }
 
@@ -81,16 +74,20 @@ export default function RescheduleMeetingForm({
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        scheduledAt: newDate.toISOString(),
+                        // The exact moment, ending in "Z".
+                        scheduledAt: scheduledAt.toISOString(),
                         reason: reason.trim(),
                     }),
                 }
             )
-            const json = await res.json()
+            const json = await res.json().catch(() => null)
             if (!res.ok || !json?.success) {
                 throw new Error(json?.message || "Failed to reschedule")
             }
-            toast.success(json.message || "Meeting rescheduled")
+            showGoogleResult(json.google, {
+                done: "Meeting rescheduled",
+                googleDone: "Meeting rescheduled. Google emailed the guests the new time.",
+            })
             onSuccess()
         } catch (err: any) {
             toast.error(err?.message || "Failed to reschedule")
@@ -106,19 +103,15 @@ export default function RescheduleMeetingForm({
                 Reschedule meeting
             </div>
 
-            <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-medium text-neutral-500 uppercase tracking-wide">
-                    New date & time
-                </label>
-                <input
-                    type="datetime-local"
-                    className={INPUT}
-                    value={scheduledAt}
-                    min={minDatetime}
-                    onChange={(e) => setScheduledAt(e.target.value)}
-                    disabled={submitting}
-                />
-            </div>
+            <MeetingWhenField
+                label="New date & time"
+                labelClassName="text-[11px] font-medium text-neutral-500 uppercase tracking-wide"
+                inputClassName={INPUT}
+                value={scheduledAt}
+                onChange={setScheduledAt}
+                clientZone={clientZone}
+                disabled={submitting}
+            />
 
             <div className="flex flex-col gap-1">
                 <label className="text-[11px] font-medium text-neutral-500 uppercase tracking-wide">
@@ -133,6 +126,12 @@ export default function RescheduleMeetingForm({
                     disabled={submitting}
                 />
             </div>
+
+            {isOnline && (
+                <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                    Google Calendar will move the event and email every guest the new time.
+                </p>
+            )}
 
             <div className="flex justify-end gap-2">
                 <button

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
+import { dateKeyRangeFilter } from "@/lib/time/zone"
+import { resolveViewerZone } from "@/lib/time/viewerZone"
 import dbConnect from "@/lib/db/dbConnect"
 import Lead from "@/models/Lead"
 import { SortOrder } from "mongoose"
@@ -17,7 +19,7 @@ import { resolveWriteRegion, RegionChoiceError } from "@/lib/region-scope/resolv
 
 export async function GET(req: NextRequest) {
     try {
-        await requireRole(req, [10, 15, 50, 60, 65, 69, 70, 45])
+        const viewer = await requireRole(req, [10, 15, 50, 60, 65, 69, 70, 45])
 
         await dbConnect()
 
@@ -52,23 +54,12 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        // Date range on createdAt — `to` is treated as end-of-day inclusive.
-        if (from || to) {
-            const createdAt: Record<string, Date> = {}
-            if (from) {
-                const f = new Date(from)
-                if (!isNaN(f.getTime())) createdAt.$gte = f
-            }
-            if (to) {
-                const t = new Date(to)
-                if (!isNaN(t.getTime())) {
-                    t.setHours(23, 59, 59, 999)
-                    createdAt.$lte = t
-                }
-            }
-            if (Object.keys(createdAt).length > 0) {
-                query.createdAt = createdAt
-            }
+        // Date range on createdAt. "From" and "To" are days in the viewer's
+        // zone, and To includes its whole day. setHours() used the server's
+        // day, which is UTC on Vercel, so a day in India ran 5:30 AM to 5:30 AM.
+        const createdAt = dateKeyRangeFilter(from, to, resolveViewerZone(req, viewer))
+        if (createdAt) {
+            query.createdAt = createdAt
         }
 
         const skip = (page - 1) * limit
