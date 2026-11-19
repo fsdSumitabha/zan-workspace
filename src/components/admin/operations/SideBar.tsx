@@ -52,7 +52,7 @@ const navItems: NavItem[] = [
         roles: EMAIL_ACCESS_ROLES,
         children: [
             { name: "Overview", href: "/admin/operations/email", roles: EMAIL_ACCESS_ROLES },
-            { name: "Campaigns", href: "/admin/operations/email/campaigns", roles: EMAIL_ACCESS_ROLES, soon: true },
+            { name: "Campaigns", href: "/admin/operations/email/campaigns", roles: EMAIL_ACCESS_ROLES },
             { name: "Templates", href: "/admin/operations/email/templates", roles: EMAIL_ACCESS_ROLES },
             { name: "Audiences", href: "/admin/operations/email/audiences", roles: EMAIL_ACCESS_ROLES },
             { name: "Contacts", href: "/admin/operations/email/contacts", roles: EMAIL_ACCESS_ROLES },

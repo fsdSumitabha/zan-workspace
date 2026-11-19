@@ -359,3 +359,83 @@ export interface CampaignActionResult {
     recipients?: number
     message: string
 }
+
+/** Everything the campaign wizard needs, in one response. */
+export interface CampaignChoices {
+    templates: Array<{
+        _id: string
+        name: string
+        category: number
+        thumbnailUrl: string
+        versionId: string | null
+        version: number
+        mergeTokens: string[]
+        htmlBytes: number
+    }>
+    audiences: Array<{
+        _id: string
+        name: string
+        description: string
+        lastCount: number | null
+        lastCountedAt: string | null
+    }>
+    identities: Array<{
+        _id: string
+        fromName: string
+        fromEmail: string
+        replyTo: string
+        isDefault: boolean
+        verified: boolean
+    }>
+    zones: Array<{ zone: string; place: string; hint: string }>
+    mergeTokens: Array<{
+        key: string
+        label: string
+        sample: string
+        defaultFallback: string
+    }>
+    /** Whether a campaign could actually go out, checked up front. */
+    readiness: {
+        region: string | null
+        needsRegionPick: boolean
+        secretKeyReady: boolean
+        providerReady: boolean
+        identityReady: boolean
+        templateReady: boolean
+        audienceReady: boolean
+        killSwitch: boolean
+        sendRatePerSecond: number
+        reportsDelivery: boolean
+        capabilityNote: string
+    }
+    /** How late a scheduled campaign can be. Null with no region pinned. */
+    schedulePrecisionMinutes: number | null
+}
+
+/** One recipient row on the campaign detail screen. */
+export interface CampaignRecipientRow {
+    _id: string
+    email: string
+    name: string
+    status: number
+    attempts: number
+    lastError: string
+    lastSmtpCode: number | null
+    submittedAt: string | null
+    finishedAt: string | null
+    openCount: number
+    clickCount: number
+    sourceType: number
+}
+
+export interface CampaignDetailResponse {
+    campaign: EmailCampaignRow
+    recipients: CampaignRecipientRow[]
+    recipientPagination: {
+        page: number
+        limit: number
+        total: number
+        pages: number
+    }
+    recipientCounts: Record<string, number>
+}
