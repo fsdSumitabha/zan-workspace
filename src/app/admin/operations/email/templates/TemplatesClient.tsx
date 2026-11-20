@@ -29,6 +29,7 @@ import {
     TEMPLATE_CATEGORY_META,
     type TemplateCategory,
 } from "@/constants/emailStatus"
+import { commentWithDoubleHyphen } from "@/lib/email/template/normalise"
 import type { EmailTemplateRow } from "@/types/email"
 
 const API = "/api/admin/operations/email/templates"
@@ -147,6 +148,21 @@ export default function TemplatesClient() {
             setFileProblem(
                 "That does not look like MJML. The file should have an <mjml> " +
                     "tag at the top. A plain HTML email will not compile."
+            )
+            return
+        }
+
+        // The same rule the server applies, run here so the line number
+        // arrives before the upload rather than after it. A dashed
+        // separator in a header comment is the usual cause, and a
+        // generated file often has one.
+        const badComment = commentWithDoubleHyphen(text)
+        if (badComment > 0) {
+            setFile(null)
+            setFileProblem(
+                `Line ${badComment}: a comment contains two hyphens in a row. ` +
+                    "XML does not allow it and the editor will not open the " +
+                    "template. Remove the dashes from that comment."
             )
             return
         }

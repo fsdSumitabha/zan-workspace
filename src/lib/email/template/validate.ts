@@ -1,4 +1,5 @@
 import { EmailError } from "@/lib/email/http"
+import { commentWithDoubleHyphen } from "./normalise"
 
 /**
  * Checks MJML source before it is ever handed to the compiler.
@@ -106,6 +107,25 @@ export function validateMjmlSource(mjml: unknown): MjmlCheck {
     if (!/<\s*mjml[\s>]/i.test(mjml)) {
         throw new EmailError(
             "This does not look like MJML. It should start with an <mjml> tag.",
+            400,
+            { field: "mjml" }
+        )
+    }
+
+    /**
+     * Refused here rather than left to fail later.
+     *
+     * The compiler accepts `--` inside a comment and the editor does not,
+     * so without this a template saves, sends correctly, and then cannot
+     * be opened again. Better to say so now, with the line.
+     */
+    const badComment = commentWithDoubleHyphen(mjml)
+    if (badComment > 0) {
+        throw new EmailError(
+            `Line ${badComment}: a comment contains two hyphens in a row. ` +
+            "XML does not allow that, and the editor will not open the " +
+            "template. Remove the dashes from the comment, such as a " +
+            "dashed separator line.",
             400,
             { field: "mjml" }
         )

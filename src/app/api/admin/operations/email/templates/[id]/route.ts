@@ -13,6 +13,7 @@ import EmailTemplateVersion, {
 } from "@/models/EmailTemplateVersion"
 import EmailAsset, { type IEmailAsset } from "@/models/EmailAsset"
 import EmailCampaign from "@/models/EmailCampaign"
+import { normaliseMjml } from "@/lib/email/template/normalise"
 import {
     EmailError,
     errorResponse,
@@ -97,7 +98,19 @@ export async function GET(
                 versionCount: versions.length,
                 currentVersion: current?.version ?? 0,
             } as IEmailTemplate & { versionCount: number; currentVersion: number }),
-            mjml: useDraft ? draft! : (current?.mjml ?? starterMjml()),
+            /**
+             * Normalised on the way out as well as in.
+             *
+             * Templates saved before this existed still hold the bare
+             * ampersands the editor's own save wrote, and they cannot be
+             * opened. Repairing them here means they heal the next time
+             * somebody opens one, instead of staying broken for ever or
+             * needing a migration. New rows are already clean, so this
+             * changes nothing for them.
+             */
+            mjml: normaliseMjml(
+                useDraft ? draft! : (current?.mjml ?? starterMjml())
+            ),
             fromDraft: useDraft,
             currentVersion: current
                 ? serializeVersion(current, { includeSource: true })
@@ -190,7 +203,10 @@ export async function PATCH(
                     { field: "draftMjml" }
                 )
             }
-            updates.draftMjml = draft
+            // A draft is reopened by the editor like any version, so it
+            // gets the same treatment. Nothing is compiled here: an
+            // autosave must never refuse half-typed markup.
+            updates.draftMjml = normaliseMjml(draft)
             updates.draftSavedAt = new Date()
             updates.draftSavedBy = user.id
         }
