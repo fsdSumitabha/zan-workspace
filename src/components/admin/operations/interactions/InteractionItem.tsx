@@ -16,7 +16,7 @@ export default function InteractionItem({ entityType, item, onChanged }: { entit
         case INTERACTION_TYPE.NOTE_ADDED:
             return <NoteItem item={item} onChanged={onChanged} />
         case INTERACTION_TYPE.QUOTATION_SENT:
-            return <QuotationItem item={item} />
+            return <QuotationItem item={item} onChanged={onChanged} />
         case INTERACTION_TYPE.STATUS_CHANGED:
             return <StatusChangeItem entityType={entityType} item={item} onChanged={onChanged} />
         case INTERACTION_TYPE.CALL_MADE:

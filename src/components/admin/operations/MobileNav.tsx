@@ -2,9 +2,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { FolderKanban, Home, Target, UserRoundCog, Handshake, PhoneCall, } from "lucide-react";
+import { FolderKanban, Home, Target, UserRoundCog, Handshake, PhoneCall, Mails, } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { LEAD_SOURCE_ACCESS_ROLES } from "@/constants/leadSourceRoles";
+import { EMAIL_ACCESS_ROLES } from "@/constants/emailRoles";
 import styles from "@/assets/css/MobileNav.module.css";
 
 
@@ -45,6 +46,14 @@ const navItems: Array<{
         href: "/admin/operations/projects",
         roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 70, 80],
         icon: FolderKanban,
+    },
+    {
+        // "Email", not "Email Marketing". The label shows under the active
+        // icon, and the long name runs into the next icon on a small phone.
+        name: "Email",
+        href: "/admin/operations/email",
+        roles: EMAIL_ACCESS_ROLES,
+        icon: Mails,
     },
     {
         name: "Users",

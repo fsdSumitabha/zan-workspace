@@ -193,6 +193,7 @@ List state lives in the URL (`?page=`, `?search=`, filters). A reload or a share
 ## 6. Setup
 
 Copy `env.example` to `.env.local`. The groups are MongoDB, `JWT_SECRET`, Meta, Google Ads, Google Calendar, ImageKit, SMTP and the client portal.
+There are two SMTP accounts: `HR_SMTP_*` for the user module, `SALES_SMTP_*` for campaigns and quotations. See `src/lib/mail/accounts.ts`.
 The code also reads `NEXT_PUBLIC_REGION` and `APP_LOGIN_URL`. Neither is in `env.example` yet.
 
 ```bash

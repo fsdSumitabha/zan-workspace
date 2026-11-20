@@ -17,6 +17,15 @@ export interface IQuotation extends Document {
     status?: number
     uploadedBy?: mongoose.Types.ObjectId
     createdBy?: mongoose.Types.ObjectId
+    // Whether the quotation reached the client by email. See
+    // src/services/quotationMail.ts.
+    mail?: {
+        status?: "sent" | "failed"
+        to?: string
+        sentAt?: Date
+        attempts?: number
+        error?: string
+    }
 }
 
 const QuotationSchema = new Schema<IQuotation>(
@@ -58,6 +67,27 @@ const QuotationSchema = new Schema<IQuotation>(
         createdBy: {
             type: Schema.Types.ObjectId,
             ref: "User"
+        },
+
+        // The email to the client. See src/services/quotationMail.ts.
+        //
+        // The quotation is saved first and the mail is sent after, so a mail
+        // failure never loses the record. The failure is kept here instead,
+        // and the timeline shows it with a Try again button. Same shape and
+        // same reasoning as Meeting.external.
+        mail: {
+            // "sent" or "failed". Absent means nobody has tried yet, which
+            // is what every quotation created before this existed looks like.
+            status: String,
+            // The address it went to, or the one that was tried. Kept because
+            // a client's address can change after the quotation was sent.
+            to: String,
+            sentAt: Date,
+            // Counts every try, including the ones that failed. A high number
+            // next to an error means the problem is not going away by itself.
+            attempts: Number,
+            // Why the last try did not arrive. Cleared when one does.
+            error: String
         }
     },
     { timestamps: true }

@@ -10,6 +10,19 @@ export const ENTITY_TYPE = {
     QUOTATION: 8,
     LEAD_SOURCE: 9,
     LEAD_SOURCE_UPLOAD: 10,
+
+    // Email marketing. See docs/EMAIL_MARKETING_DATABASE_SCHEMA.md.
+    // Only the records a person edits get a code. Job rows
+    // (CampaignRecipient, EmailDeliveryAttempt, EmailTrackingEvent) are
+    // written by workers, not people, so they are not audited.
+    EMAIL_CAMPAIGN: 11,
+    EMAIL_TEMPLATE: 12,
+    EMAIL_AUDIENCE: 13,
+    EMAIL_CONTACT: 14,
+    EMAIL_ASSET: 15,
+    EMAIL_SUPPRESSION: 16,
+    EMAIL_SENDER_IDENTITY: 17,
+    EMAIL_PROVIDER_CONFIG: 18,
 } as const
 
 export type EntityType = (typeof ENTITY_TYPE)[keyof typeof ENTITY_TYPE]
@@ -26,4 +39,12 @@ export const ENTITY_TYPE_META: Record<EntityType, { label: string }> = {
     8: { label: "Quotation" },
     9: { label: "Lead Source" },
     10: { label: "Lead Source Upload" },
+    11: { label: "Email Campaign" },
+    12: { label: "Email Template" },
+    13: { label: "Email Audience" },
+    14: { label: "Email Contact" },
+    15: { label: "Email Asset" },
+    16: { label: "Email Suppression" },
+    17: { label: "Sender Identity" },
+    18: { label: "Email Provider" },
 }
