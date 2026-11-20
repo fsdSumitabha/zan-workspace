@@ -22,7 +22,7 @@ import { previewAudience } from "@/lib/email/audience/preview"
 import { getQueue } from "@/lib/email/queue"
 import { wallTimeToUtc, normalizeTimeZone } from "@/lib/time/zone"
 import {
-    getDeliverySettings,
+    deliverySettings,
     schedulePrecisionMinutes,
 } from "@/lib/email/config/deliveryConfig"
 import type { CampaignActionResult } from "@/types/email"
@@ -209,7 +209,7 @@ async function schedule(
         }
     )
 
-    const settings = await getDeliverySettings(campaign.region)
+    const settings = deliverySettings()
     const precision = schedulePrecisionMinutes(settings)
 
     return {

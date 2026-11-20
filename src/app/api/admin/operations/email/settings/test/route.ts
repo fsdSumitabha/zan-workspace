@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
+
 import dbConnect from "@/lib/db/dbConnect"
 import { requireRole } from "@/lib/auth/requireRole"
 import { EMAIL_ADMIN_ROLES } from "@/constants/emailRoles"
-import EmailProviderConfig, {
-    type IEmailProviderConfig,
-} from "@/models/EmailProviderConfig"
 import { resolveWriteRegion } from "@/lib/region-scope/resolveWriteRegion"
-import { EmailError, errorResponse, readJson, readString } from "@/lib/email/http"
-import { decryptSecret } from "@/lib/email/config/crypto"
+import { EmailError, errorResponse } from "@/lib/email/http"
+import { MAIL_ACCOUNT, readMailAccount } from "@/lib/mail/accounts"
+import { recordTestResult } from "@/lib/email/config/providerConfig"
 import { testConnection } from "@/lib/email/delivery/transport"
 import { checkRateLimit } from "@/lib/security/rateLimit"
 import type { SmtpTestResult } from "@/types/email"
@@ -15,14 +14,16 @@ import type { SmtpTestResult } from "@/types/email"
 /**
  * POST /api/admin/operations/email/settings/test
  *
- * Opens an SMTP connection and signs in. Sends nothing.
+ * Opens an SMTP connection to the sales mailbox and signs in. Sends
+ * nothing, so it cannot reach anybody.
  *
- * It tests the password in the body when one is sent, so somebody can
- * check a new password before saving it. With no password in the body it
- * tests the stored one.
+ * It takes no body. There is nothing to try out: the credentials come from
+ * the server's SALES_SMTP_* variables, and those are what a campaign will
+ * use. Testing anything else would prove nothing about whether a campaign
+ * can send.
  *
- * The result is written back to the provider row, so the settings screen
- * can show when it was last checked and what the server said.
+ * The result is recorded so the settings and overview screens can say when
+ * the connection was last proved, and what the server said if it refused.
  */
 export async function POST(req: NextRequest) {
     try {
@@ -42,80 +43,39 @@ export async function POST(req: NextRequest) {
         await dbConnect()
 
         const region = resolveWriteRegion(undefined, user)
-        const body = await readJson(req)
+        const account = readMailAccount(MAIL_ACCOUNT.SALES)
 
-        const stored = await EmailProviderConfig.findOne({ region })
-            .sort({ isDefault: -1, createdAt: 1 })
-            .select("+passCipher +passIv +passTag")
-            .lean<IEmailProviderConfig>()
-
-        const host = readString(body, "host", 255) ?? stored?.host
-        const user_ = readString(body, "user", 255) ?? stored?.user
-        const rawPort = body.port === undefined ? stored?.port : Number(body.port)
-
-        if (!host || !user_ || !Number.isFinite(rawPort)) {
+        if (!account) {
             throw new EmailError(
-                "Enter the host, the port and the username before testing.",
+                "The sales mailbox is not set up on this server. Set " +
+                    "SALES_SMTP_HOST, SALES_SMTP_PORT, SALES_SMTP_USER and " +
+                    "SALES_SMTP_PASS, then restart it.",
                 400
             )
         }
 
-        const port = Number(rawPort)
-        const secure =
-            body.secure === undefined
-                ? (stored?.secure ?? port === 465)
-                : Boolean(body.secure)
+        const result = await testConnection({
+            host: account.host,
+            port: account.port,
+            secure: account.secure,
+            user: account.user,
+            pass: account.pass,
+        })
 
-        const pass = resolvePassword(readString(body, "pass", 500), stored)
+        await recordTestResult(region, result)
 
-        const result = await testConnection({ host, port, secure, user: user_, pass })
-        const testedAt = new Date()
-
-        // Record it even when it failed. "Last checked 10 minutes ago, 535
-        // bad password" is the most useful line on the settings screen.
-        if (stored) {
-            await EmailProviderConfig.updateOne(
-                { _id: stored._id },
-                {
-                    $set: {
-                        lastTestAt: testedAt,
-                        lastTestOk: result.ok,
-                        lastTestMessage: result.message,
-                    },
-                }
-            )
-        }
-
-        const data: SmtpTestResult = {
+        const body: SmtpTestResult = {
             ok: result.ok,
-            message: result.message,
-            testedAt: testedAt.toISOString(),
+            message: result.ok
+                ? `Signed in to ${account.user} on ${account.host}.`
+                : result.message,
+            testedAt: new Date().toISOString(),
         }
 
-        return NextResponse.json({ success: true, data })
+        // 200 either way. The request worked; the answer is in the body.
+        // A failed sign-in is information, not a broken endpoint.
+        return NextResponse.json({ success: true, data: body })
     } catch (error) {
-        return errorResponse(error, "The connection test could not be run")
+        return errorResponse(error, "The connection test could not run")
     }
-}
-
-/** The typed password if one was sent, otherwise the stored one. */
-function resolvePassword(
-    typed: string | undefined,
-    stored: IEmailProviderConfig | null
-): string {
-    if (typed) return typed
-
-    if (!stored?.passCipher || !stored.passIv || !stored.passTag) {
-        throw new EmailError(
-            "No password is saved yet. Enter one to test the connection.",
-            400,
-            { field: "pass" }
-        )
-    }
-
-    return decryptSecret({
-        cipher: stored.passCipher,
-        iv: stored.passIv,
-        tag: stored.passTag,
-    })
 }

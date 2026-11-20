@@ -86,8 +86,10 @@ The count is always shown on the report, so nothing is hidden. If the
 number is ever more than a handful, that is a signal the workers are
 being killed mid-flight, not a signal to change the policy.
 
-The policy can be changed per region in Settings. Think about it before
-you do.
+The policy is `unknownOutcomePolicy` in
+`src/lib/email/config/deliveryConfig.ts`. Changing it is a code change, and
+it should be: letting the system resend by default is a decision that
+deserves a review, not a toggle.
 
 ---
 
@@ -148,20 +150,37 @@ beginning with `=` is shown rather than run as a formula.
 
 ---
 
-## 6. The numbers to set, and what they actually do
+## 6. The numbers, and why they are not yours to change
 
-**Email Marketing → Settings** holds the delivery settings, per region.
-Each field has one sentence of help under it. The ones that matter:
+There is nothing to set. Every operating number is a constant in
+`src/lib/email/config/deliveryConfig.ts`, and **Email Marketing →
+Settings** shows them read-only, each with one sentence saying what it
+does.
 
-- **Emails per second** and **Emails per day** are the provider's
-  limits, not wishes. Set them to what the provider allows.
-- **Send concurrency** is how many sends are in flight inside one
-  worker. See the measurements below before raising it.
-- **Scheduler interval** decides how close to its chosen time a
-  scheduled campaign actually goes out. The campaign screen tells people
-  the real precision, which is twice this interval.
-- **Bounce limit** stops a campaign when that share of sends hard
-  bounce, once enough have been sent to be meaningful. Leave it on.
+They are in code because none of them is a preference. Each comes from a
+limit somebody else imposes:
+
+- **Emails per second (10)** and **Emails per day (1,000)** come from
+  Gmail. The daily figure is half of what Gmail allows the account; the
+  other half is left for quotations and user mail, which do not pass
+  through this limiter. Spending the whole allowance would block the
+  mailbox for 24 hours and stop those too.
+- **Send concurrency (2)** comes from the measurement below.
+- **Worker time budget (180s)** comes from Vercel's 300-second ceiling.
+- **Scheduler interval (15 minutes)** is a statement about whatever
+  scheduler is actually wired up, not a wish. The campaign screen shows
+  double it, which is the honest worst case.
+- **Bounce limit (10% after 25 sends)** stops a campaign when a list is
+  bad. The older 5%-after-100 never fired at all on a campaign of under
+  100 recipients, which is every campaign here.
+
+The connection comes from the `SALES_SMTP_*` environment variables, the
+same mailbox quotations go out from. There is no SMTP form and no stored
+password.
+
+**The kill switch is the one thing on that screen you can change.** It
+has to be, because it is the only control that matters while mail is
+going out, and an environment variable needs a redeploy.
 
 ### What the benchmark measured
 
@@ -222,19 +241,26 @@ addresses. It cannot reach a real person.
 ## 7. Raising the send rate
 
 When the provider changes — a higher Gmail limit, or a move to SES —
-change the numbers in Settings, not in the code. No deploy is needed:
-the next worker reads the new values.
+edit `DELIVERY_LIMITS` in `src/lib/email/config/deliveryConfig.ts` and
+deploy. This is a code change on purpose: the numbers carry the reasoning
+that produced them, and a figure changed on a screen at 2am carries
+nothing.
 
 1. Confirm the new limit in the provider's own documentation.
-2. Set **Emails per second** and **Emails per day** to it.
-3. Leave send concurrency alone at first. Send one campaign and read the
-   report's throughput figure.
-4. If throughput is well under the new limit, and Delivery Activity
-   shows low latency, raise send concurrency one step and measure again.
+2. Change `globalPerSecond` and `globalPerDay`, and update the comment
+   above each with where the new figure came from.
+3. Leave `sendConcurrency` alone at first. Deploy, send one campaign, and
+   read the report's throughput figure.
+4. If throughput is well under the new limit, and Delivery Activity shows
+   low latency, raise `sendConcurrency` one step and measure again.
 
 Set the rate below the provider's limit, not at it. The limiter is a
 backstop, and several warm instances each sending at the limit add up to
 more than the limit.
+
+Changing the mailbox itself is not a code change: edit `SALES_SMTP_*` and
+restart. Quotations follow it automatically, which is the point of there
+being one account.
 
 ---
 

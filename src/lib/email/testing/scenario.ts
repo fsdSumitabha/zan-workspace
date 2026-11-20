@@ -14,8 +14,10 @@ import EmailDispatchLock from "@/models/EmailDispatchLock"
 import EmailContact from "@/models/EmailContact"
 import EmailAudience from "@/models/EmailAudience"
 import { CAMPAIGN_STATUS, RECIPIENT_STATUS } from "@/constants/emailStatus"
-import { DELIVERY_DEFAULTS } from "@/lib/email/config/deliveryConfig"
-import { encryptSecret } from "@/lib/email/config/crypto"
+import {
+    DELIVERY_LIMITS,
+    setTestLimits,
+} from "@/lib/email/config/deliveryConfig"
 import { buildTrackingToken } from "@/lib/email/campaign/snapshot"
 import { clearCollections } from "./db"
 
@@ -34,24 +36,26 @@ import { clearCollections } from "./db"
  */
 
 export const TEST_REGION = "IN" as const
-export const TEST_PROVIDER_KEY = "sink:test"
-
 /**
- * Keys the tests use, so a developer does not have to configure anything
- * to run them and the suite does not depend on whatever is in .env.local.
- *
- * They are fixed values in a file that only tests import. Nothing they
- * encrypt leaves the test database, and the password they protect is
- * itself a placeholder.
+ * The rate limiter's counter key. Fixed in providerConfig.ts now that
+ * there is one sending account, so a test that clears counters must use
+ * the same string the engine does.
  */
-const TEST_SECRET_KEY =
-    "0000000000000000000000000000000000000000000000000000000000000001"
+export const TEST_PROVIDER_KEY = "sales"
 
 function ensureTestSecrets(): void {
-    process.env.EMAIL_SECRET_KEY ??= TEST_SECRET_KEY
     process.env.EMAIL_TRACKING_SECRET ??= "test-tracking-secret"
     process.env.EMAIL_PUBLIC_ORIGIN ??= "http://localhost:3000"
     process.env.EMAIL_JOB_SECRET ??= "test-job-secret-at-least-16-chars"
+
+    // Campaigns send through the sales mailbox from the environment, so a
+    // test has to provide one. The address is on `.invalid`, which RFC 2606
+    // reserves and which can never resolve, and the transport is replaced
+    // by a sink before any worker runs. Nothing here can reach a person.
+    process.env.SALES_SMTP_HOST ??= "sink.invalid"
+    process.env.SALES_SMTP_PORT ??= "465"
+    process.env.SALES_SMTP_USER ??= "sink@zan.invalid"
+    process.env.SALES_SMTP_PASS ??= "not-a-real-password"
 }
 
 export const ALL_EMAIL_MODELS = [
@@ -100,45 +104,28 @@ export async function seedScenario(
     ensureTestSecrets()
     const now = new Date()
 
-    /* ---- Provider, with a password the engine can decrypt ---- */
+    /* ---- Limits ----
+     *
+     * The real ones are constants now, so a scenario overrides them
+     * through the test seam rather than by seeding a row. The defaults
+     * here are deliberately loose: a test that wants to watch the rate
+     * limiter bite sets perSecond itself.
+     */
 
-    const secret = encryptSecret("not-a-real-password")
-
-    await EmailProviderConfig.create({
-        region: TEST_REGION,
-        name: "Sink",
-        providerKey: TEST_PROVIDER_KEY,
-        host: "sink.invalid",
-        port: 465,
-        secure: true,
-        user: "sink@zan.invalid",
-        passCipher: secret.cipher,
-        passIv: secret.iv,
-        passTag: secret.tag,
-        maxConnections: 1,
-        maxMessages: 100,
+    setTestLimits({
         globalPerSecond: options.perSecond ?? 50,
         globalPerDay: options.perDay ?? 10_000,
-        killSwitch: false,
-        isDefault: true,
-    })
-
-    /* ---- Delivery settings ---- */
-
-    await EmailDeliveryConfig.create({
-        region: TEST_REGION,
-        ...DELIVERY_DEFAULTS,
         maxJobsPerInvocation:
-            options.maxJobsPerInvocation ?? DELIVERY_DEFAULTS.maxJobsPerInvocation,
+            options.maxJobsPerInvocation ?? DELIVERY_LIMITS.maxJobsPerInvocation,
         sendConcurrency:
-            options.sendConcurrency ?? DELIVERY_DEFAULTS.sendConcurrency,
+            options.sendConcurrency ?? DELIVERY_LIMITS.sendConcurrency,
         workerDurationBudgetMs:
             options.workerDurationBudgetMs ??
-            DELIVERY_DEFAULTS.workerDurationBudgetMs,
+            DELIVERY_LIMITS.workerDurationBudgetMs,
         leaseDurationMs:
-            options.leaseDurationMs ?? DELIVERY_DEFAULTS.leaseDurationMs,
+            options.leaseDurationMs ?? DELIVERY_LIMITS.leaseDurationMs,
         maxAttemptsTransient:
-            options.maxAttemptsTransient ?? DELIVERY_DEFAULTS.maxAttemptsTransient,
+            options.maxAttemptsTransient ?? DELIVERY_LIMITS.maxAttemptsTransient,
     })
 
     /* ---- Sender identity ---- */

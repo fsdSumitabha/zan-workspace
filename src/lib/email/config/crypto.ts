@@ -129,7 +129,7 @@ export function configFingerprint(parts: {
     port: number
     secure: boolean
     user: string
-    passCipher?: string
+    passHash?: string
     maxConnections: number
     maxMessages: number
 }): string {
@@ -141,7 +141,7 @@ export function configFingerprint(parts: {
                 parts.port,
                 parts.secure,
                 parts.user,
-                parts.passCipher ?? "",
+                parts.passHash ?? "",
                 parts.maxConnections,
                 parts.maxMessages,
             ].join("|")

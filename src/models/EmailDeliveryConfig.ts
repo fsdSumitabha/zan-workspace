@@ -79,6 +79,35 @@ export interface IEmailDeliveryConfig extends Document {
     /** Only apply the bounce threshold after this many sends. */
     bounceRateMinSample: number
 
+    /**
+     * Stop all campaign sending in this region, now.
+     *
+     * The only field on this row the engine still reads. Everything else
+     * here was moved into DELIVERY_LIMITS in
+     * src/lib/email/config/deliveryConfig.ts, because those numbers come
+     * from Gmail's and Vercel's limits rather than from anybody's
+     * preference. The columns are left in place so existing rows are not
+     * disturbed.
+     *
+     * This one stayed in the database because it is the only control that
+     * has to change while mail is going out, and an environment variable
+     * cannot: changing one on Vercel needs a redeploy.
+     *
+     * No row at all means sending is allowed.
+     */
+    killSwitch?: boolean
+    /** Shown to whoever finds sending switched off. */
+    killSwitchReason?: string
+
+    /**
+     * The last time somebody pressed Test connection, and what the mail
+     * server said. Moved here from the provider row, which no longer
+     * exists at send time. The overview screen reads it.
+     */
+    lastTestOk?: boolean
+    lastTestAt?: Date
+    lastTestMessage?: string
+
     updatedBy?: Types.ObjectId
     createdAt: Date
     updatedAt: Date
@@ -126,6 +155,14 @@ const EmailDeliveryConfigSchema = new Schema<IEmailDeliveryConfig>(
 
         bounceRateThreshold: { type: Number, default: 0.05, min: 0, max: 1 },
         bounceRateMinSample: { type: Number, default: 100, min: 1 },
+
+        // The one field still read at send time. See the interface above.
+        killSwitch: { type: Boolean, default: false },
+        killSwitchReason: { type: String, trim: true, maxlength: 300 },
+
+        lastTestOk: { type: Boolean },
+        lastTestAt: { type: Date },
+        lastTestMessage: { type: String, trim: true, maxlength: 500 },
 
         updatedBy: { type: Schema.Types.ObjectId, ref: "User" },
     },

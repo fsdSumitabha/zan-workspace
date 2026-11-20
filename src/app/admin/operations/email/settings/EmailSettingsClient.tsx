@@ -4,22 +4,20 @@ import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
-    AlertTriangle,
     CheckCircle2,
     Globe,
     Loader2,
     Plug,
     PowerOff,
-    Save,
     ShieldAlert,
     Sliders,
     UserRoundCheck,
+    XCircle,
 } from "lucide-react"
 
 import { handleAuthError } from "@/lib/auth/handleAuthError"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
 import SettingsCard, {
-    Field,
     buttonGhost,
     buttonPrimary,
     inputClass,
@@ -33,25 +31,55 @@ import type {
 
 const API = "/api/admin/operations/email/settings"
 
-/** Which delivery fields the screen shows, and in what order. */
-const DELIVERY_FIELDS: Array<{
+/**
+ * Email settings: three facts and one switch.
+ *
+ * Almost nothing here is editable, and that is deliberate. The connection
+ * comes from the server's environment, and every limit is a constant
+ * derived from what Gmail and Vercel allow. Both are shown so somebody
+ * diagnosing a slow or stopped campaign can see what the engine is doing
+ * without reading the code.
+ *
+ * The kill switch is the only control. It is the one thing that has to
+ * change while mail is going out.
+ */
+
+/**
+ * Which numbers the screen shows, in what order, and how to read each one.
+ *
+ * Milliseconds and fractions are turned into words. "180000" tells a
+ * person nothing; "180 seconds" tells them whether it is the problem.
+ */
+const SHOWN: Array<{
     key: keyof DeliverySettingsView
     label: string
-    step?: number
+    format?: (value: number) => string
 }> = [
-    { key: "globalCampaignConcurrency", label: "Campaigns sending at once" },
-    { key: "maxJobsPerInvocation", label: "Recipients per worker" },
+    { key: "globalPerSecond", label: "Emails per second", format: (v) => `${v} a second` },
+    { key: "globalPerDay", label: "Emails per day", format: (v) => v.toLocaleString() },
     { key: "sendConcurrency", label: "Emails in flight per worker" },
-    { key: "workerDurationBudgetMs", label: "Worker time budget (ms)" },
-    { key: "workerSafetyFraction", label: "Safety fraction", step: 0.05 },
-    { key: "leaseDurationMs", label: "Lease duration (ms)" },
+    { key: "maxJobsPerInvocation", label: "Recipients per worker" },
+    { key: "globalCampaignConcurrency", label: "Campaigns sending at once" },
+    { key: "maxConnections", label: "Connections to the mail server" },
+    { key: "workerDurationBudgetMs", label: "Worker time budget", format: secs },
+    { key: "workerSafetyFraction", label: "Stops claiming at", format: (v) => `${Math.round(v * 100)}% of the budget` },
+    { key: "leaseDurationMs", label: "Lease duration", format: secs },
     { key: "maxAttemptsTransient", label: "Retries for temporary failures" },
-    { key: "backoffBaseMs", label: "First retry wait (ms)" },
-    { key: "backoffMaxMs", label: "Longest retry wait (ms)" },
-    { key: "heartbeatIntervalMinutes", label: "Scheduler interval (minutes)" },
-    { key: "bounceRateThreshold", label: "Bounce limit", step: 0.01 },
-    { key: "bounceRateMinSample", label: "Bounce limit applies after" },
+    { key: "backoffBaseMs", label: "First retry wait", format: secs },
+    { key: "backoffMaxMs", label: "Longest retry wait", format: mins },
+    { key: "heartbeatIntervalMinutes", label: "Scheduler interval", format: (v) => `${v} minutes` },
+    { key: "bounceRateThreshold", label: "Bounce limit", format: (v) => `${Math.round(v * 100)}%` },
+    { key: "bounceRateMinSample", label: "Bounce limit applies after", format: (v) => `${v} sends` },
 ]
+
+function secs(ms: number): string {
+    return `${Math.round(ms / 1000)} seconds`
+}
+
+function mins(ms: number): string {
+    const m = ms / 60_000
+    return m >= 1 ? `${Math.round(m)} minutes` : secs(ms)
+}
 
 export default function EmailSettingsClient() {
     const router = useRouter()
@@ -59,30 +87,10 @@ export default function EmailSettingsClient() {
     const [loading, setLoading] = useState(true)
     const [forbidden, setForbidden] = useState("")
     const [data, setData] = useState<EmailSettingsLoaded | null>(null)
-    /**
-     * Set when the session is looking at several regions. These settings
-     * are per region, so there is nothing to show until one is picked.
-     */
+    /** The regions in view when there is more than one, so none is picked. */
     const [needRegion, setNeedRegion] = useState<string[] | null>(null)
 
-    // The SMTP form. `pass` is write-only: it starts empty even when a
-    // password is stored, and an empty box means "keep the saved one".
-    const [form, setForm] = useState({
-        name: "",
-        host: "",
-        port: 465,
-        secure: true,
-        user: "",
-        pass: "",
-        globalPerSecond: 2,
-        globalPerDay: 500,
-        maxConnections: 1,
-        maxMessages: 100,
-        reportsDelivery: false,
-        reportsBounces: false,
-    })
-
-    const [delivery, setDelivery] = useState<DeliverySettingsView | null>(null)
+    const [reason, setReason] = useState("")
     const [saving, setSaving] = useState(false)
     const [testing, setTesting] = useState(false)
     const [testResult, setTestResult] = useState<SmtpTestResult | null>(null)
@@ -91,112 +99,76 @@ export default function EmailSettingsClient() {
         const res = await fetch(API, { credentials: "include", cache: "no-store" })
         const json = await res.json().catch(() => null)
 
-        if (handleAuthError(res, json, router, setForbidden)) return
-
         if (!res.ok || !json?.success) {
-            throw new Error(json?.message || "Failed to load the settings")
+            if (handleAuthError(res, json, router, setForbidden)) {
+                setLoading(false)
+                return
+            }
+            setForbidden(json?.message || "You cannot open the email settings.")
+            setLoading(false)
+            return
         }
 
         const body = json.data as EmailSettingsResponse
 
         if (body.needsRegionPick) {
             setNeedRegion(body.regionsInView)
-            setData(null)
+            setLoading(false)
             return
         }
 
         setNeedRegion(null)
         setData(body)
-        setDelivery(body.delivery)
-
-        // An existing connection fills the form. A new one starts from the
-        // SMTP_* env vars the app already uses, so nobody retypes them.
-        const p = body.provider
-        const s = body.suggestion
-
-        setForm({
-            name: p?.name ?? "Default",
-            host: p?.host ?? s?.host ?? "",
-            port: p?.port ?? s?.port ?? 465,
-            secure: p?.secure ?? s?.secure ?? true,
-            user: p?.user ?? s?.user ?? "",
-            pass: "",
-            globalPerSecond: p?.globalPerSecond ?? 2,
-            globalPerDay: p?.globalPerDay ?? 500,
-            maxConnections: p?.maxConnections ?? 1,
-            maxMessages: p?.maxMessages ?? 100,
-            reportsDelivery: p?.reportsDelivery ?? false,
-            reportsBounces: p?.reportsBounces ?? false,
-        })
+        setReason(body.provider?.killSwitchReason ?? "")
+        setLoading(false)
     }, [router])
 
     useEffect(() => {
-        load()
-            .catch((e: unknown) => {
-                toast.error(e instanceof Error ? e.message : "Failed to load")
-            })
-            .finally(() => setLoading(false))
+        void load()
     }, [load])
 
-    async function save() {
-        if (!delivery) return
+    const setKillSwitch = async (on: boolean) => {
+        if (saving) return
         setSaving(true)
-
         try {
             const res = await fetch(API, {
                 method: "PUT",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...form, delivery }),
+                body: JSON.stringify({ killSwitch: on, killSwitchReason: reason }),
             })
             const json = await res.json().catch(() => null)
-
-            if (handleAuthError(res, json, router, setForbidden)) return
-
             if (!res.ok || !json?.success) {
-                throw new Error(json?.message || "Failed to save")
+                throw new Error(json?.message || "That did not save")
             }
-
-            toast.success("Settings saved.")
-            setForm((f) => ({ ...f, pass: "" }))
+            if (on) toast.warning(json.message)
+            else toast.success(json.message)
             await load()
         } catch (e: unknown) {
-            toast.error(e instanceof Error ? e.message : "Failed to save")
+            toast.error(e instanceof Error ? e.message : "That did not save")
         } finally {
             setSaving(false)
         }
     }
 
-    async function test() {
+    const testConnection = async () => {
+        if (testing) return
         setTesting(true)
         setTestResult(null)
-
         try {
             const res = await fetch(`${API}/test`, {
                 method: "POST",
                 credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    host: form.host,
-                    port: form.port,
-                    secure: form.secure,
-                    user: form.user,
-                    // Empty means "test the saved password".
-                    ...(form.pass ? { pass: form.pass } : {}),
-                }),
             })
             const json = await res.json().catch(() => null)
-
-            if (handleAuthError(res, json, router, setForbidden)) return
-
-            if (!res.ok || !json?.success) {
+            if (!json?.data) {
                 throw new Error(json?.message || "The test could not run")
             }
-
             const result = json.data as SmtpTestResult
             setTestResult(result)
             if (result.ok) toast.success(result.message)
-            else toast.error(result.message)
+            else toast.error(result.message, { duration: 12_000 })
+            await load()
         } catch (e: unknown) {
             toast.error(e instanceof Error ? e.message : "The test could not run")
         } finally {
@@ -209,11 +181,9 @@ export default function EmailSettingsClient() {
     if (needRegion) {
         return (
             <div className="space-y-4">
-                <div>
-                    <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
-                        Email settings
-                    </h1>
-                </div>
+                <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    Email settings
+                </h1>
                 <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
                     <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400">
                         <Globe size={20} />
@@ -222,17 +192,17 @@ export default function EmailSettingsClient() {
                         Pick a region first
                     </h2>
                     <p className="mx-auto mt-1 max-w-md text-sm text-slate-500 dark:text-neutral-400">
-                        Each region has its own SMTP connection, its own sender
-                        identities and its own sending limits. You are looking at{" "}
-                        {needRegion.join(", ")}. Choose one in the switcher at the
-                        top of the sidebar to see and change its settings.
+                        Sending is switched off per region, and each region has its
+                        own sender identities. You are looking at{" "}
+                        {needRegion.join(", ")}. Choose one in the switcher at the top
+                        of the sidebar.
                     </p>
                 </div>
             </div>
         )
     }
 
-    if (loading || !data || !delivery) {
+    if (loading || !data) {
         return (
             <div className="space-y-4">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -246,6 +216,8 @@ export default function EmailSettingsClient() {
     }
 
     const readOnly = !data.canEdit
+    const provider = data.provider
+    const off = provider?.killSwitch ?? false
 
     return (
         <div className="space-y-4">
@@ -253,220 +225,96 @@ export default function EmailSettingsClient() {
                 <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
                     Email settings
                 </h1>
-                <p className="mt-0.5 text-sm text-slate-500 dark:text-neutral-400">
-                    The connection campaigns send through, who they come from, and
-                    how fast they go out.
+                <p className="text-sm text-slate-500 dark:text-neutral-400">
+                    Region {data.region}. The connection and the limits are set on
+                    the server; this screen shows them.
                 </p>
             </div>
 
-            {/* The encryption key is a hard prerequisite. Saying so here
-                saves a confusing 500 on the first save. */}
-            {!data.secretKeyReady && (
-                <Banner
-                    tone="danger"
-                    icon={<ShieldAlert size={16} />}
-                    title="EMAIL_SECRET_KEY is not set"
-                >
-                    The SMTP password is stored encrypted, and the key is missing or
-                    the wrong length. Add 64 hex characters to{" "}
-                    <code className="rounded bg-black/10 px-1 dark:bg-white/10">
-                        .env.local
-                    </code>{" "}
-                    and restart. Generate one with{" "}
-                    <code className="rounded bg-black/10 px-1 dark:bg-white/10">
-                        node -e &quot;console.log(require(&apos;crypto&apos;).randomBytes(32).toString(&apos;hex&apos;))&quot;
-                    </code>
-                </Banner>
-            )}
-
-            {data.provider?.killSwitch && (
+            {off && (
                 <Banner
                     tone="danger"
                     icon={<PowerOff size={16} />}
-                    title="Sending is switched off"
+                    title="Campaign sending is switched off"
                 >
-                    {data.provider.killSwitchReason ||
-                        "No campaign will send until this is turned back on."}
+                    {provider?.killSwitchReason
+                        ? provider.killSwitchReason
+                        : "No reason was recorded."}{" "}
+                    Recipients stay queued and go out when it is switched back on.
                 </Banner>
             )}
 
-            {data.capabilityNote && (
+            {!provider && (
                 <Banner
-                    tone="info"
-                    icon={<AlertTriangle size={16} />}
-                    title="What this provider can report"
+                    tone="danger"
+                    icon={<ShieldAlert size={16} />}
+                    title="No sales mailbox on this server"
                 >
-                    {data.capabilityNote}
+                    No campaign can send. Set SALES_SMTP_HOST, SALES_SMTP_PORT,
+                    SALES_SMTP_USER and SALES_SMTP_PASS in the server environment,
+                    then restart it.
                 </Banner>
             )}
 
-            {/* ---------------- SMTP connection ---------------- */}
+            {/* ---------------- The connection ---------------- */}
             <SettingsCard
-                title="SMTP connection"
-                description="Campaigns send through this. It is separate from the mail the app already sends for sign-ups and bookings."
-                footer={
-                    <>
-                        {testResult && (
-                            <span
-                                className={`mr-auto flex items-center gap-1.5 text-xs ${testResult.ok
-                                    ? "text-emerald-600 dark:text-emerald-400"
-                                    : "text-rose-600 dark:text-rose-400"
-                                    }`}
-                            >
-                                {testResult.ok ? (
-                                    <CheckCircle2 size={14} />
-                                ) : (
-                                    <AlertTriangle size={14} />
-                                )}
-                                {testResult.message}
-                            </span>
-                        )}
-                        <button
-                            type="button"
-                            onClick={test}
-                            disabled={testing || readOnly || !form.host || !form.user}
-                            className={buttonGhost}
-                        >
-                            {testing ? (
-                                <Loader2 size={15} className="animate-spin" />
-                            ) : (
-                                <Plug size={15} />
-                            )}
-                            Test connection
-                        </button>
-                    </>
-                }
+                title="Sending connection"
+                description="The sales mailbox, from the server environment. The same one quotations go out from."
             >
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Name">
-                        <input
-                            className={inputClass}
-                            value={form.name}
-                            disabled={readOnly}
-                            onChange={(e) => setForm({ ...form, name: e.target.value })}
-                            placeholder="Gmail"
-                        />
-                    </Field>
+                {provider ? (
+                    <>
+                        <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                            <Fact label="From address" value={provider.user} />
+                            <Fact label="Server" value={`${provider.host}:${provider.port}`} />
+                            <Fact
+                                label="Encryption"
+                                value={provider.secure ? "TLS" : "STARTTLS"}
+                            />
+                            <Fact
+                                label="Password"
+                                value="Set in SALES_SMTP_PASS"
+                            />
+                        </dl>
 
-                    <Field label="Host">
-                        <input
-                            className={inputClass}
-                            value={form.host}
-                            disabled={readOnly}
-                            onChange={(e) => setForm({ ...form, host: e.target.value })}
-                            placeholder="smtp.gmail.com"
-                        />
-                    </Field>
+                        <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-neutral-500">
+                            To change any of this, edit the SALES_SMTP_* variables on
+                            the server and restart it. Nothing is stored in the
+                            database, so there is no password here to go stale.
+                        </p>
 
-                    <Field label="Port" help="465 for TLS, 587 for STARTTLS.">
-                        <input
-                            type="number"
-                            className={inputClass}
-                            value={form.port}
-                            disabled={readOnly}
-                            onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    port: Number(e.target.value),
-                                    secure: Number(e.target.value) === 465,
-                                })
-                            }
-                        />
-                    </Field>
+                        {data.capabilityNote && (
+                            <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-neutral-500">
+                                {data.capabilityNote}
+                            </p>
+                        )}
 
-                    <Field label="Username">
-                        <input
-                            className={inputClass}
-                            value={form.user}
-                            disabled={readOnly}
-                            onChange={(e) => setForm({ ...form, user: e.target.value })}
-                            placeholder="news@zanservices.com"
-                        />
-                    </Field>
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={testConnection}
+                                disabled={testing}
+                                className={buttonGhost}
+                            >
+                                {testing ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                    <Plug size={14} />
+                                )}
+                                {testing ? "Testing..." : "Test connection"}
+                            </button>
 
-                    <Field
-                        label="Password"
-                        help={
-                            data.provider?.hasPassword
-                                ? "A password is saved. Leave this empty to keep it."
-                                : "For Gmail this is an app password, not the account password."
-                        }
-                    >
-                        <input
-                            type="password"
-                            className={inputClass}
-                            value={form.pass}
-                            disabled={readOnly}
-                            autoComplete="new-password"
-                            onChange={(e) => setForm({ ...form, pass: e.target.value })}
-                            placeholder={
-                                data.provider?.hasPassword ? "••••••••••••" : ""
-                            }
-                        />
-                    </Field>
-
-                    <Field
-                        label="Emails per second"
-                        help="Shared by every worker, not per worker."
-                    >
-                        <input
-                            type="number"
-                            className={inputClass}
-                            value={form.globalPerSecond}
-                            disabled={readOnly}
-                            onChange={(e) =>
-                                setForm({ ...form, globalPerSecond: Number(e.target.value) })
-                            }
-                        />
-                    </Field>
-
-                    <Field
-                        label="Emails per day"
-                        help="A guard against a runaway loop. Gmail stops a Workspace account at 2,000."
-                    >
-                        <input
-                            type="number"
-                            className={inputClass}
-                            value={form.globalPerDay}
-                            disabled={readOnly}
-                            onChange={(e) =>
-                                setForm({ ...form, globalPerDay: Number(e.target.value) })
-                            }
-                        />
-                    </Field>
-
-                    <Field
-                        label="SMTP connections"
-                        help="Keep this at 1. Connections multiply across server instances."
-                    >
-                        <input
-                            type="number"
-                            className={inputClass}
-                            value={form.maxConnections}
-                            disabled={readOnly}
-                            onChange={(e) =>
-                                setForm({ ...form, maxConnections: Number(e.target.value) })
-                            }
-                        />
-                    </Field>
-                </div>
-
-                <div className="space-y-2 border-t border-slate-100 pt-3 dark:border-neutral-800">
-                    <Toggle
-                        label="This provider confirms deliveries by webhook"
-                        help="Leave off for Gmail. With it off, Delivered reads 'not reported' instead of zero."
-                        checked={form.reportsDelivery}
-                        disabled={readOnly}
-                        onChange={(v) => setForm({ ...form, reportsDelivery: v })}
-                    />
-                    <Toggle
-                        label="This provider reports bounces by webhook"
-                        help="Leave off for Gmail."
-                        checked={form.reportsBounces}
-                        disabled={readOnly}
-                        onChange={(v) => setForm({ ...form, reportsBounces: v })}
-                    />
-                </div>
+                            <TestLine
+                                result={testResult}
+                                lastOk={provider.lastTestOk}
+                                lastMessage={provider.lastTestMessage}
+                            />
+                        </div>
+                    </>
+                ) : (
+                    <p className="text-sm text-slate-500 dark:text-neutral-400">
+                        Nothing to show until SALES_SMTP_* is set.
+                    </p>
+                )}
             </SettingsCard>
 
             {/* ---------------- Sender identities ---------------- */}
@@ -520,126 +368,171 @@ export default function EmailSettingsClient() {
                 )}
             </SettingsCard>
 
-            {/* ---------------- Delivery limits ---------------- */}
+            {/* ---------------- The limits ---------------- */}
             <SettingsCard
                 title="Delivery limits"
-                description={`Scheduled campaigns go out within about ${data.schedulePrecisionMinutes} minutes of the chosen time. Change the scheduler interval below to tighten that.`}
+                description="Set in the code, from what Gmail and Vercel allow and from what this app was measured doing. Changing one is a deploy."
             >
-                <div className="grid gap-4 sm:grid-cols-2">
-                    {DELIVERY_FIELDS.map(({ key, label, step }) => (
-                        <Field
-                            key={key}
-                            label={label}
-                            help={`${data.deliveryHelp[key] ?? ""} Default: ${data.deliveryDefaults[key]}.`}
-                        >
-                            <input
-                                type="number"
-                                step={step ?? 1}
-                                className={inputClass}
-                                value={Number(delivery[key])}
-                                disabled={readOnly}
-                                onChange={(e) =>
-                                    setDelivery({
-                                        ...delivery,
-                                        [key]: Number(e.target.value),
-                                    })
-                                }
-                            />
-                        </Field>
-                    ))}
-                </div>
+                <dl className="divide-y divide-slate-100 dark:divide-neutral-800">
+                    {SHOWN.map((row) => {
+                        const value = data.delivery[row.key]
+                        const shown =
+                            typeof value === "number"
+                                ? (row.format?.(value) ?? String(value))
+                                : value
+                                  ? "On"
+                                  : "Off"
 
-                <div className="border-t border-slate-100 pt-3 dark:border-neutral-800">
-                    <Toggle
-                        label="Check the suppression list again before each send"
-                        help="Someone can unsubscribe between scheduling and sending. Leave this on."
-                        checked={delivery.suppressionRecheckBeforeSend}
-                        disabled={readOnly}
-                        onChange={(v) =>
-                            setDelivery({ ...delivery, suppressionRecheckBeforeSend: v })
-                        }
-                    />
-                </div>
-            </SettingsCard>
+                        return (
+                            <div key={row.key} className="py-2.5">
+                                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                                    <dt className="text-sm text-slate-800 dark:text-neutral-200">
+                                        {row.label}
+                                    </dt>
+                                    <dd className="font-mono text-sm text-slate-900 dark:text-white">
+                                        {shown}
+                                    </dd>
+                                </div>
+                                {data.deliveryHelp[row.key] && (
+                                    <p className="mt-0.5 max-w-prose text-xs leading-relaxed text-slate-500 dark:text-neutral-500">
+                                        {data.deliveryHelp[row.key]}
+                                    </p>
+                                )}
+                            </div>
+                        )
+                    })}
+                </dl>
 
-            {/* ---------------- Safety ---------------- */}
-            <SettingsCard
-                title="Safety"
-                description="Stop every campaign at once. The worker checks this before taking any work, so it takes effect within one cycle."
-            >
-                <Toggle
-                    label="Switch off all sending"
-                    help="Nothing goes out while this is on. Campaigns stay where they are and resume when it is turned off."
-                    checked={data.provider?.killSwitch ?? false}
-                    disabled={readOnly || !data.provider}
-                    danger
-                    onChange={async (v) => {
-                        if (!data.provider) return
-                        const reason = v
-                            ? window.prompt("Why is sending being switched off?") ?? ""
-                            : ""
-                        if (v && !reason.trim()) return
-
-                        setData({
-                            ...data,
-                            provider: {
-                                ...data.provider,
-                                killSwitch: v,
-                                killSwitchReason: reason,
-                            },
-                        })
-
-                        try {
-                            const res = await fetch(API, {
-                                method: "PUT",
-                                credentials: "include",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    ...form,
-                                    pass: "",
-                                    killSwitch: v,
-                                    killSwitchReason: reason,
-                                    delivery,
-                                }),
-                            })
-                            if (!res.ok) throw new Error()
-                            toast.success(
-                                v ? "Sending is switched off." : "Sending is back on."
-                            )
-                            await load()
-                        } catch {
-                            toast.error("Could not change the switch.")
-                            await load()
-                        }
-                    }}
-                />
-            </SettingsCard>
-
-            {!readOnly && (
-                <div className="sticky bottom-4 flex justify-end">
-                    <button
-                        type="button"
-                        onClick={save}
-                        disabled={saving}
-                        className={`${buttonPrimary} shadow-lg`}
-                    >
-                        {saving ? (
-                            <Loader2 size={15} className="animate-spin" />
-                        ) : (
-                            <Save size={15} />
-                        )}
-                        Save settings
-                    </button>
-                </div>
-            )}
-
-            {readOnly && (
-                <p className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-neutral-500">
-                    <Sliders size={13} />
-                    You can read these settings but not change them.
+                <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-neutral-500">
+                    A scheduled campaign can go out up to{" "}
+                    {data.schedulePrecisionMinutes} minutes after its chosen time.
+                    The scheduler runs on an interval; it is not a clock.
                 </p>
-            )}
+            </SettingsCard>
+
+            {/* ---------------- The kill switch ---------------- */}
+            <SettingsCard
+                title="Kill switch"
+                description="Stops every campaign in this region. The fastest thing to do when you do not yet know what is wrong."
+            >
+                <p className="text-sm text-slate-600 dark:text-neutral-300">
+                    Nothing is lost. Every worker checks this before it claims any
+                    work, so sending stops within one cycle, and queued recipients go
+                    out when it is switched back on.
+                </p>
+
+                {!off && (
+                    <div className="mt-3">
+                        <label
+                            htmlFor="killReason"
+                            className="mb-1 block text-xs text-slate-600 dark:text-neutral-400"
+                        >
+                            Why are you stopping it? Whoever finds sending off needs
+                            to know whether it is safe to turn back on.
+                        </label>
+                        <input
+                            id="killReason"
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            disabled={readOnly}
+                            maxLength={300}
+                            placeholder="Bounces climbing on the November campaign"
+                            className={inputClass}
+                        />
+                    </div>
+                )}
+
+                <div className="mt-4">
+                    {off ? (
+                        <button
+                            type="button"
+                            onClick={() => setKillSwitch(false)}
+                            disabled={readOnly || saving}
+                            className={buttonPrimary}
+                        >
+                            {saving ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                                <CheckCircle2 size={14} />
+                            )}
+                            Turn sending back on
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => setKillSwitch(true)}
+                            disabled={readOnly || saving || !reason.trim()}
+                            className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {saving ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                                <PowerOff size={14} />
+                            )}
+                            Stop all sending
+                        </button>
+                    )}
+                </div>
+
+                {readOnly && (
+                    <p className="mt-2 text-xs text-slate-500 dark:text-neutral-500">
+                        You can see this but not change it. Ask an admin or an
+                        operations manager.
+                    </p>
+                )}
+            </SettingsCard>
         </div>
+    )
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="min-w-0">
+            <dt className="text-xs text-slate-500 dark:text-neutral-500">{label}</dt>
+            <dd className="truncate font-mono text-sm text-slate-900 dark:text-white">
+                {value}
+            </dd>
+        </div>
+    )
+}
+
+/**
+ * What the last connection test said.
+ *
+ * A test run just now wins over the stored one, because somebody who has
+ * pressed the button is asking about this moment.
+ */
+function TestLine({
+    result,
+    lastOk,
+    lastMessage,
+}: {
+    result: SmtpTestResult | null
+    lastOk: boolean | null
+    lastMessage: string
+}) {
+    const ok = result ? result.ok : lastOk
+    const message = result ? result.message : lastMessage
+
+    if (ok === null) {
+        return (
+            <span className="text-xs text-slate-500 dark:text-neutral-500">
+                Never tested on this server.
+            </span>
+        )
+    }
+
+    return (
+        <span
+            className={`inline-flex items-center gap-1.5 text-xs ${
+                ok
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-rose-600 dark:text-rose-400"
+            }`}
+        >
+            {ok ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
+            {message || (ok ? "Connected and signed in." : "The last test failed.")}
+        </span>
     )
 }
 
@@ -666,54 +559,6 @@ function Banner({
                 {title}
             </div>
             <div className="mt-1 text-xs leading-relaxed opacity-90">{children}</div>
-        </div>
-    )
-}
-
-function Toggle({
-    label,
-    help,
-    checked,
-    disabled,
-    danger,
-    onChange,
-}: {
-    label: string
-    help?: string
-    checked: boolean
-    disabled?: boolean
-    danger?: boolean
-    onChange: (value: boolean) => void
-}) {
-    const on = danger ? "bg-rose-600" : "bg-emerald-600"
-
-    return (
-        <div className="flex items-start gap-3">
-            <button
-                type="button"
-                role="switch"
-                aria-checked={checked}
-                aria-label={label}
-                disabled={disabled}
-                onClick={() => onChange(!checked)}
-                className={`mt-0.5 h-5 w-9 shrink-0 rounded-full p-0.5 transition disabled:cursor-not-allowed disabled:opacity-50 ${checked ? on : "bg-slate-300 dark:bg-neutral-700"
-                    }`}
-            >
-                <span
-                    className={`block h-4 w-4 rounded-full bg-white transition-transform ${checked ? "translate-x-4" : "translate-x-0"
-                        }`}
-                />
-            </button>
-            <div className="min-w-0">
-                <div className="text-sm text-slate-800 dark:text-neutral-200">
-                    {label}
-                </div>
-                {help && (
-                    <div className="text-xs text-slate-500 dark:text-neutral-500">
-                        {help}
-                    </div>
-                )}
-            </div>
         </div>
     )
 }

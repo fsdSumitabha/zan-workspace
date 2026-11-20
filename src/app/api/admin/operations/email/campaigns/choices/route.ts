@@ -10,19 +10,18 @@ import EmailAudience, { type IEmailAudience } from "@/models/EmailAudience"
 import EmailSenderIdentity, {
     type IEmailSenderIdentity,
 } from "@/models/EmailSenderIdentity"
-import EmailProviderConfig, {
-    type IEmailProviderConfig,
-} from "@/models/EmailProviderConfig"
 import { errorResponse } from "@/lib/email/http"
 import {
-    getDeliverySettings,
+    deliverySettings,
     schedulePrecisionMinutes,
 } from "@/lib/email/config/deliveryConfig"
-import { providerCapabilities } from "@/lib/email/config/providerConfig"
+import {
+    getProvider,
+    providerCapabilities,
+} from "@/lib/email/config/providerConfig"
 import { pinnedRegion } from "@/lib/email/region"
 import { MERGE_TOKENS } from "@/lib/email/personalise/tokens"
 import { ZONE_CHOICES } from "@/lib/time/zone"
-import { hasValidSecretKey } from "@/lib/email/config/crypto"
 
 /**
  * GET /api/admin/operations/email/campaigns/choices
@@ -59,10 +58,7 @@ export async function GET(req: NextRequest) {
             EmailSenderIdentity.find({})
                 .sort({ isDefault: -1, createdAt: 1 })
                 .lean<IEmailSenderIdentity[]>(),
-            EmailProviderConfig.findOne({})
-                .sort({ isDefault: -1, createdAt: 1 })
-                .select("+passCipher")
-                .lean<IEmailProviderConfig>(),
+            region ? getProvider(region) : null,
         ])
 
         // The merge tokens each template actually uses, so step four can
@@ -83,7 +79,7 @@ export async function GET(req: NextRequest) {
             versions.map((v) => [String(v.templateId), v])
         )
 
-        const settings = region ? await getDeliverySettings(region) : null
+        const settings = deliverySettings()
 
         return NextResponse.json({
             success: true,
@@ -138,22 +134,19 @@ export async function GET(req: NextRequest) {
                 readiness: {
                     region,
                     needsRegionPick: region === null,
-                    secretKeyReady: hasValidSecretKey(),
-                    providerReady: Boolean(provider?.passCipher),
+                    providerReady: Boolean(provider?.hasPassword),
                     identityReady: identities.length > 0,
                     templateReady: templates.length > 0,
                     audienceReady: audiences.length > 0,
                     killSwitch: provider?.killSwitch ?? false,
-                    sendRatePerSecond: provider?.globalPerSecond ?? 0,
+                    sendRatePerSecond: settings.globalPerSecond,
                     reportsDelivery: provider?.reportsDelivery ?? false,
                     capabilityNote: provider
                         ? providerCapabilities(provider.host).note
                         : "",
                 },
 
-                schedulePrecisionMinutes: settings
-                    ? schedulePrecisionMinutes(settings)
-                    : null,
+                schedulePrecisionMinutes: schedulePrecisionMinutes(settings),
             },
         })
     } catch (error) {

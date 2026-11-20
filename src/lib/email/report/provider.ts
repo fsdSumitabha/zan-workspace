@@ -1,60 +1,50 @@
-import EmailProviderConfig, {
-    type IEmailProviderConfig,
-} from "@/models/EmailProviderConfig"
+import { MAIL_ACCOUNT, mailAccountConnection } from "@/lib/mail/accounts"
 import { providerCapabilities } from "@/lib/email/config/providerConfig"
 
 /**
- * Whether a region's provider confirms deliveries at all.
+ * Whether the provider confirms deliveries at all.
  *
  * This is the one fact that decides whether a delivery figure is a real
  * measurement or an absence of one. Gmail reports no deliveries, so with
  * Gmail a delivered count of zero means "not measured", and the report
- * shows nothing rather than 0%.
+ * shows an em dash rather than 0%.
  *
- * With no provider configured the honest answer is no: nothing has
+ * It used to read a per-region provider row. There is one sending account
+ * now, from SALES_SMTP_*, so the answer no longer varies by region. The
+ * region argument is kept because the callers have one and a future
+ * per-region account would need it again.
+ *
+ * With no account configured the honest answer is no: nothing has
  * confirmed anything.
  */
-export async function reportsDelivery(region: string): Promise<boolean> {
-    const provider = await EmailProviderConfig.findOne({ region })
-        .sort({ isDefault: -1, createdAt: 1 })
-        .select("host")
-        .lean<IEmailProviderConfig>()
+export async function reportsDelivery(_region: string): Promise<boolean> {
+    const account = mailAccountConnection(MAIL_ACCOUNT.SALES)
+    if (!account) return false
 
-    if (!provider) return false
-
-    return providerCapabilities(provider.host).reportsDelivery
+    return providerCapabilities(account.host).reportsDelivery
 }
 
 /**
  * The same answer for several regions at once.
  *
- * The comparison screen can hold campaigns from more than one region, and
- * one query per campaign would be a query per row.
+ * The comparison screen can hold campaigns from more than one region. The
+ * answer is the same for all of them now, but the shape is kept so the
+ * callers do not have to care.
  */
 export async function reportsDeliveryByRegion(
     regions: string[]
 ): Promise<Map<string, boolean>> {
     const unique = Array.from(new Set(regions))
-
-    if (unique.length === 0) return new Map()
-
-    const rows = await EmailProviderConfig.find({ region: { $in: unique } })
-        .sort({ isDefault: -1, createdAt: 1 })
-        .select("region host")
-        .lean<IEmailProviderConfig[]>()
-
     const result = new Map<string, boolean>()
 
-    // Sorted default-first, so the first row seen for a region is the one
-    // that would actually send, and later rows must not overwrite it.
-    for (const row of rows) {
-        if (result.has(row.region)) continue
-        result.set(row.region, providerCapabilities(row.host).reportsDelivery)
-    }
+    if (unique.length === 0) return result
 
-    for (const region of unique) {
-        if (!result.has(region)) result.set(region, false)
-    }
+    const account = mailAccountConnection(MAIL_ACCOUNT.SALES)
+    const answer = account
+        ? providerCapabilities(account.host).reportsDelivery
+        : false
+
+    for (const region of unique) result.set(region, answer)
 
     return result
 }

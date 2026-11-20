@@ -302,16 +302,10 @@ export default function CampaignWizard() {
 
     // The things that must exist before a campaign can be built at all.
     const missing: Array<{ what: string; where: string; href: string }> = []
-    if (!r.secretKeyReady)
-        missing.push({
-            what: "the encryption key",
-            where: "add EMAIL_SECRET_KEY to .env.local",
-            href: "/admin/operations/email/settings",
-        })
     if (!r.providerReady)
         missing.push({
-            what: "an SMTP connection",
-            where: "Settings",
+            what: "the sales mailbox",
+            where: "set SALES_SMTP_* on the server",
             href: "/admin/operations/email/settings",
         })
     if (!r.identityReady)

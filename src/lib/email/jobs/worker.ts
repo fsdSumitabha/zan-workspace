@@ -21,7 +21,7 @@ import {
 } from "@/constants/emailStatus"
 import {
     claimDeadlineMs,
-    getDeliverySettings,
+    deliverySettings,
     withOverrides,
     type DeliverySettings,
 } from "@/lib/email/config/deliveryConfig"
@@ -102,7 +102,7 @@ export async function runWorker(input: {
     }
 
     const settings = withOverrides(
-        await getDeliverySettings(campaign.region),
+        deliverySettings(),
         campaign.deliveryOverrides
     )
     const deadline = startedAt + claimDeadlineMs(settings)

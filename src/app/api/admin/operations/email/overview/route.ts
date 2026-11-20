@@ -2,20 +2,19 @@ import { NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/db/dbConnect"
 import { requireRole } from "@/lib/auth/requireRole"
 import { EMAIL_ACCESS_ROLES, canAdministerEmail } from "@/constants/emailRoles"
-import EmailProviderConfig, {
-    type IEmailProviderConfig,
-} from "@/models/EmailProviderConfig"
 import EmailSenderIdentity from "@/models/EmailSenderIdentity"
 import EmailSuppression from "@/models/EmailSuppression"
 import EmailCampaign from "@/models/EmailCampaign"
 import { pinnedRegion, regionsInView } from "@/lib/email/region"
 import { errorResponse } from "@/lib/email/http"
-import { hasValidSecretKey } from "@/lib/email/config/crypto"
 import {
-    getDeliverySettings,
+    deliverySettings,
     schedulePrecisionMinutes,
 } from "@/lib/email/config/deliveryConfig"
-import { providerCapabilities } from "@/lib/email/config/providerConfig"
+import {
+    getProvider,
+    providerCapabilities,
+} from "@/lib/email/config/providerConfig"
 import { CAMPAIGN_STATUS } from "@/constants/emailStatus"
 
 /**
@@ -39,23 +38,19 @@ export async function GET(req: NextRequest) {
          * regionScopePlugin. No explicit region is passed, and none is
          * demanded.
          *
-         * The connection and the limits do NOT merge: there is one SMTP
-         * connection per region. Those are only read when the session is
-         * pinned to a single region, and the screen says so otherwise.
+         * The limits are the same everywhere now: they come from
+         * DELIVERY_LIMITS in code, not from a row. The kill switch is
+         * still per region, so the connection block is only read when the
+         * session is pinned to one region.
          */
         const region = pinnedRegion()
+        const delivery = deliverySettings()
 
-        const [provider, identityCount, suppressionCount, delivery, statusCounts] =
+        const [provider, identityCount, suppressionCount, statusCounts] =
             await Promise.all([
-                region
-                    ? EmailProviderConfig.findOne({ region })
-                          .sort({ isDefault: -1, createdAt: 1 })
-                          .select("+passCipher")
-                          .lean<IEmailProviderConfig>()
-                    : null,
+                region ? getProvider(region) : null,
                 EmailSenderIdentity.countDocuments({}),
                 EmailSuppression.countDocuments({}),
-                region ? getDeliverySettings(region) : null,
                 EmailCampaign.aggregate<{ _id: number; n: number }>([
                     { $group: { _id: "$status", n: { $sum: 1 } } },
                 ]),
@@ -75,8 +70,7 @@ export async function GET(req: NextRequest) {
                 region,
                 regionsInView: regionsInView(),
                 setup: {
-                    secretKeyReady: hasValidSecretKey(),
-                    providerReady: Boolean(provider?.passCipher),
+                    providerReady: Boolean(provider?.hasPassword),
                     providerName: provider?.name ?? "",
                     identityReady: identityCount > 0,
                     killSwitch: provider?.killSwitch ?? false,
@@ -105,11 +99,9 @@ export async function GET(req: NextRequest) {
                         count(CAMPAIGN_STATUS.FAILED) + count(CAMPAIGN_STATUS.HALTED),
                 },
                 suppressionCount,
-                schedulePrecisionMinutes: delivery
-                    ? schedulePrecisionMinutes(delivery)
-                    : null,
-                sendRatePerSecond: provider?.globalPerSecond ?? 0,
-                dailyBudget: provider?.globalPerDay ?? 0,
+                schedulePrecisionMinutes: schedulePrecisionMinutes(delivery),
+                sendRatePerSecond: delivery.globalPerSecond,
+                dailyBudget: delivery.globalPerDay,
                 canAdminister: canAdministerEmail(user.role),
             },
         })

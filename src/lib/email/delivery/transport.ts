@@ -63,12 +63,14 @@ export function setTestTransport(transporter: Transporter | null): void {
 export function getTransport(provider: ProviderWithSecret): Transporter {
     if (injected && process.env.NODE_ENV !== "production") return injected
 
+    // passHash, never the password: this key lives in module memory for as
+    // long as the process does.
     const key = configFingerprint({
         host: provider.host,
         port: provider.port,
         secure: provider.secure,
         user: provider.user,
-        passCipher: provider.passCipher,
+        passHash: provider.passHash,
         maxConnections: provider.maxConnections,
         maxMessages: provider.maxMessages,
     })

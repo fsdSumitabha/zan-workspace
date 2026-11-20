@@ -24,7 +24,6 @@ interface Overview {
     region: string | null
     regionsInView: string[]
     setup: {
-        secretKeyReady: boolean
         providerReady: boolean
         providerName: string
         identityReady: boolean
@@ -104,21 +103,18 @@ export default function EmailOverviewClient() {
 
     const steps = [
         {
-            done: setup.secretKeyReady,
-            label: "Encryption key is set",
-            detail: "EMAIL_SECRET_KEY in .env.local, 64 hex characters.",
-        },
-        {
             done: setup.providerReady,
             label: setup.providerName
-                ? `SMTP connection saved (${setup.providerName})`
-                : "SMTP connection saved",
+                ? `Sales mailbox is set up (${setup.providerName})`
+                : "Sales mailbox is set up",
             detail:
-                setup.lastTestOk === null
-                    ? "Save the connection, then press Test connection."
-                    : setup.lastTestOk
-                      ? "The last test signed in successfully."
-                      : setup.lastTestMessage,
+                !setup.providerReady
+                    ? "Set SALES_SMTP_HOST, SALES_SMTP_PORT, SALES_SMTP_USER and SALES_SMTP_PASS on the server."
+                    : setup.lastTestOk === null
+                      ? "Press Test connection in Settings to prove it signs in."
+                      : setup.lastTestOk
+                        ? "The last test signed in successfully."
+                        : setup.lastTestMessage,
         },
         {
             done: setup.identityReady,

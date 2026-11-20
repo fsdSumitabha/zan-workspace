@@ -7,8 +7,16 @@
  */
 
 /** The SMTP connection, as the settings screen sees it. */
+/**
+ * The sending connection, as the settings screen sees it.
+ *
+ * It comes from the SALES_SMTP_* environment variables, not from a row
+ * anybody can edit. `id` is a constant, kept so the screen has a stable
+ * key. See src/lib/email/config/providerConfig.ts.
+ */
 export interface EmailProviderView {
-    _id: string
+    id: string
+    region: string
     name: string
     providerKey: string
     host: string
@@ -22,10 +30,10 @@ export interface EmailProviderView {
     globalPerSecond: number
     globalPerDay: number
     killSwitch: boolean
-    killSwitchReason: string
+    killSwitchReason?: string
     reportsDelivery: boolean
     reportsBounces: boolean
-    lastTestAt: string | null
+    lastTestAt: string | Date | null
     lastTestOk: boolean | null
     lastTestMessage: string
 }
@@ -43,6 +51,10 @@ export interface EmailSenderIdentityView {
 
 /** Every tunable number, with what it is now and what the default was. */
 export interface DeliverySettingsView {
+    globalPerSecond: number
+    globalPerDay: number
+    maxConnections: number
+    maxMessages: number
     logicalBatchSize: number
     maxJobsPerInvocation: number
     sendConcurrency: number
@@ -89,17 +101,12 @@ export interface EmailSettingsLoaded {
     provider: EmailProviderView | null
     identities: EmailSenderIdentityView[]
     delivery: DeliverySettingsView
-    deliveryDefaults: DeliverySettingsView
+    /**
+     * The same numbers again, as the constants they are. The screen shows
+     * them read-only; nothing can change them without a deploy.
+     */
+    deliveryLimits: DeliverySettingsView
     deliveryHelp: Record<string, string>
-    /** Whether EMAIL_SECRET_KEY is set and the right length. */
-    secretKeyReady: boolean
-    /** Suggested host, port and user from the existing SMTP_* env vars. */
-    suggestion: {
-        host: string
-        port: number
-        secure: boolean
-        user: string
-    } | null
     /** What this provider can and cannot report, in plain words. */
     capabilityNote: string
     /**
@@ -107,7 +114,7 @@ export interface EmailSettingsLoaded {
      * screens show this next to the time picker.
      */
     schedulePrecisionMinutes: number
-    /** True when the person may edit SMTP settings, not only read them. */
+    /** True when the person may use the kill switch, not only read. */
     canEdit: boolean
 }
 
@@ -398,7 +405,6 @@ export interface CampaignChoices {
     readiness: {
         region: string | null
         needsRegionPick: boolean
-        secretKeyReady: boolean
         providerReady: boolean
         identityReady: boolean
         templateReady: boolean
