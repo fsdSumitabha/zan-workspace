@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import clsx from "clsx"
 import {
+    AlertTriangle,
+    FileCode2,
     FileText,
     Loader2,
     Pencil,
@@ -31,6 +33,9 @@ import type { EmailTemplateRow } from "@/types/email"
 
 const API = "/api/admin/operations/email/templates"
 
+/** The create route reads at most this much MJML. Keep the two in step. */
+const MAX_MJML_BYTES = 512 * 1024
+
 export default function TemplatesClient() {
     const router = useRouter()
 
@@ -50,6 +55,14 @@ export default function TemplatesClient() {
     const [newCategory, setNewCategory] = useState<TemplateCategory>(
         TEMPLATE_CATEGORY.GENERAL
     )
+
+    // An uploaded .mjml file, read in the browser. The create route has
+    // always accepted `mjml` in the body; there was no way to send one.
+    const [file, setFile] = useState<{ name: string; mjml: string } | null>(
+        null
+    )
+    const [fileProblem, setFileProblem] = useState("")
+    const [fileWarnings, setFileWarnings] = useState<string[]>([])
 
     const load = useCallback(
         async (q: string, cat: TemplateCategory | null) => {
@@ -91,7 +104,79 @@ export default function TemplatesClient() {
     function openCreate() {
         setNewName("")
         setNewCategory(TEMPLATE_CATEGORY.GENERAL)
+        setFile(null)
+        setFileProblem("")
+        setFileWarnings([])
         setNewOpen(true)
+    }
+
+    /**
+     * Reads a .mjml file the person picked.
+     *
+     * The file is read here and sent as text. Nothing is uploaded: the
+     * server compiles the MJML and stores the result, so there is no file
+     * to keep and no upload endpoint to guard.
+     *
+     * Two checks happen before the server sees it. Both are about what the
+     * Zan starter gives you for free and an imported file may not have.
+     */
+    async function readMjmlFile(picked: File | null) {
+        setFileProblem("")
+        setFileWarnings([])
+
+        if (!picked) {
+            setFile(null)
+            return
+        }
+
+        // The create route refuses anything over 512 KB. Say so here
+        // rather than after an upload that was never going to work.
+        if (picked.size > MAX_MJML_BYTES) {
+            setFile(null)
+            setFileProblem(
+                `That file is ${Math.round(picked.size / 1024)} KB. The limit is ` +
+                    `${MAX_MJML_BYTES / 1024} KB.`
+            )
+            return
+        }
+
+        const text = await picked.text()
+
+        if (!text.includes("<mjml")) {
+            setFile(null)
+            setFileProblem(
+                "That does not look like MJML. The file should have an <mjml> " +
+                    "tag at the top. A plain HTML email will not compile."
+            )
+            return
+        }
+
+        const warnings: string[] = []
+        if (!text.includes("{{unsubscribe_url}}")) {
+            warnings.push(
+                "No {{unsubscribe_url}} in the file, so there will be no " +
+                    "unsubscribe link in the email body. The one-click " +
+                    "unsubscribe header is still sent, but the law wants a " +
+                    "visible link. Add one in the editor."
+            )
+        }
+        if (!text.includes("{{postal_address}}")) {
+            warnings.push(
+                "No {{postal_address}} in the file. Marketing email has to " +
+                    "carry a postal address. Add the token in the editor and " +
+                    "the sender identity fills it in."
+            )
+        }
+
+        setFile({ name: picked.name, mjml: text })
+        setFileWarnings(warnings)
+
+        // A name saves one step, and the filename is usually the right one.
+        setNewName((current) =>
+            current.trim() === ""
+                ? picked.name.replace(/\.mjml$/i, "").replace(/[-_]+/g, " ")
+                : current
+        )
     }
 
     async function createTemplate() {
@@ -104,7 +189,13 @@ export default function TemplatesClient() {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, category: newCategory }),
+                body: JSON.stringify({
+                    name,
+                    category: newCategory,
+                    // Left out when nobody picked a file, so the route
+                    // falls back to the Zan starter.
+                    ...(file ? { mjml: file.mjml } : {}),
+                }),
             })
             const json = await res.json().catch(() => null)
 
@@ -185,7 +276,11 @@ export default function TemplatesClient() {
                 open={newOpen}
                 onClose={() => !creating && setNewOpen(false)}
                 title="New template"
-                description="It starts from the Zan design, with a footer and an unsubscribe link already in place. The editor opens next."
+                description={
+                    file
+                        ? `It starts from ${file.name}. The editor opens next.`
+                        : "It starts from the Zan design, with a footer and an unsubscribe link already in place. The editor opens next."
+                }
                 footer={
                     <>
                         <button
@@ -253,6 +348,62 @@ export default function TemplatesClient() {
                         the email.
                     </span>
                 </label>
+
+                <div className="rounded-lg border border-dashed border-slate-300 p-3 dark:border-neutral-700">
+                    <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                            Start from an MJML file
+                        </span>
+                        {file && (
+                            <button
+                                type="button"
+                                onClick={() => readMjmlFile(null)}
+                                className="text-xs text-rose-600 hover:underline dark:text-rose-400"
+                            >
+                                Remove
+                            </button>
+                        )}
+                    </div>
+
+                    {file ? (
+                        <p className="mt-2 flex items-center gap-2 text-sm text-neutral-800 dark:text-neutral-100">
+                            <FileCode2 size={15} className="shrink-0" />
+                            <span className="truncate">{file.name}</span>
+                        </p>
+                    ) : (
+                        <input
+                            type="file"
+                            accept=".mjml,text/plain"
+                            onChange={(e) =>
+                                readMjmlFile(e.target.files?.[0] ?? null)
+                            }
+                            className="mt-2 block w-full text-xs text-neutral-500 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-neutral-700 hover:file:bg-slate-200 dark:text-neutral-400 dark:file:bg-neutral-800 dark:file:text-neutral-200 dark:hover:file:bg-neutral-700"
+                        />
+                    )}
+
+                    <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+                        Optional. Without one it starts from the Zan design,
+                        which already has the footer, the unsubscribe link and
+                        the postal address in it.
+                    </p>
+
+                    {fileProblem && (
+                        <p className="mt-2 flex items-start gap-1.5 text-xs text-rose-600 dark:text-rose-400">
+                            <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+                            <span>{fileProblem}</span>
+                        </p>
+                    )}
+
+                    {fileWarnings.map((w) => (
+                        <p
+                            key={w}
+                            className="mt-2 flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400"
+                        >
+                            <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+                            <span>{w}</span>
+                        </p>
+                    ))}
+                </div>
             </Dialog>
 
             {/* Filters */}
