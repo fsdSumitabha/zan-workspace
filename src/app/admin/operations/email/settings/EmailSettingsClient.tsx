@@ -710,7 +710,7 @@ function IdentitySection({
 
                     <Field
                         label="Postal address"
-                        help="Required, and printed in the footer of every campaign. The law asks for a real address, and a missing one is read as spam."
+                        help="Your company's full street address, not just a PIN code. It is printed at the bottom of every campaign, because the law asks for an address a reader could post a letter to. A missing one is also read as spam."
                     >
                         <textarea
                             value={postalAddress}
