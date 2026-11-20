@@ -13,21 +13,17 @@ export const EMAIL_ROLES = {
     /**
      * The settings screen: sender identities and the global kill switch.
      *
-     * 10 Admin, 15 Operations Manager, 45 Senior Blockchain Developer,
-     * 50 Digital Marketer.
+     * 10 Admin, 15 Operations Manager. Nobody else.
      *
-     * 50 is here because a campaign cannot be sent without a sender
-     * identity, and the Digital Marketer is who sends campaigns. Leaving
-     * them out meant the person the module is for could not finish the
-     * setup it needs.
+     * Deliberately not 45 or 50, who can do everything else here. These
+     * two controls decide who the company appears to be when it sends
+     * mail, and can stop every campaign at once.
      *
-     * Note what this reach includes. These roles decide who the company
-     * appears to be when it sends mail, and can stop every campaign at
-     * once. There is no SMTP password here to leak: the connection is in
-     * the server environment and the screen only shows the host and the
-     * address.
+     * The cost of keeping it this small: a sender identity has to exist
+     * before anybody can send a campaign, so an Admin creates it once
+     * during setup. Day to day nobody needs this screen.
      */
-    ADMIN: [10, 15, 45, 50],
+    ADMIN: [10, 15],
 
     /**
      * Create, edit, schedule, send, pause, resume and cancel campaigns.
