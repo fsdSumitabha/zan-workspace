@@ -369,6 +369,31 @@ export default function EmailSettingsClient() {
                     {data.schedulePrecisionMinutes} minutes after its chosen time.
                     The scheduler runs on an interval; it is not a clock.
                 </p>
+
+                {/*
+                 * The figure above is what the code assumes. This is what
+                 * is really happening. On the Vercel Hobby plan the
+                 * built-in cron runs once a day, not every fifteen
+                 * minutes, so the two can disagree by a lot and nothing
+                 * else in the app would show it.
+                 */}
+                {data.schedulerLastRunAt ? (
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-neutral-500">
+                        It last ran{" "}
+                        {new Date(data.schedulerLastRunAt).toLocaleString()}. If
+                        that is much older than the interval above, the interval
+                        is not what is really happening.
+                    </p>
+                ) : (
+                    <p className="mt-1 flex items-start gap-1.5 text-xs leading-relaxed text-amber-700 dark:text-amber-400">
+                        <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+                        <span>
+                            It has never run on this server, so no scheduled
+                            campaign will go out. Send now is not affected. See
+                            docs/EMAIL_MARKETING_SCHEDULING.md.
+                        </span>
+                    </p>
+                )}
             </SettingsCard>
 
             {/* ---------------- The kill switch ---------------- */}

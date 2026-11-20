@@ -21,6 +21,7 @@ import {
 import { CAMPAIGN_STATUS, RECIPIENT_STATUS, isRecipientStatus } from "@/constants/emailStatus"
 import { serializeCampaign } from "@/lib/email/campaign/serialize"
 import { recountCampaign } from "@/lib/email/campaign/close"
+import { schedulerHealth } from "@/lib/email/jobs/health"
 
 /**
  * GET: one campaign, with a page of its recipients.
@@ -83,10 +84,21 @@ export async function GET(
               await EmailCampaign.findById(campaignId).lean<IEmailCampaign>())
             : campaign
 
+        /**
+         * Only for a campaign that is waiting. It answers the question a
+         * person asks when the time has passed and nothing happened, and
+         * that question has no answer anywhere else in the app.
+         */
+        const scheduler =
+            campaign.status === CAMPAIGN_STATUS.SCHEDULED
+                ? await schedulerHealth()
+                : null
+
         return NextResponse.json({
             success: true,
             data: {
                 campaign: serializeCampaign(fresh ?? campaign),
+                scheduler,
                 recipients: recipients.map((r) => ({
                     _id: String(r._id),
                     email: r.email,
