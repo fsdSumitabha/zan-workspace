@@ -11,24 +11,27 @@
  */
 export const EMAIL_ROLES = {
     /**
-     * Everything, including SMTP credentials, delivery limits and the
-     * global kill switch.
+     * The settings screen: sender identities and the global kill switch.
      *
-     * 10 Admin, 15 Operations Manager.
+     * 10 Admin, 15 Operations Manager. Nobody else.
      *
-     * Kept small on purpose. These roles can change who the company appears
-     * to be when it sends mail, and can stop every campaign at once.
+     * Deliberately not 45 or 50, who can do everything else here. These
+     * two controls decide who the company appears to be when it sends
+     * mail, and can stop every campaign at once.
+     *
+     * The cost of keeping it this small: a sender identity has to exist
+     * before anybody can send a campaign, so an Admin creates it once
+     * during setup. Day to day nobody needs this screen.
      */
     ADMIN: [10, 15],
 
     /**
      * Create, edit, schedule, send, pause, resume and cancel campaigns.
      * Manage templates, audiences, contacts and the suppression list.
-     * Cannot touch SMTP settings.
      *
      * 50 Digital Marketer is who this module is for.
      */
-    MANAGE: [10, 15, 50],
+    MANAGE: [10, 15, 45, 50],
 
     /**
      * Create and edit drafts and templates. Cannot schedule or send.
@@ -37,7 +40,7 @@ export const EMAIL_ROLES = {
      * manager to review and send. Sending to a hundred people without
      * review is not a thing one person should do alone.
      */
-    AUTHOR: [10, 15, 50, 60],
+    AUTHOR: [10, 15, 45, 50, 60],
 
     /**
      * Read campaigns, reports and delivery activity. Change nothing.
@@ -45,7 +48,7 @@ export const EMAIL_ROLES = {
      * The same roles that can open the Leads list, minus the ones with no
      * reason to read marketing results.
      */
-    VIEW: [10, 15, 50, 60, 65, 69, 70],
+    VIEW: [10, 15, 45, 50, 60, 65, 69, 70],
 } as const
 
 /** Everyone who can open the email marketing pages at all. */
@@ -61,7 +64,7 @@ export function canUseEmail(role: number | null | undefined): boolean {
     return role != null && EMAIL_ACCESS_ROLES.includes(role)
 }
 
-/** SMTP settings, delivery limits and the kill switch. */
+/** Sender identities and the kill switch. The settings screen. */
 export function canAdministerEmail(role: number | null | undefined): boolean {
     return role != null && EMAIL_ADMIN_ROLES.includes(role)
 }

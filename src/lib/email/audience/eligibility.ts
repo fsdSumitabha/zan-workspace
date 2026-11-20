@@ -8,7 +8,7 @@ import {
     readAddress,
     splitPastedAddresses,
 } from "./address"
-import type { Candidate } from "./resolve"
+import { inRegion, type Candidate } from "./resolve"
 
 /**
  * Turns candidates into the list that will actually be sent to, and says
@@ -75,6 +75,16 @@ export interface EligibilityOptions {
      * shared inbox never signed up.
      */
     allowRoleAddresses?: boolean
+
+    /**
+     * The campaign's region. Pins the suppression and consent lookups to
+     * it, so the preview and the snapshot ask the same question.
+     *
+     * Without it these two queries fall back to the region plugin, which
+     * adds nothing inside the dispatcher. An unsubscribe recorded in one
+     * region would then decide a campaign in another.
+     */
+    region?: string
 }
 
 /**
@@ -179,9 +189,9 @@ export async function applyEligibility(
 
     // One indexed query for the whole list, not one per recipient.
     const addresses = afterRules.map((r) => r.emailNormalized)
-    const suppressedRows = await EmailSuppression.find({
-        emailNormalized: { $in: addresses },
-    })
+    const suppressedRows = await EmailSuppression.find(
+        inRegion({ emailNormalized: { $in: addresses } }, options.region)
+    )
         .select("emailNormalized")
         .lean<{ emailNormalized: string }[]>()
 
@@ -202,13 +212,18 @@ export async function applyEligibility(
     let withoutConsent = new Set<string>()
 
     if (contactAddresses.length > 0) {
-        const rows = await EmailContact.find({
-            emailNormalized: { $in: contactAddresses },
-            $or: [
-                { marketingConsent: { $ne: true } },
-                { consentWithdrawnAt: { $ne: null } },
-            ],
-        })
+        const rows = await EmailContact.find(
+            inRegion(
+                {
+                    emailNormalized: { $in: contactAddresses },
+                    $or: [
+                        { marketingConsent: { $ne: true } },
+                        { consentWithdrawnAt: { $ne: null } },
+                    ],
+                },
+                options.region
+            )
+        )
             .select("emailNormalized")
             .lean<{ emailNormalized: string }[]>()
 

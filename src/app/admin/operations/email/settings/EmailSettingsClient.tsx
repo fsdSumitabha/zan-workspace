@@ -4,13 +4,15 @@ import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
+    AlertTriangle,
     CheckCircle2,
     Globe,
     Loader2,
     Plug,
+    Plus,
     PowerOff,
     ShieldAlert,
-    Sliders,
+    Trash2,
     UserRoundCheck,
     XCircle,
 } from "lucide-react"
@@ -18,12 +20,14 @@ import {
 import { handleAuthError } from "@/lib/auth/handleAuthError"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
 import SettingsCard, {
+    Field,
     buttonGhost,
     buttonPrimary,
     inputClass,
 } from "@/components/admin/email/SettingsCard"
 import type {
     DeliverySettingsView,
+    EmailSenderIdentityView,
     EmailSettingsLoaded,
     EmailSettingsResponse,
     SmtpTestResult,
@@ -318,55 +322,12 @@ export default function EmailSettingsClient() {
             </SettingsCard>
 
             {/* ---------------- Sender identities ---------------- */}
-            <SettingsCard
-                title="Sender identities"
-                description="Who a campaign appears to come from. A postal address is required in every marketing email."
-            >
-                {data.identities.length === 0 ? (
-                    <p className="text-sm text-slate-500 dark:text-neutral-400">
-                        No sender identity yet. A campaign cannot be sent without one.
-                    </p>
-                ) : (
-                    <ul className="divide-y divide-slate-100 dark:divide-neutral-800">
-                        {data.identities.map((id) => (
-                            <li
-                                key={id._id}
-                                className="flex flex-wrap items-center gap-2 py-2.5"
-                            >
-                                <UserRoundCheck
-                                    size={16}
-                                    className={
-                                        id.verifiedAt
-                                            ? "text-emerald-500"
-                                            : "text-slate-400 dark:text-neutral-600"
-                                    }
-                                />
-                                <div className="min-w-0 flex-1">
-                                    <div className="truncate text-sm text-slate-900 dark:text-white">
-                                        {id.fromName}{" "}
-                                        <span className="text-slate-500 dark:text-neutral-400">
-                                            &lt;{id.fromEmail}&gt;
-                                        </span>
-                                    </div>
-                                    <div className="truncate text-xs text-slate-500 dark:text-neutral-500">
-                                        {id.postalAddress}
-                                    </div>
-                                </div>
-                                {id.isDefault && (
-                                    <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                                        Default
-                                    </span>
-                                )}
-                                {!id.verifiedAt && (
-                                    <span className="rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                                        Domain not confirmed
-                                    </span>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </SettingsCard>
+            <IdentitySection
+                identities={data.identities}
+                smtpUser={provider?.user ?? ""}
+                canEdit={!readOnly}
+                onChanged={load}
+            />
 
             {/* ---------------- The limits ---------------- */}
             <SettingsCard
@@ -482,6 +443,338 @@ export default function EmailSettingsClient() {
                 )}
             </SettingsCard>
         </div>
+    )
+}
+
+/**
+ * Sender identities: who a campaign appears to come from.
+ *
+ * This is not the connection above, and the difference is the question
+ * everybody asks on this screen. The connection is the mailbox that
+ * carries the mail, and a passing test only proves Gmail will take it.
+ * An identity is what the reader sees: a name, an address a reply goes
+ * to, and the postal address printed in the footer. No connection test
+ * can supply those, because only a person can say what they should be.
+ *
+ * Quotations need no identity. They go from the sales mailbox as itself.
+ * Only campaigns need one, because marketing email must carry a postal
+ * address.
+ */
+function IdentitySection({
+    identities,
+    smtpUser,
+    canEdit,
+    onChanged,
+}: {
+    identities: EmailSenderIdentityView[]
+    smtpUser: string
+    canEdit: boolean
+    onChanged: () => Promise<void>
+}) {
+    // Open from the start when there is none. That state stops every
+    // campaign, so the form is the answer. A button hiding it would only
+    // be one more click in the way of the one thing left to do.
+    const [open, setOpen] = useState(identities.length === 0)
+    const [saving, setSaving] = useState(false)
+    const [removingId, setRemovingId] = useState("")
+
+    const [fromName, setFromName] = useState("")
+    const [fromEmail, setFromEmail] = useState(smtpUser)
+    const [replyTo, setReplyTo] = useState("")
+    const [postalAddress, setPostalAddress] = useState("")
+    const [confirmed, setConfirmed] = useState(false)
+
+    const first = identities.length === 0
+    const ready =
+        fromName.trim() !== "" &&
+        fromEmail.trim() !== "" &&
+        postalAddress.trim() !== ""
+
+    // Gmail rewrites the From header to the account that signed in,
+    // unless the address is confirmed in that account under "Send mail
+    // as". Another address is allowed here, because that alias is a
+    // normal thing to set up. But say so now, rather than let the first
+    // campaign arrive from an address nobody chose.
+    const mismatch =
+        smtpUser !== "" &&
+        fromEmail.trim() !== "" &&
+        fromEmail.trim().toLowerCase() !== smtpUser.toLowerCase()
+
+    const save = async () => {
+        if (saving || !ready) return
+        setSaving(true)
+        try {
+            const res = await fetch(`${API}/identities`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    fromName: fromName.trim(),
+                    fromEmail: fromEmail.trim(),
+                    replyTo: replyTo.trim() || undefined,
+                    postalAddress: postalAddress.trim(),
+                    // The first one is always the default. A campaign
+                    // that does not name an identity would otherwise
+                    // find nothing to send as.
+                    isDefault: first,
+                    verified: confirmed,
+                }),
+            })
+            const json = await res.json().catch(() => null)
+            if (!res.ok || !json?.success) {
+                throw new Error(json?.message || "That did not save")
+            }
+
+            toast.success(
+                first
+                    ? "Sender identity saved. Campaigns can be sent now."
+                    : "Sender identity saved."
+            )
+
+            setFromName("")
+            setReplyTo("")
+            setPostalAddress("")
+            setConfirmed(false)
+            setOpen(false)
+            await onChanged()
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : "That did not save")
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const remove = async (row: EmailSenderIdentityView) => {
+        if (removingId) return
+        if (
+            !window.confirm(
+                `Remove ${row.fromEmail}? A campaign already sent keeps the ` +
+                    `address it went out from. A campaign still being written ` +
+                    `will need another identity.`
+            )
+        ) {
+            return
+        }
+
+        setRemovingId(row._id)
+        try {
+            const res = await fetch(
+                `${API}/identities?id=${encodeURIComponent(row._id)}`,
+                { method: "DELETE", credentials: "include" }
+            )
+            const json = await res.json().catch(() => null)
+            if (!res.ok || !json?.success) {
+                throw new Error(json?.message || "That did not save")
+            }
+            toast.success(`${row.fromEmail} removed.`)
+            await onChanged()
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : "That did not save")
+        } finally {
+            setRemovingId("")
+        }
+    }
+
+    return (
+        <SettingsCard
+            title="Sender identities"
+            description="Who a campaign appears to come from. This is separate from the connection above: the connection carries the mail, this is the name and address the reader sees."
+        >
+            {identities.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-neutral-400">
+                    No sender identity yet. A campaign cannot be sent without
+                    one. Quotations are not affected; they go from the sales
+                    mailbox as itself.
+                </p>
+            ) : (
+                <ul className="divide-y divide-slate-100 dark:divide-neutral-800">
+                    {identities.map((id) => (
+                        <li
+                            key={id._id}
+                            className="flex flex-wrap items-center gap-2 py-2.5"
+                        >
+                            <UserRoundCheck
+                                size={16}
+                                className={
+                                    id.verifiedAt
+                                        ? "text-emerald-500"
+                                        : "text-slate-400 dark:text-neutral-600"
+                                }
+                            />
+                            <div className="min-w-0 flex-1">
+                                <div className="truncate text-sm text-slate-900 dark:text-white">
+                                    {id.fromName}{" "}
+                                    <span className="text-slate-500 dark:text-neutral-400">
+                                        &lt;{id.fromEmail}&gt;
+                                    </span>
+                                </div>
+                                <div className="truncate text-xs text-slate-500 dark:text-neutral-500">
+                                    {id.postalAddress}
+                                </div>
+                            </div>
+                            {id.isDefault && (
+                                <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                    Default
+                                </span>
+                            )}
+                            {!id.verifiedAt && (
+                                <span className="rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                                    Domain not confirmed
+                                </span>
+                            )}
+                            {canEdit && (
+                                <button
+                                    type="button"
+                                    onClick={() => remove(id)}
+                                    disabled={removingId === id._id}
+                                    title={`Remove ${id.fromEmail}`}
+                                    className="rounded-md p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:text-neutral-500 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                                >
+                                    {removingId === id._id ? (
+                                        <Loader2 size={14} className="animate-spin" />
+                                    ) : (
+                                        <Trash2 size={14} />
+                                    )}
+                                </button>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            {!canEdit ? (
+                <p className="text-xs text-slate-500 dark:text-neutral-500">
+                    You can see these but not change them. Ask an admin or an
+                    operations manager to add one.
+                </p>
+            ) : open ? (
+                <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-neutral-800 dark:bg-neutral-950">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <Field
+                            label="Sender name"
+                            help="The name in the inbox. Readers decide whether to open on this."
+                        >
+                            <input
+                                value={fromName}
+                                onChange={(e) => setFromName(e.target.value)}
+                                maxLength={100}
+                                placeholder="Zan Services"
+                                className={inputClass}
+                            />
+                        </Field>
+
+                        <Field
+                            label="Sender address"
+                            help={
+                                smtpUser
+                                    ? `Keep this as ${smtpUser} unless that mailbox has the other address set up under "Send mail as".`
+                                    : "The address the campaign comes from."
+                            }
+                        >
+                            <input
+                                value={fromEmail}
+                                onChange={(e) => setFromEmail(e.target.value)}
+                                maxLength={255}
+                                inputMode="email"
+                                placeholder="sales@zanservices.com"
+                                className={inputClass}
+                            />
+                        </Field>
+                    </div>
+
+                    {mismatch && (
+                        <p className="flex items-start gap-2 text-xs leading-relaxed text-amber-700 dark:text-amber-400">
+                            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                            <span>
+                                This is not the mailbox that signs in. Gmail will
+                                send as {smtpUser} anyway, unless {fromEmail.trim()}{" "}
+                                is confirmed in that account under Settings,
+                                Accounts, Send mail as.
+                            </span>
+                        </p>
+                    )}
+
+                    <Field
+                        label="Reply-to address"
+                        help="Optional. Where a reply should land, when that is not the sender address."
+                    >
+                        <input
+                            value={replyTo}
+                            onChange={(e) => setReplyTo(e.target.value)}
+                            maxLength={255}
+                            inputMode="email"
+                            placeholder="Leave empty to use the sender address"
+                            className={inputClass}
+                        />
+                    </Field>
+
+                    <Field
+                        label="Postal address"
+                        help="Your company's full street address, not just a PIN code. It is printed at the bottom of every campaign, because the law asks for an address a reader could post a letter to. A missing one is also read as spam."
+                    >
+                        <textarea
+                            value={postalAddress}
+                            onChange={(e) => setPostalAddress(e.target.value)}
+                            maxLength={500}
+                            rows={2}
+                            placeholder="Zan Services, 12 Example Road, Kolkata 700001, India"
+                            className={inputClass}
+                        />
+                    </Field>
+
+                    <label className="flex items-start gap-2 text-xs text-slate-600 dark:text-neutral-400">
+                        <input
+                            type="checkbox"
+                            checked={confirmed}
+                            onChange={(e) => setConfirmed(e.target.checked)}
+                            className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 dark:border-neutral-700"
+                        />
+                        <span>
+                            SPF, DKIM and DMARC are set up for this domain. Nobody
+                            can check this from here, so it is a note with your
+                            name and the date. Sending works either way; this only
+                            clears the amber tag.
+                        </span>
+                    </label>
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <button
+                            type="button"
+                            onClick={save}
+                            disabled={saving || !ready}
+                            className={buttonPrimary}
+                        >
+                            {saving ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                                <CheckCircle2 size={14} />
+                            )}
+                            {saving ? "Saving..." : "Save sender identity"}
+                        </button>
+
+                        {!first && (
+                            <button
+                                type="button"
+                                onClick={() => setOpen(false)}
+                                disabled={saving}
+                                className={buttonGhost}
+                            >
+                                Cancel
+                            </button>
+                        )}
+                    </div>
+                </div>
+            ) : (
+                <button
+                    type="button"
+                    onClick={() => setOpen(true)}
+                    className={buttonGhost}
+                >
+                    <Plus size={14} />
+                    Add another sender identity
+                </button>
+            )}
+        </SettingsCard>
     )
 }
 

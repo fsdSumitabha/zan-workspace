@@ -7,6 +7,7 @@ import { EmailError, errorResponse, isObjectId, readJson } from "@/lib/email/htt
 import { parseAudienceRules } from "@/lib/email/audience/parseRules"
 import { previewAudience } from "@/lib/email/audience/preview"
 import { checkRateLimit } from "@/lib/security/rateLimit"
+import { pinnedRegion } from "@/lib/email/region"
 
 /**
  * POST /api/admin/operations/email/audiences/preview
@@ -55,8 +56,12 @@ export async function POST(req: NextRequest) {
             rules = parseAudienceRules(body.rules)
         }
 
+        // The pinned region, so the builder counts what a campaign in
+        // that region would actually send to. With no region pinned the
+        // plugin still scopes this to what the person may read.
         const preview = await previewAudience(rules, {
             allowRoleAddresses: body.allowRoleAddresses === true,
+            region: pinnedRegion() ?? undefined,
         })
 
         return NextResponse.json({ success: true, data: preview })
