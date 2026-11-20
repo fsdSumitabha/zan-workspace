@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import FileUpload from "../dropzone/FileUpload"
+import { showQuotationMailResult } from "@/components/admin/operations/interactions/quotationMailToast"
 
 interface Props {
     entityType: number
@@ -55,30 +56,30 @@ export default function QuotationForm({
 
         setLoading(true)
 
-        const promise = fetch("/api/admin/operations/quotations", {
-            method: "POST",
-            body: formData
-        }).then(async (res) => {
+        // One loading toast replaced by one final toast, rather than
+        // toast.promise. The reply carries two separate outcomes: the
+        // quotation was saved, and the email either went to the client or
+        // did not. toast.promise can only say "success", which would hide a
+        // quotation the client never received. See showQuotationMailResult.
+        const pending = toast.loading("Uploading quotation...")
+
+        try {
+            const res = await fetch("/api/admin/operations/quotations", {
+                method: "POST",
+                body: formData
+            })
             const data = await res.json().catch(() => ({}))
             if (!res.ok || !data.success) {
                 throw new Error(data.error || "Failed to create quotation")
             }
-            return data
-        })
 
-        toast.promise(promise, {
-            loading: "Uploading quotation...",
-            success: () => {
-                onSuccess?.()
-                onClose()
-                return "Quotation created successfully"
-            },
-            error: (err) => err.message || "Something went wrong"
-        })
-
-        try {
-            await promise
-        } catch (err) {
+            toast.dismiss(pending)
+            showQuotationMailResult(data.mail, { done: "Quotation created" })
+            onSuccess?.()
+            onClose()
+        } catch (err: any) {
+            toast.dismiss(pending)
+            toast.error(err?.message || "Something went wrong")
             console.error(err)
         } finally {
             setLoading(false)

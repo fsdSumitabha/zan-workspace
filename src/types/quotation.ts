@@ -11,4 +11,14 @@ export interface Quotation {
     uploadedBy?: Types.ObjectId; // references User
     createdAt?: Date;
     updatedAt?: Date;
+    // Whether it reached the client by email. Absent on every quotation
+    // created before the app could email one. See
+    // src/services/quotationMail.ts.
+    mail?: {
+        status?: "sent" | "failed";
+        to?: string;
+        sentAt?: Date;
+        attempts?: number;
+        error?: string;
+    };
 }

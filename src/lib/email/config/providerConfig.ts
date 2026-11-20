@@ -3,6 +3,7 @@ import EmailProviderConfig, {
     type IEmailProviderConfig,
 } from "@/models/EmailProviderConfig"
 import { EmailError } from "@/lib/email/http"
+import { MAIL_ACCOUNT, mailAccountConnection } from "@/lib/mail/accounts"
 import { decryptSecret } from "./crypto"
 
 /**
@@ -146,12 +147,18 @@ function toSettings(row: IEmailProviderConfig): ProviderSettings {
 
 /**
  * The settings to offer when somebody sets up a provider for the first
- * time, taken from the SMTP_* environment variables the app already uses
- * for registration and booking mail.
+ * time, taken from the SALES_SMTP_* environment variables.
+ *
+ * The sales mailbox, not the HR one. A campaign goes to customers and
+ * leads, so it must come from the address a customer may reply to. This
+ * used to read the unprefixed SMTP_* variables, which are the HR mailbox,
+ * and so offered to send bulk mail as HR.
  *
  * It is a starting point for the form, not a fallback at send time. A
  * campaign always sends through a saved provider row, so that the kill
- * switch and the rate limits apply.
+ * switch and the rate limits apply. Setting SALES_SMTP_PASS therefore does
+ * not by itself let a campaign send: the password still has to be saved on
+ * the settings screen, where it is encrypted at rest.
  */
 export function suggestedFromEnv(): {
     host: string
@@ -159,13 +166,15 @@ export function suggestedFromEnv(): {
     secure: boolean
     user: string
 } | null {
-    const host = process.env.SMTP_HOST?.trim()
-    const user = process.env.SMTP_USER?.trim()
-    const port = Number(process.env.SMTP_PORT)
+    const sales = mailAccountConnection(MAIL_ACCOUNT.SALES)
+    if (!sales) return null
 
-    if (!host || !user || !Number.isFinite(port)) return null
-
-    return { host, port, secure: port === 465, user }
+    return {
+        host: sales.host,
+        port: sales.port,
+        secure: sales.secure,
+        user: sales.user,
+    }
 }
 
 /**

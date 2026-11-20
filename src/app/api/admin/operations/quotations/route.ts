@@ -11,6 +11,7 @@ import { imagekit } from "@/lib/imagekit/imagekit"
 import { emitNotification } from "@/lib/notifications/emit"
 import { EVENT_CODE } from "@/constants/eventTypes"
 import { resolveParentName } from "@/lib/notifications/resolveParentName"
+import { sendQuotationMail } from "@/services/quotationMail"
 
 function parentUrlFor(et: number, eid: string): string | undefined {
     if (et === ENTITY_TYPE.LEAD) return `/admin/operations/leads/${eid}`
@@ -158,8 +159,18 @@ export async function POST(req: NextRequest) {
             payload: { parentUrl: parentUrlFor(entityType, String(entityId)), parentName, amount, title },
         })
 
+        // 6. Email it to the client, from the sales mailbox.
+        //
+        // Last, and after everything is saved. sendQuotationMail never
+        // throws: a mail failure comes back as a result, is kept on the
+        // quotation, and is reported to the person who pressed Send with a
+        // Try again button on the timeline. The quotation is the record and
+        // it is already saved, so an email that did not go out must never
+        // fail this request.
+        const mail = await sendQuotationMail(quotation, { description })
+
         return NextResponse.json(
-            { success: true, data: quotation },
+            { success: true, data: quotation, mail },
             { status: 201 }
         )
     } catch (error: any) {
