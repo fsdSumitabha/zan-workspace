@@ -16,6 +16,11 @@ import {
 
 import { handleAuthError } from "@/lib/auth/handleAuthError"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
+import Dialog, {
+    BUTTON_PRIMARY,
+    BUTTON_QUIET,
+    FIELD,
+} from "@/components/admin/operations/lead-sources/Dialog"
 import {
     TEMPLATE_CATEGORIES,
     TEMPLATE_CATEGORY,
@@ -36,6 +41,15 @@ export default function TemplatesClient() {
     const [search, setSearch] = useState("")
     const [category, setCategory] = useState<TemplateCategory | null>(null)
     const [creating, setCreating] = useState(false)
+
+    // The new-template dialog. It was window.prompt, which cannot say what
+    // a name is for, cannot offer the category, and looks like a browser
+    // warning rather than part of the app.
+    const [newOpen, setNewOpen] = useState(false)
+    const [newName, setNewName] = useState("")
+    const [newCategory, setNewCategory] = useState<TemplateCategory>(
+        TEMPLATE_CATEGORY.GENERAL
+    )
 
     const load = useCallback(
         async (q: string, cat: TemplateCategory | null) => {
@@ -74,9 +88,15 @@ export default function TemplatesClient() {
         return () => clearTimeout(t)
     }, [search, category, load])
 
+    function openCreate() {
+        setNewName("")
+        setNewCategory(TEMPLATE_CATEGORY.GENERAL)
+        setNewOpen(true)
+    }
+
     async function createTemplate() {
-        const name = window.prompt("Name for the new template")
-        if (!name?.trim()) return
+        const name = newName.trim()
+        if (!name || creating) return
 
         setCreating(true)
         try {
@@ -84,7 +104,7 @@ export default function TemplatesClient() {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: name.trim() }),
+                body: JSON.stringify({ name, category: newCategory }),
             })
             const json = await res.json().catch(() => null)
 
@@ -95,9 +115,12 @@ export default function TemplatesClient() {
             }
 
             const created = json.data as EmailTemplateRow
+            setNewOpen(false)
             toast.success("Template created.")
             router.push(`/admin/email-studio/${created._id}`)
         } catch (e: unknown) {
+            // The dialog stays open, with the name still in it. A duplicate
+            // name is the common failure, and retyping it would be rude.
             toast.error(e instanceof Error ? e.message : "Could not create")
         } finally {
             setCreating(false)
@@ -150,18 +173,87 @@ export default function TemplatesClient() {
 
                 <button
                     type="button"
-                    onClick={createTemplate}
-                    disabled={creating}
-                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                    onClick={openCreate}
+                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
                 >
-                    {creating ? (
-                        <Loader2 size={15} className="animate-spin" />
-                    ) : (
-                        <Plus size={15} />
-                    )}
+                    <Plus size={15} />
                     New template
                 </button>
             </div>
+
+            <Dialog
+                open={newOpen}
+                onClose={() => !creating && setNewOpen(false)}
+                title="New template"
+                description="It starts from the Zan design, with a footer and an unsubscribe link already in place. The editor opens next."
+                footer={
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setNewOpen(false)}
+                            disabled={creating}
+                            className={BUTTON_QUIET}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={createTemplate}
+                            disabled={creating || newName.trim() === ""}
+                            className={BUTTON_PRIMARY}
+                        >
+                            {creating && (
+                                <Loader2 size={15} className="animate-spin" />
+                            )}
+                            {creating ? "Creating..." : "Create and open"}
+                        </button>
+                    </>
+                }
+            >
+                <label className="block">
+                    <span className="mb-1 block text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                        Name
+                    </span>
+                    <input
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") createTemplate()
+                        }}
+                        maxLength={200}
+                        placeholder="November newsletter"
+                        className={FIELD}
+                    />
+                    <span className="mt-1 block text-xs text-neutral-500 dark:text-neutral-400">
+                        Only your team sees this. It is not the subject line.
+                    </span>
+                </label>
+
+                <label className="block">
+                    <span className="mb-1 block text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                        Category
+                    </span>
+                    <select
+                        value={newCategory}
+                        onChange={(e) =>
+                            setNewCategory(
+                                Number(e.target.value) as TemplateCategory
+                            )
+                        }
+                        className={FIELD}
+                    >
+                        {TEMPLATE_CATEGORIES.map((c) => (
+                            <option key={c} value={c}>
+                                {TEMPLATE_CATEGORY_META[c].label}
+                            </option>
+                        ))}
+                    </select>
+                    <span className="mt-1 block text-xs text-neutral-500 dark:text-neutral-400">
+                        Only for filtering the library. It changes nothing in
+                        the email.
+                    </span>
+                </label>
+            </Dialog>
 
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
