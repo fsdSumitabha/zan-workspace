@@ -185,7 +185,7 @@ async function schedule(
     // The audience as it is now, frozen onto the campaign. The saved
     // audience can be edited later; this campaign keeps what was approved.
     const rules = await rulesFor(campaign)
-    const preview = await previewAudience(rules)
+    const preview = await previewAudience(rules, { region: campaign.region })
 
     if (preview.eligibleTotal === 0) {
         throw new EmailError(

@@ -18,11 +18,17 @@ import { firstNameOf, splitPastedAddresses } from "./address"
  * below. That is why EmailAudience stores a closed shape rather than a
  * Mongo filter.
  *
- * ## Region comes free
+ * ## Region is passed in, not inherited
  *
- * Lead, Client and EmailContact all carry regionScopePlugin, so every
- * query below is already narrowed to the regions the request may read. No
- * region appears in this file.
+ * Lead, Client and EmailContact all carry regionScopePlugin, so inside a
+ * signed-in request these queries are already narrowed to the regions that
+ * request may read.
+ *
+ * That is not enough. The dispatcher builds a scheduled campaign's
+ * snapshot inside `runWithoutRegionScope`, where the plugin adds nothing,
+ * so relying on it alone let an IN campaign collect AE recipients. The
+ * campaign's own region is the authority, and it is passed in. See
+ * `inRegion` below for why it goes in an `$and`.
  *
  * ## This returns candidates, not recipients
  *
@@ -63,6 +69,38 @@ export interface ResolveResult {
  */
 export const MAX_CANDIDATES = 25_000
 
+export interface ResolveOptions {
+    /**
+     * The one region these recipients must belong to.
+     *
+     * The campaign snapshot always passes the campaign's region. The
+     * preview passes the pinned region, so what a person approves is
+     * built by the same filter that later writes the rows.
+     *
+     * Left out, the query falls back to whatever the region plugin adds,
+     * which is correct inside a request and nothing at all outside one.
+     */
+    region?: string
+}
+
+/**
+ * Pins a filter to one region, in a way the region plugin cannot widen.
+ *
+ * The plugin adds its condition with `query.where({ region: ... })`, which
+ * replaces a plain `region` key on the same filter. An `$and` entry is not
+ * replaced, so both conditions survive and the narrower one decides.
+ *
+ * In a request that means "a region I may read AND the campaign's region".
+ * In the dispatcher, where the plugin adds nothing, it means "the
+ * campaign's region". Both are right.
+ */
+export function inRegion(
+    filter: Record<string, unknown>,
+    region?: string
+): Record<string, unknown> {
+    return region ? { $and: [filter, { region }] } : filter
+}
+
 interface LeanLead {
     _id: Types.ObjectId
     name?: string
@@ -91,7 +129,8 @@ interface LeanContact {
 }
 
 export async function resolveAudience(
-    rules: IAudienceRules | undefined | null
+    rules: IAudienceRules | undefined | null,
+    options: ResolveOptions = {}
 ): Promise<ResolveResult> {
     const candidates: Candidate[] = []
     const matched = { leads: 0, clients: 0, contacts: 0, manual: 0 }
@@ -105,7 +144,7 @@ export async function resolveAudience(
 
     const leadFilter = buildLeadFilter(rules)
     if (leadFilter) {
-        const rows = await Lead.find(leadFilter)
+        const rows = await Lead.find(inRegion(leadFilter, options.region))
             .select("_id name email phone source assignedTo")
             .limit(MAX_CANDIDATES + 1)
             .lean<LeanLead[]>()
@@ -143,7 +182,7 @@ export async function resolveAudience(
 
     const clientFilter = buildClientFilter(rules)
     if (clientFilter) {
-        const rows = await Client.find(clientFilter)
+        const rows = await Client.find(inRegion(clientFilter, options.region))
             .select("_id name company email phone")
             .limit(MAX_CANDIDATES + 1)
             .lean<LeanClient[]>()
@@ -176,7 +215,9 @@ export async function resolveAudience(
 
     const contactFilter = buildContactFilter(rules)
     if (contactFilter) {
-        const rows = await EmailContact.find(contactFilter)
+        const rows = await EmailContact.find(
+            inRegion(contactFilter, options.region)
+        )
             .select("_id email firstName lastName company marketingConsent customFields")
             .limit(MAX_CANDIDATES + 1)
             .lean<LeanContact[]>()

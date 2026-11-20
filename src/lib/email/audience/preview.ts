@@ -36,13 +36,17 @@ const SAMPLE_SIZE = 10
 
 export async function previewAudience(
     rules: IAudienceRules | null | undefined,
-    options: { allowRoleAddresses?: boolean } = {}
+    options: { allowRoleAddresses?: boolean; region?: string } = {}
 ): Promise<AudiencePreview> {
-    const resolved = await resolveAudience(rules)
+    const resolved = await resolveAudience(rules, { region: options.region })
 
     const { eligible, excluded, samples } = await applyEligibility(
         resolved.candidates,
-        { rules, allowRoleAddresses: options.allowRoleAddresses }
+        {
+            rules,
+            allowRoleAddresses: options.allowRoleAddresses,
+            region: options.region,
+        }
     )
 
     const matchedTotal =
@@ -97,12 +101,13 @@ export async function previewAudience(
  */
 export async function resolveEligibleRecipients(
     rules: IAudienceRules | null | undefined,
-    options: { allowRoleAddresses?: boolean } = {}
+    options: { allowRoleAddresses?: boolean; region?: string } = {}
 ) {
-    const resolved = await resolveAudience(rules)
+    const resolved = await resolveAudience(rules, { region: options.region })
     const result = await applyEligibility(resolved.candidates, {
         rules,
         allowRoleAddresses: options.allowRoleAddresses,
+        region: options.region,
     })
 
     return { ...result, matched: resolved.matched, truncated: resolved.truncated }

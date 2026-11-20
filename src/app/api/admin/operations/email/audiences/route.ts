@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
         }
 
         const rules = parseAudienceRules(body.rules)
-        const preview = await previewAudience(rules)
+        const preview = await previewAudience(rules, { region })
 
         const audience = await EmailAudience.create({
             region,

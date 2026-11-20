@@ -29,7 +29,9 @@ export async function GET(
         await dbConnect()
 
         const audience = await load((await params).id)
-        const preview = await previewAudience(audience.rules)
+        const preview = await previewAudience(audience.rules, {
+            region: audience.region,
+        })
 
         return NextResponse.json({
             success: true,
@@ -78,7 +80,9 @@ export async function PATCH(
         let preview
         if (body.rules !== undefined) {
             const rules = parseAudienceRules(body.rules)
-            preview = await previewAudience(rules)
+            preview = await previewAudience(rules, {
+                region: audience.region,
+            })
             updates.rules = rules
             updates.lastCount = preview.eligibleTotal
             updates.lastCountedAt = new Date()

@@ -55,7 +55,12 @@ export async function buildSnapshot(
 ): Promise<SnapshotResult> {
     const campaignId = campaign._id
 
-    const { eligible, excluded } = await resolveEligibleRecipients(rules)
+    // The campaign's region, always, never the ambient one. The
+    // dispatcher builds scheduled snapshots with the region filter
+    // switched off, so without this an IN campaign collected AE people.
+    const { eligible, excluded } = await resolveEligibleRecipients(rules, {
+        region: campaign.region,
+    })
 
     if (eligible.length === 0) {
         throw new EmailError(
