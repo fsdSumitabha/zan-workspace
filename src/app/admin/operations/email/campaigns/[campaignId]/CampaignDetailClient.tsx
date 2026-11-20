@@ -43,6 +43,27 @@ const ACTIONS: Partial<
     [CAMPAIGN_STATUS.ARCHIVED]: { label: "Archive", action: "archive" },
 }
 
+/** Whole minutes since an ISO time. Zero when it is in the future. */
+function minutesSince(iso: string | null): number {
+    if (!iso) return 0
+    const then = new Date(iso).getTime()
+    if (Number.isNaN(then)) return 0
+    return Math.max(0, Math.floor((Date.now() - then) / 60_000))
+}
+
+/** "42 minutes", "3 hours", "2 days". Said to a person, not logged. */
+function describeGap(minutes: number): string {
+    if (minutes < 60) {
+        return `${minutes} minute${minutes === 1 ? "" : "s"}`
+    }
+    const hours = Math.floor(minutes / 60)
+    if (hours < 48) {
+        return `${hours} hour${hours === 1 ? "" : "s"}`
+    }
+    const days = Math.floor(hours / 24)
+    return `${days} days`
+}
+
 export default function CampaignDetailClient({
     campaignId,
 }: {
@@ -176,6 +197,9 @@ export default function CampaignDetailClient({
     }
 
     const { campaign, recipients, recipientCounts } = data
+
+    // How far past its time this campaign is. Zero until it is due.
+    const overdueBy = minutesSince(campaign.scheduledAt)
     const meta = CAMPAIGN_STATUS_META[campaign.status as CampaignStatus]
 
     const actions = campaign.allowedActions
@@ -278,6 +302,48 @@ export default function CampaignDetailClient({
                     {campaign.scheduleWall.replace("T", " ")} {campaign.scheduleZone}
                 </Banner>
             )}
+
+            {/*
+             * The time has passed and nothing happened.
+             *
+             * Without this the screen says "Scheduled" for ever and looks
+             * perfectly healthy. The campaign is fine; what is missing is
+             * something calling the dispatcher. That is invisible
+             * everywhere else in the app, so it is said here, where the
+             * person is already standing and asking why.
+             */}
+            {campaign.status === CAMPAIGN_STATUS.SCHEDULED &&
+                data.scheduler &&
+                overdueBy > data.scheduler.expectedWithinMinutes && (
+                    <Banner
+                        tone="danger"
+                        title={`This should have gone out ${describeGap(overdueBy)} ago`}
+                        icon={<AlertTriangle size={15} />}
+                    >
+                        {data.scheduler.lastRunAt ? (
+                            <>
+                                The campaign is fine. What has not happened is
+                                the scheduler: it last ran{" "}
+                                {describeGap(
+                                    minutesSince(data.scheduler.lastRunAt)
+                                )}{" "}
+                                ago, and it has to run before a scheduled
+                                campaign can start.
+                            </>
+                        ) : (
+                            <>
+                                The campaign is fine. The scheduler has never
+                                run on this deployment, so no scheduled
+                                campaign will ever start.
+                            </>
+                        )}{" "}
+                        Press Send now to send it immediately. To make
+                        scheduling work, see
+                        docs/EMAIL_MARKETING_SCHEDULING.md: on Vercel Hobby
+                        the built-in cron runs once a day, and it needs
+                        CRON_SECRET set or its request is refused.
+                    </Banner>
+                )}
 
             {/* ---------- Tabs ---------- */}
             <div className="flex gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">

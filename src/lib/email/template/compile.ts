@@ -8,6 +8,7 @@ import {
 import { sanitizeEmailHtml } from "./sanitize"
 import { extractLinkHosts } from "./extractLinks"
 import { findMergeTokens } from "@/lib/email/personalise/tokens"
+import { normaliseMjml } from "./normalise"
 
 /**
  * Compiles MJML to the HTML we actually send.
@@ -39,6 +40,12 @@ import { findMergeTokens } from "@/lib/email/personalise/tokens"
  */
 
 export interface CompileResult {
+    /**
+     * The source, made safe for an XML parser. Store THIS, not what was
+     * sent in. It is what the editor has to be able to reopen, and it
+     * says exactly the same thing. See ./normalise.ts.
+     */
+    mjml: string
     html: string
     text: string
     /** Hosts found in the HTML. The click redirect's allow-list. */
@@ -60,7 +67,13 @@ interface MjmlError {
  * Validates, compiles, sanitises and measures. Throws EmailError with
  * readable messages when the source cannot be used.
  */
-export function compileMjml(mjml: string): CompileResult {
+export function compileMjml(source: string): CompileResult {
+    // Before anything else, so the compiled HTML and the stored source
+    // come from the same text. The editor parses this again later with a
+    // stricter parser than MJML's; normalise.ts explains what that costs
+    // when it is skipped.
+    const mjml = normaliseMjml(source)
+
     const { warnings } = validateMjmlSource(mjml)
 
     let raw: { html: string; errors?: MjmlError[] }
@@ -117,6 +130,7 @@ export function compileMjml(mjml: string): CompileResult {
     }
 
     return {
+        mjml,
         html,
         text: htmlToText(html),
         linkHosts: extractLinkHosts(html),

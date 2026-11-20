@@ -11,6 +11,7 @@ import {
     Blocks,
     Check,
     Eye,
+    History,
     Image as ImageIcon,
     Layers,
     Loader2,
@@ -24,11 +25,18 @@ import {
 } from "lucide-react"
 
 import { handleAuthError } from "@/lib/auth/handleAuthError"
+import Dialog, {
+    BUTTON_QUIET,
+} from "@/components/admin/operations/lead-sources/Dialog"
 import PreviewFrame from "@/components/admin/email/editor/PreviewFrame"
 import { useAutosave } from "@/components/admin/email/editor/useAutosave"
 import { useUnsavedGuard } from "@/components/admin/email/editor/useUnsavedGuard"
 import type { MjmlEditorHandle } from "@/components/admin/email/editor/MjmlEditor"
-import type { CompileResponse, EmailEditorPayload } from "@/types/email"
+import type {
+    CompileResponse,
+    EmailEditorPayload,
+    EmailTemplateVersionView,
+} from "@/types/email"
 
 /**
  * GrapesJS touches `window` as soon as it is imported, so the editor can
@@ -71,6 +79,18 @@ export default function EmailStudioClient({
     const [previewOpen, setPreviewOpen] = useState(false)
     const [previewing, setPreviewing] = useState(false)
     const [panelsOpen, setPanelsOpen] = useState(false)
+
+    /**
+     * Version history.
+     *
+     * The list is fetched when the panel opens rather than taken from the
+     * payload, because the payload is from page load and every save since
+     * has added to it.
+     */
+    const [historyOpen, setHistoryOpen] = useState(false)
+    const [history, setHistory] = useState<EmailTemplateVersionView[]>([])
+    const [historyLoading, setHistoryLoading] = useState(false)
+    const [loadingVersion, setLoadingVersion] = useState(0)
 
     const handleRef = useRef<MjmlEditorHandle | null>(null)
 
@@ -169,6 +189,94 @@ export default function EmailStudioClient({
         if (!settled.current) return
         setDirty(true)
     }, [])
+
+    /* ---------------------------------------------------------------- */
+    /* Version history                                                   */
+    /* ---------------------------------------------------------------- */
+
+    async function openHistory() {
+        setHistoryOpen(true)
+        setHistoryLoading(true)
+        try {
+            const res = await fetch(`${API}/${templateId}/versions`, {
+                credentials: "include",
+                cache: "no-store",
+            })
+            const json = await res.json().catch(() => null)
+            if (!res.ok || !json?.success) {
+                throw new Error(json?.message || "Could not load the history")
+            }
+            setHistory(json.data as EmailTemplateVersionView[])
+        } catch (e: unknown) {
+            toast.error(
+                e instanceof Error ? e.message : "Could not load the history"
+            )
+            setHistoryOpen(false)
+        } finally {
+            setHistoryLoading(false)
+        }
+    }
+
+    /**
+     * Puts an old version back on the canvas.
+     *
+     * It does not write anything. The old content becomes unsaved changes,
+     * so you can look at it, change your mind and leave, or press Save and
+     * keep it as the next version.
+     *
+     * Going back never erases what came after. Restoring version 1 over
+     * version 3 makes version 4, and 2 and 3 are still there. A campaign
+     * that was sent from version 2 keeps pointing at version 2, and its
+     * report keeps describing the email that actually went out.
+     */
+    async function loadVersion(version: number) {
+        if (loadingVersion) return
+
+        if (
+            dirty &&
+            !window.confirm(
+                `Put version ${version} on the canvas? Your unsaved changes ` +
+                    "will be replaced."
+            )
+        ) {
+            return
+        }
+
+        setLoadingVersion(version)
+        try {
+            const res = await fetch(
+                `${API}/${templateId}/versions?version=${version}`,
+                { credentials: "include", cache: "no-store" }
+            )
+            const json = await res.json().catch(() => null)
+            if (!res.ok || !json?.success) {
+                throw new Error(json?.message || "Could not load that version")
+            }
+
+            const rows = json.data as EmailTemplateVersionView[]
+            const wanted = rows.find((r) => r.version === version)
+
+            if (!wanted?.mjml) {
+                throw new Error("That version has no content to restore.")
+            }
+
+            handleRef.current?.setMjml(wanted.mjml)
+            setDirty(true)
+            setHistoryOpen(false)
+
+            const next = (payload?.template.currentVersion ?? 0) + 1
+            toast.success(
+                `Version ${version} is on the canvas. Press Save to keep it ` +
+                    `as version ${next}.`
+            )
+        } catch (e: unknown) {
+            toast.error(
+                e instanceof Error ? e.message : "Could not load that version"
+            )
+        } finally {
+            setLoadingVersion(0)
+        }
+    }
 
     /* ---------------------------------------------------------------- */
     /* Save a version                                                    */
@@ -405,6 +513,16 @@ export default function EmailStudioClient({
 
                     <button
                         type="button"
+                        onClick={openHistory}
+                        title="Every version you have saved, and how to go back to one"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    >
+                        <History size={15} />
+                        <span className="hidden sm:inline">History</span>
+                    </button>
+
+                    <button
+                        type="button"
                         onClick={openPreview}
                         disabled={previewing}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
@@ -539,6 +657,82 @@ export default function EmailStudioClient({
                     onClose={() => setPreviewOpen(false)}
                 />
             )}
+
+            {/* ---------------- Version history ---------------- */}
+            <Dialog
+                open={historyOpen}
+                onClose={() => !loadingVersion && setHistoryOpen(false)}
+                title="Version history"
+                description="Every time you press Save, the one before it is kept. Going back never erases what came after."
+            >
+                {historyLoading ? (
+                    <p className="py-6 text-center text-sm text-neutral-500 dark:text-neutral-400">
+                        <Loader2 size={16} className="mx-auto animate-spin" />
+                    </p>
+                ) : history.length === 0 ? (
+                    <p className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
+                        No versions yet.
+                    </p>
+                ) : (
+                    <ul className="-mx-1 max-h-[55vh] divide-y divide-neutral-100 overflow-y-auto dark:divide-neutral-800">
+                        {history.map((v) => {
+                            const current =
+                                v.version === payload.template.currentVersion
+
+                            return (
+                                <li
+                                    key={v._id}
+                                    className="flex flex-wrap items-center gap-2 px-1 py-2.5"
+                                >
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2 text-sm text-neutral-900 dark:text-neutral-100">
+                                            Version {v.version}
+                                            {current && (
+                                                <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                                    Current
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="truncate text-xs text-neutral-500 dark:text-neutral-500">
+                                            {new Date(v.createdAt).toLocaleString()}
+                                            {v.note ? ` · ${v.note}` : ""}
+                                            {v.htmlBytes
+                                                ? ` · ${Math.round(v.htmlBytes / 1024)} KB`
+                                                : ""}
+                                        </div>
+                                    </div>
+
+                                    {!current && payload.canEdit && (
+                                        <button
+                                            type="button"
+                                            onClick={() => loadVersion(v.version)}
+                                            disabled={loadingVersion > 0}
+                                            className={BUTTON_QUIET}
+                                        >
+                                            {loadingVersion === v.version ? (
+                                                <Loader2
+                                                    size={14}
+                                                    className="animate-spin"
+                                                />
+                                            ) : (
+                                                <Undo2 size={14} />
+                                            )}
+                                            Put this back
+                                        </button>
+                                    )}
+                                </li>
+                            )
+                        })}
+                    </ul>
+                )}
+
+                <p className="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+                    Putting a version back does not save anything. It goes on the
+                    canvas as unsaved changes, so you can look at it and leave, or
+                    press Save to keep it as the next version. A campaign already
+                    sent keeps the version it went out from.
+                </p>
+            </Dialog>
         </div>
     )
 }

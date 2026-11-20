@@ -178,7 +178,9 @@ export async function POST(req: NextRequest) {
             region,
             templateId: template._id,
             version: 1,
-            mjml,
+            // compiled.mjml, not mjml: the normalised source is what the
+            // editor must be able to reopen. See template/normalise.ts.
+            mjml: compiled.mjml,
             html: compiled.html,
             text: compiled.text,
             linkHosts: compiled.linkHosts,

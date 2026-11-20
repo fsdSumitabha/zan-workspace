@@ -105,7 +105,9 @@ export async function POST(
         const version = await insertNextVersion({
             templateId: template._id as Types.ObjectId,
             region: template.region,
-            mjml,
+            // The normalised source, not the raw body. See
+            // template/normalise.ts.
+            mjml: compiled.mjml,
             compiled,
             note: readString(body, "note", 500) ?? "",
             userId: user.id,

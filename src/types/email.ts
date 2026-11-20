@@ -114,6 +114,11 @@ export interface EmailSettingsLoaded {
      * screens show this next to the time picker.
      */
     schedulePrecisionMinutes: number
+    /**
+     * When the dispatcher last ran. Null means it never has, and no
+     * scheduled campaign will go out until something calls it.
+     */
+    schedulerLastRunAt: string | null
     /** True when the person may use the kill switch, not only read. */
     canEdit: boolean
 }
@@ -436,6 +441,15 @@ export interface CampaignRecipientRow {
 
 export interface CampaignDetailResponse {
     campaign: EmailCampaignRow
+    /**
+     * Only for a campaign that is still waiting. Null otherwise.
+     * `lastRunAt` is when the dispatcher last ran at all; null means it
+     * never has, and no scheduled campaign will ever go out.
+     */
+    scheduler: {
+        lastRunAt: string | null
+        expectedWithinMinutes: number
+    } | null
     recipients: CampaignRecipientRow[]
     recipientPagination: {
         page: number

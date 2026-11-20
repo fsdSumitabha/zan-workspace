@@ -24,6 +24,7 @@ import {
 } from "@/lib/email/config/providerConfig"
 import { serializeIdentity } from "@/lib/email/settings/serialize"
 import { pinnedRegion, regionsInView } from "@/lib/email/region"
+import { schedulerHealth } from "@/lib/email/jobs/health"
 import type { EmailSettingsResponse } from "@/types/email"
 
 /**
@@ -94,6 +95,10 @@ export async function GET(req: NextRequest) {
                 ? providerCapabilities(provider.host).note
                 : "",
             schedulePrecisionMinutes: schedulePrecisionMinutes(delivery),
+            // The interval below is what the code assumes. This is what
+            // is actually happening. They are not always the same, and
+            // the gap is invisible everywhere else.
+            schedulerLastRunAt: (await schedulerHealth()).lastRunAt,
             canEdit: canAdministerEmail(user.role),
         }
 
