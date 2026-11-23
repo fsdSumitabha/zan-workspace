@@ -3,12 +3,13 @@
 import Link from "next/link"
 import { Image } from "@imagekit/next"
 import RegionSwitcher from "@/components/admin/operations/region/RegionSwitcher"
-import { User, LogOut, Home, Target, Handshake, FolderKanban, CalendarClock, UserRoundCog, Activity, BarChart3, PhoneCall, Mails, ChevronDown } from "lucide-react"
+import { User, LogOut, Home, Target, Handshake, FolderKanban, CalendarClock, UserRoundCog, Activity, BarChart3, PhoneCall, Mails, Megaphone, ChevronDown } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { LEAD_SOURCE_ACCESS_ROLES } from "@/constants/leadSourceRoles"
 import { EMAIL_ACCESS_ROLES, EMAIL_ADMIN_ROLES } from "@/constants/emailRoles"
+import { AD_TRACKING_VIEW_ROLES, LEAD_IMPORT_ROLES } from "@/constants/adTrackingRoles"
 
 /**
  * One sidebar entry.
@@ -42,6 +43,24 @@ const navItems: NavItem[] = [
     { name: "Clients", href: "/admin/operations/clients", icon: Handshake, roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 69, 70, 80] },
     { name: "Projects", href: "/admin/operations/projects", icon: FolderKanban, roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 70, 80] },
     { name: "Meetings", href: "/admin/operations/meetings", icon: CalendarClock, roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 65, 69, 70, 80] },
+    {
+        // Where each lead came from: campaign, ad set, ad and lead form,
+        // and the bulk lead import. "Import leads" is a button on these
+        // pages and on Leads, not an entry here, like "Create campaign".
+        // See docs/ad-tracking.md.
+        name: "Ad Tracking",
+        href: "/admin/operations/ad-tracking",
+        icon: Megaphone,
+        roles: AD_TRACKING_VIEW_ROLES,
+        children: [
+            { name: "Overview", href: "/admin/operations/ad-tracking", roles: AD_TRACKING_VIEW_ROLES },
+            { name: "Campaigns", href: "/admin/operations/ad-tracking/campaigns", roles: AD_TRACKING_VIEW_ROLES },
+            { name: "Ad Sets", href: "/admin/operations/ad-tracking/ad-sets", roles: AD_TRACKING_VIEW_ROLES },
+            { name: "Ads", href: "/admin/operations/ad-tracking/ads", roles: AD_TRACKING_VIEW_ROLES },
+            { name: "Lead Forms", href: "/admin/operations/ad-tracking/forms", roles: AD_TRACKING_VIEW_ROLES },
+            { name: "Lead Imports", href: "/admin/operations/ad-tracking/imports", roles: LEAD_IMPORT_ROLES },
+        ],
+    },
     {
         // "Create campaign" is not in this list on purpose. It is a button on
         // the Overview and Campaigns screens. A nav entry that is really a

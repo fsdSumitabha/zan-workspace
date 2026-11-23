@@ -23,6 +23,8 @@ import { InteractionType } from "@/constants/interactionTypes"
 import { useAuth } from "@/contexts/AuthContext"
 import AccessDenied from "@/components/admin/operations/AccessDenied"
 import { handleAuthError } from "@/lib/auth/handleAuthError"
+import LeadAdSourceCard from "@/components/admin/operations/ad-tracking/LeadAdSourceCard"
+import type { LeadAdSource } from "@/types/adTracking"
 
 export default function Page() {
     const params = useParams()
@@ -30,6 +32,7 @@ export default function Page() {
 
     const [lead, setLead] = useState<Lead | null>(null)
     const [client, setClient] = useState<Client | null>(null)
+    const [adSource, setAdSource] = useState<LeadAdSource | null>(null)
     const [loading, setLoading] = useState(true)
     const [accessError, setAccessError] = useState<string | null>(null)
 
@@ -55,6 +58,7 @@ export default function Page() {
                 // been converted.
                 setLead(data?.data?.lead ?? null)
                 setClient(data?.data?.client ?? null)
+                setAdSource(data?.data?.adSource ?? null)
             } catch (err) {
                 console.error("Failed to fetch lead", err)
             } finally {
@@ -199,6 +203,8 @@ export default function Page() {
                         {!loading && lead && (
                             <>
                                 <LeadDetails lead={lead} onStatusChange={handleStatusChange} />
+
+                                <LeadAdSourceCard source={adSource} />
 
                                 {client && (
                                     <div className="p-5  rounded-b-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">

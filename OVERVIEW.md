@@ -23,6 +23,7 @@ Other features:
 - **Global search** across leads, clients, projects and meetings.
 - **PWA.** The web UI can be installed on a phone.
 - **Lead sources.** Cold-calling lists uploaded from Excel. Each row gets a person and a day. Good calls are converted to leads. See `docs/lead-sources.md`.
+- **Ad tracking.** Bulk lead import from a Meta leads export. Each campaign, ad set, ad and lead form is saved once, and each lead points at the ad it came from. See `docs/ad-tracking.md`.
 
 ---
 
@@ -76,9 +77,9 @@ Every status, type and role is a number in `src/constants`. Labels and colors li
 | `LEAD_SOURCE_STATUS` | NEW 10, NOT_REACHED 20, CALL_BACK 30, INTERESTED 40, NOT_INTERESTED 50, CONVERTED 70. No pipeline order. 60 was WRONG_NUMBER, now part of NOT_INTERESTED. Do not reuse it. |
 | `CLIENT_STATUS` | ACTIVE 1, INACTIVE 2, ON_HOLD 3, COMPLETED 4 |
 | `PROJECT_STATUS` | DISCUSSION 110 … CLOSED 180 (8 steps) |
-| `ENTITY_TYPE` | LEAD 0, CLIENT 1, PROJECT 2, USER 3, INTERACTION 4, MEETING 5, DOCUMENT 6, CALL 7, QUOTATION 8, LEAD_SOURCE 9, LEAD_SOURCE_UPLOAD 10 |
+| `ENTITY_TYPE` | LEAD 0, CLIENT 1, PROJECT 2, USER 3, INTERACTION 4, MEETING 5, DOCUMENT 6, CALL 7, QUOTATION 8, LEAD_SOURCE 9, LEAD_SOURCE_UPLOAD 10, email 11–18, LEAD_IMPORT 19 |
 | `INTERACTION_TYPE` | Meetings 2010–2050, NOTE 2110, CALL 2210, DOCUMENT 2310, QUOTATION 2410, STATUS_CHANGED 2510 |
-| `EVENT_TYPE` | Lead 1000–1020, Client 1100–1110, Project 1200–1210, plus every interaction code |
+| `EVENT_TYPE` | Lead 1000–1030 (1030 is a bulk import), Client 1100–1110, Project 1200–1210, plus every interaction code |
 | Roles | Admin 10, Ops Manager 15, HR 20, Project Manager 30, Developers 40–45, Digital Marketer 50, BDE 60, Accountant 70, Support 80, System 90 |
 
 ### 3.4 Data model
@@ -98,6 +99,8 @@ All models are in `src/models`. Users, leads, clients and projects use soft dele
 | `StatsSnapshot` | Cached counts for the side panel |
 | `LeadSource` | One row of a cold-calling sheet, with a person, a day, a callback time and a timeline. Kept apart from `Lead` |
 | `LeadSourceUpload` | One uploaded sheet, with a copy of every row and its result for the report |
+| `AdCampaign`, `AdSet`, `Ad`, `LeadForm` | One row per platform id. Campaign ← Ad set ← Ad → Lead form. A lead points at its most specific one |
+| `LeadImport` | One imported sheet of leads, with its report and the lead counts by campaign, ad set, ad and form |
 
 ### 3.5 Cross-cutting systems
 
@@ -167,6 +170,7 @@ All admin routes are under `/api/admin/operations`.
 | Meetings | `meetings`, `meetings/[id]/status`, `meetings/[id]/reschedule` |
 | Users | `users`, `users/[id]`, `users/picker` |
 | Lead sources | `lead-sources`, `/[id]`, `/status`, `/notes`, `/callback`, `/convert`, `bulk`, `assignees`, `template`, `uploads`, `uploads/[id]`, `/download` |
+| Ad tracking | `ad-tracking/imports`, `imports/[id]`, `/download`, `template`, `overview`, `[kind]`, `[kind]/[id]`, `/leads` |
 | Dashboard | `/` (feed), `stats`, `overall-stats`, `search`, `activity-logs`, `/meta`, `/heatmap` |
 | Notifications | `/api/notifications`, `seen`, `read-all`, `[id]/read` |
 | Public | `/api/public/leads`, `/api/public/booking`, `/api/public/booking/slots`, `/api/webhooks/facebook/leads` |
@@ -184,6 +188,7 @@ All admin routes are under `/api/admin/operations`.
 | `/admin/operations/meetings`, `notifications`, `overall-stats` | Meeting list, notification feed, charts |
 | `/admin/operations/users`, `profile`, `activity-logs` | User admin, own profile, audit log |
 | `/admin/operations/lead-sources`, `/upload`, `/uploads` | Cold-calling list by day and person, sheet upload, upload reports |
+| `/admin/operations/ad-tracking`, `/import`, `/imports`, `/campaigns`, `/ad-sets`, `/ads`, `/forms` | Lead import, import reports, and lead counts per campaign, ad set, ad and form |
 
 `admin/operations/layout.tsx` wraps every CRM page. It holds the sidebar, search bar, notification bell, side panels and mobile nav.
 List state lives in the URL (`?page=`, `?search=`, filters). A reload or a shared link opens the same view.

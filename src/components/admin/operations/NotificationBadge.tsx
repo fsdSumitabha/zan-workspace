@@ -1,6 +1,6 @@
 import {
     Bell, Calendar, CalendarCheck, CalendarClock, CalendarX,
-    FileText, FolderPlus, IndianRupee, PartyPopper, Phone,
+    FileText, FileUp, FolderPlus, IndianRupee, PartyPopper, Phone,
     RefreshCw, StickyNote, Target, UserPlus, type LucideIcon,
 } from "lucide-react"
 
@@ -19,6 +19,7 @@ const BADGE_MAP: Record<string, BadgeMeta> = {
     "sticky-note":    { Icon: StickyNote,         color: "text-neutral-600 dark:text-neutral-300", bg: "bg-neutral-500/10" },
     "phone":          { Icon: Phone,              color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
     "file-text":      { Icon: FileText,           color: "text-neutral-600 dark:text-neutral-300", bg: "bg-neutral-500/10" },
+    "file-up":        { Icon: FileUp,             color: "text-indigo-600 dark:text-indigo-400",   bg: "bg-indigo-500/10" },
     "indian-rupee":   { Icon: IndianRupee,        color: "text-purple-600 dark:text-purple-400",   bg: "bg-purple-500/10" },
     "bell":           { Icon: Bell,               color: "text-neutral-600 dark:text-neutral-300", bg: "bg-neutral-500/10" },
 }

@@ -9,6 +9,7 @@ import { auditedFindByIdAndUpdate } from "@/lib/activity-log"
 import { validatePhone } from "@/lib/phone"
 import { DUPLICATE_LEAD_MESSAGE, findLeadPhoneConflict } from "@/lib/leads/findLeadByPhone"
 import { getRegion } from "@/lib/region"
+import { resolveLeadAdSource } from "@/lib/ad-tracking/records"
 
 export async function GET(
     req: NextRequest,
@@ -36,11 +37,20 @@ export async function GET(
             ? await Client.findById(lead.convertedClientId)
             : null
 
+        // The ad this lead came from: Ad -> Ad set -> Campaign, and the
+        // form. Null for a lead added by hand. A failure here must not
+        // hide the lead, so it is logged and left out.
+        const adSource = await resolveLeadAdSource(lead.toObject()).catch((error) => {
+            console.error("[leads] ad source lookup failed:", error)
+            return null
+        })
+
         return NextResponse.json({
             success: true,
             data: {
                 lead,
                 client: client || null,
+                adSource,
             },
         })
     } catch (error: any) {

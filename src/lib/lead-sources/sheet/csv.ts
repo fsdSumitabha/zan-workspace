@@ -99,8 +99,21 @@ function guessSeparator(text: string): string {
  * Excel saves "CSV UTF-8" as UTF-8, but plain "CSV" on Windows as
  * Windows-1252. Decoding that as UTF-8 turns "José" into "Jos�". So strict
  * UTF-8 is tried first, and Windows-1252 is the fallback.
+ *
+ * Meta's lead export is UTF-16, with tabs between the cells, even though
+ * the file ends in .csv. It starts with a byte order mark, FF FE. Without
+ * this check it decodes as Windows-1252 into "ÿþi\0d\0", and no header
+ * matches. The tabs are found by guessSeparator.
  */
 export function decodeCsv(buffer: Uint8Array): string {
+    if (buffer[0] === 0xff && buffer[1] === 0xfe) return new TextDecoder("utf-16le").decode(buffer)
+    if (buffer[0] === 0xfe && buffer[1] === 0xff) return new TextDecoder("utf-16be").decode(buffer)
+    // UTF-16 with no mark. Header text is plain ASCII, so in UTF-16LE every
+    // second byte of the first characters is zero.
+    if (buffer.length >= 4 && buffer[0] !== 0 && buffer[1] === 0 && buffer[2] !== 0 && buffer[3] === 0) {
+        return new TextDecoder("utf-16le").decode(buffer)
+    }
+
     try {
         return new TextDecoder("utf-8", { fatal: true }).decode(buffer)
     } catch {

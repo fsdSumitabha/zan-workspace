@@ -41,4 +41,9 @@ export const ENTITY_AUDIT_CONFIG: Partial<Record<EntityType, EntityAuditConfig>>
         // report, up to a few megabytes. Logging it would copy it again.
         skipFields: ["rows", "columns", "missingColumns"],
     },
+    19: {
+        // Lead import. Same reason as 10: `rows` copies the whole sheet.
+        // `breakdown` is a count made from the rows.
+        skipFields: ["rows", "columns", "fileNotes", "breakdown"],
+    },
 }
