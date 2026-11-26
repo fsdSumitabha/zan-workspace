@@ -32,9 +32,20 @@ export interface IEmailContact extends Document {
     company?: string
 
     marketingConsent: boolean
-    /** Where the consent came from, e.g. "import:nov-list.xlsx", "form". */
+    /**
+     * Where the consent came from, e.g. "import:nov-list.xlsx", or
+     * "form:zanservices.com/newsletter_form" for a website sign-up.
+     */
     consentSource?: string
     consentAt?: Date
+    /**
+     * A website sign-up's record of what the person agreed to: the exact
+     * words next to the box they ticked, which version of those words, and
+     * the page they were on. Empty for imported contacts.
+     */
+    consentText?: string
+    consentVersion?: string
+    consentPage?: string
     /** Set when the person unsubscribes. A suppression row is written too. */
     consentWithdrawnAt?: Date | null
 
@@ -75,6 +86,9 @@ const EmailContactSchema = new Schema<IEmailContact>(
         marketingConsent: { type: Boolean, default: false, required: true },
         consentSource: String,
         consentAt: Date,
+        consentText: { type: String, maxlength: 1000 },
+        consentVersion: { type: String, maxlength: 40 },
+        consentPage: { type: String, maxlength: 500 },
         consentWithdrawnAt: { type: Date, default: null },
 
         tags: { type: [String], default: [] },

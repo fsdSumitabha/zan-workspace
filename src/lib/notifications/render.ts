@@ -15,6 +15,9 @@ const BODY_MAX = 80
 // Sources that code sets. A lead added by hand keeps the source as typed.
 const LEAD_SOURCE_LABEL: Record<string, string> = {
     "client-portal": "the website",
+    // Set by /api/integrations/leads: the website's domain.
+    "zanservices.com": "the Zan Services website",
+    "zanversetechnologies.com": "the Zan Verse Technologies website",
     "facebook": "Facebook",
     "booking-page": "the booking page",
     "Cold Call": "a cold call",
@@ -288,7 +291,8 @@ export function renderMessage(
             const who = payload.parentName ?? "a client"
             return {
                 badge: "sticky-note",
-                title: clip(`${by} added a note on ${who}`, TITLE_MAX),
+                // No actor: a website added it, for a second enquiry from a lead.
+                title: clip(actor ? `${by} added a note on ${who}` : `New note on ${who}`, TITLE_MAX),
                 // The note title. A note saved without one shows its text instead.
                 body: bodyLine(payload.title || payload.description),
                 url: payload.parentUrl,

@@ -247,7 +247,11 @@ then hit the index, turning a clear message into a 500:
 - `src/lib/leads/findLeadByPhone.ts`
 - `src/app/api/public/booking/route.ts`
 
-Both carry a comment saying so.
+Both carry a comment saying so. A third reads it for the same reason:
+`src/lib/integrations/receiveLead.ts`. A website enquiry whose phone another
+region's lead already has is added to that lead, in that lead's region, as the
+booking page does, and its note says which region's site sent it. See
+docs/website-integrations.md.
 
 ### 3.6 Facebook Lead Ads needs a real region rule
 

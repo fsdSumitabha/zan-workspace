@@ -6,10 +6,6 @@
 	"additionalDirectories": [
       "D:\\zanverse-technologies",
       "D:\\zanservices"
-    ],
-    "deny": [
-      "Edit(//d/zanverse-technologies/**)",
-      "Edit(//d/zanservices/**)"
     ]
   }
 }

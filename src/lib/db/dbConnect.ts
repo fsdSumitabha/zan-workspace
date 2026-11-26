@@ -48,6 +48,12 @@ import "@/models/EmailDeliveryConfig";
 import "@/models/EmailRateCounter";
 import "@/models/EmailDispatchLock";
 
+// Website integrations. Imported here so `npm run db:indexes` builds the
+// unique { site, requestId } index, which is what stops a retried request
+// saving a lead twice, and the index that expires old rows.
+// See docs/website-integrations.md.
+import "@/models/IntegrationReceipt";
+
 const MONGODB_URI = process.env.MONGODB_URI as string;
 
 if (!MONGODB_URI) {
