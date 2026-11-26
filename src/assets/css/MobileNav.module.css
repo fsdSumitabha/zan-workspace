@@ -175,7 +175,9 @@
                 (var(--gap, 0px) + var(--item-width)) * var(--item, 0)
         )
     );
-    transition: transform 460ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition:
+        transform 460ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 240ms ease;
     pointer-events: none;
     /* Bottom-only cyan glow under the navy indicator.
        - Alpha keeps the cyan readable as a *glow*, not paint.
@@ -185,6 +187,13 @@
     box-shadow:
         0 18px 26px -8px rgba(103, 232, 249, 0.45),
         0 8px 12px -6px rgba(103, 232, 249, 0.35);
+}
+
+/* The page showing is not one of the tabs (a page from the three-dots
+   menu, or the profile). No tab is current, so the indicator hides.
+   The cutouts are children of the indicator, so they hide with it. */
+.indicatorHidden {
+    opacity: 0;
 }
 
 .indicator::before,

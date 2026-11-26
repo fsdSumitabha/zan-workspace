@@ -7,6 +7,8 @@ export const EVENT_TYPE = {
     1000: "LEAD_CREATED",
     1010: "LEAD_CONVERTED",
     1020: "LEAD_STATUS_CHANGED",
+    // One notification for a whole sheet of leads, never one per lead.
+    1030: "LEADS_IMPORTED",
 
     1100: "CLIENT_CREATED",
     1110: "CLIENT_STATUS_CHANGED",

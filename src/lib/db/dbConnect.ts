@@ -17,6 +17,15 @@ import "@/models/StatsSnapshot";
 import "@/models/LeadSource";
 import "@/models/LeadSourceUpload";
 
+// Ad tracking. Imported here so `npm run db:indexes` builds the unique
+// { platform, externalId } index on each, which is what stops one campaign,
+// ad set, ad or form being saved twice. See docs/ad-tracking.md.
+import "@/models/AdCampaign";
+import "@/models/AdSet";
+import "@/models/Ad";
+import "@/models/LeadForm";
+import "@/models/LeadImport";
+
 // Email marketing. These must be imported here too, or
 // `mongoose.modelNames()` does not see them and `npm run db:indexes`
 // silently skips every index they declare. The unique index on

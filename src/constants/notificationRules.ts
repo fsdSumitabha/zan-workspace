@@ -5,6 +5,7 @@ export const NOTIFICATION_RULES: Partial<Record<EventType, UserRole[]>> = {
     1000: [ 10, 30, 45, 60 ],   // Lead created
     1010: [ 10, 30, 45, 60 ],   // Lead converted
     1020: [ 10, 30, 45, 60 ],   //Lead Status changed
+    1030: [ 10, 30, 45, 60 ],   // Leads imported from a sheet. Same people as Lead created.
 
     1100: [ 10, 30, 45, 60 ],   // Client created
     1110: [ 10, 30, 45, 60 ],   // Client Status changed

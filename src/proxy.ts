@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { jwtVerify, type JWTPayload } from "jose"
 import { LEAD_SOURCE_ACCESS_ROLES, LEAD_SOURCE_MANAGE_ROLES } from "@/constants/leadSourceRoles"
+import { AD_TRACKING_VIEW_ROLES, LEAD_IMPORT_ROLES } from "@/constants/adTrackingRoles"
 import {
     EMAIL_ACCESS_ROLES,
     EMAIL_ADMIN_ROLES,
@@ -34,6 +35,10 @@ const routePermissions: Array<{ pattern: RegExp; roles: number[] }> = [
     // Role lists live in src/constants/leadSourceRoles.ts.
     { pattern: /^\/admin\/operations\/lead-sources\/(upload|uploads)(\/|$)/, roles: LEAD_SOURCE_MANAGE_ROLES },
     { pattern: /^\/admin\/operations\/lead-sources(\/|$)/, roles: LEAD_SOURCE_ACCESS_ROLES },
+    // Ad tracking. The import pages first, since the first match wins.
+    // Role lists live in src/constants/adTrackingRoles.ts.
+    { pattern: /^\/admin\/operations\/ad-tracking\/(import|imports)(\/|$)/, roles: LEAD_IMPORT_ROLES },
+    { pattern: /^\/admin\/operations\/ad-tracking(\/|$)/, roles: AD_TRACKING_VIEW_ROLES },
     // Email marketing. The first match wins, so settings comes before the
     // catch-all. Role lists live in src/constants/emailRoles.ts.
     //
