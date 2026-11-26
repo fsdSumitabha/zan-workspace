@@ -5,11 +5,6 @@ import { EmailError } from "@/lib/email/http"
 /**
  * Constant-time string comparison.
  *
- * Written here rather than reusing src/lib/security/timingSafeKey.ts,
- * because that one compares against CLIENT_PORTAL_API_KEY specifically and
- * is depended on by the public lead endpoint. Widening it would change a
- * security-sensitive file for an unrelated feature.
- *
  * `timingSafeEqual` throws when the lengths differ, so the length is
  * checked first. That leaks only that a wrong-length secret is wrong, not
  * which bytes are wrong.

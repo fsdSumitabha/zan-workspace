@@ -8,7 +8,7 @@ It is one Next.js app. The same app serves the web UI and the API.
 
 ## 1. What the project does
 
-1. A **lead** comes in from a Facebook ad, the client portal, the public booking page, or a staff member.
+1. A **lead** comes in from a Facebook ad, one of the two websites (zanservices.com, zanversetechnologies.com), the public booking page, or a staff member.
 2. Staff move the lead through a status pipeline. They log notes, calls, quotations and meetings on it.
 3. When the deal is won, the lead is **converted** into a **client**.
 4. The client gets one or more **projects**. Each project has its own status pipeline and timeline.
@@ -114,7 +114,7 @@ All models are in `src/models`. Users, leads, clients and projects use soft dele
 
 | Source | Endpoint | Protection |
 |---|---|---|
-| Client portal | `POST /api/public/leads` | `x-api-key`, CORS allow-list, rate limit |
+| The two websites | `POST /api/integrations/leads` and `/newsletter` | A Bearer key per website, server to server only, rate limit. See docs/website-integrations.md |
 | Facebook Lead Ads | `/api/webhooks/facebook/leads` | Verify token, request signature, idempotent |
 | Booking page | `/api/public/booking` and `/slots` | Honeypot, live slot re-check, rate limit |
 
@@ -173,7 +173,8 @@ All admin routes are under `/api/admin/operations`.
 | Ad tracking | `ad-tracking/imports`, `imports/[id]`, `/download`, `template`, `overview`, `[kind]`, `[kind]/[id]`, `/leads` |
 | Dashboard | `/` (feed), `stats`, `overall-stats`, `search`, `activity-logs`, `/meta`, `/heatmap` |
 | Notifications | `/api/notifications`, `seen`, `read-all`, `[id]/read` |
-| Public | `/api/public/leads`, `/api/public/booking`, `/api/public/booking/slots`, `/api/webhooks/facebook/leads` |
+| Public | `/api/public/booking`, `/api/public/booking/slots`, `/api/webhooks/facebook/leads` |
+| Website integrations | `/api/integrations/leads`, `/api/integrations/newsletter` |
 
 ---
 
@@ -197,7 +198,7 @@ List state lives in the URL (`?page=`, `?search=`, filters). A reload or a share
 
 ## 6. Setup
 
-Copy `env.example` to `.env.local`. The groups are MongoDB, `JWT_SECRET`, Meta, Google Ads, Google Calendar, ImageKit, SMTP and the client portal.
+Copy `env.example` to `.env.local`. The groups are MongoDB, `JWT_SECRET`, Meta, Google Ads, Google Calendar, ImageKit, SMTP and the website integrations.
 There are two SMTP accounts: `HR_SMTP_*` for the user module, `SALES_SMTP_*` for campaigns and quotations. See `src/lib/mail/accounts.ts`.
 The code also reads `NEXT_PUBLIC_REGION` and `APP_LOGIN_URL`. Neither is in `env.example` yet.
 

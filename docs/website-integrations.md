@@ -32,11 +32,11 @@ The key decides everything else:
 
 A request with an `Origin` or `Sec-Fetch-Site` header is refused with 403. A browser always sends one of them, and a server does not. The routes send no CORS headers, so a browser's preflight fails as well. A key copied into a web page therefore cannot be used from that page.
 
-These keys are not `CLIENT_PORTAL_API_KEY`. That key ships in a browser bundle, so it is not a secret, and it guards `/api/public/leads` only.
+These routes replaced `/api/public/leads`, which the old React site called from the browser with `CLIENT_PORTAL_API_KEY`. That route and its two settings were removed on 2026-11-26.
 
 ## Who the records belong to
 
-Every lead, note and contact a website sends is written as the **system integration user**: the bot account with role 90 ("System Integration User", `src/constants/userRoles.ts`), whose Mongo id is in `ZANSERVICES_USER_ID`. It is the `createdBy` of each record and the actor of its activity log rows. `/api/public/leads` and the booking page already write as this user, so every lead that came in by itself reads the same way, wherever it came from. Both websites use the same bot; a lead's source says which website sent it.
+Every lead, note and contact a website sends is written as the **system integration user**: the bot account with role 90 ("System Integration User", `src/constants/userRoles.ts`), whose Mongo id is in `ZANSERVICES_USER_ID`. It is the `createdBy` of each record and the actor of its activity log rows. The booking page already writes as this user, so every lead that came in by itself reads the same way, wherever it came from. Both websites use the same bot; a lead's source says which website sent it.
 
 Notifications are sent with no actor, as the booking page sends them, so they read "New lead: Asha Rao" and not as from a person.
 

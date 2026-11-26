@@ -5,9 +5,9 @@ import { IntegrationError } from "./http"
  *
  * It is the system integration user: a User with role 90 ("System
  * Integration User", src/constants/userRoles.ts), a bot account rather than
- * an employee. /api/public/leads and the booking page already write as this
- * user, so a lead from a website reads the same way in the activity log and
- * on the timeline as every other lead that came in by itself. Its Mongo id is
+ * an employee. The booking page already writes as this user, so a lead from
+ * a website reads the same way in the activity log and on the timeline as
+ * every other lead that came in by itself. Its Mongo id is
  * in ZANSERVICES_USER_ID. One bot for both websites: the lead's source says
  * which website it came from.
  *

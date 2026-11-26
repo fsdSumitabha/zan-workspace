@@ -102,9 +102,11 @@ the list is short and each call site carries a comment:
   insert would fail with a driver error instead of a clean 409.
 - The booking host lookup. The host is a config value, not user data.
 
-Public intake does **not** use the bypass. `public/leads`, `public/booking`
-and the Facebook webhook call `enterRegionContext` with the deploy region
-instead, so they get a real scope and their writes are stamped normally.
+Public intake does **not** use the bypass. `public/booking` and the Facebook
+webhook call `enterRegionContext` with the deploy region instead, so they get
+a real scope and their writes are stamped normally. The website integrations
+(`/api/integrations/*`) do the same with the region in the request, checked
+against the website's key.
 
 ### The lazy-callback trap
 
