@@ -3,7 +3,7 @@ import { dateKeyRangeFilter } from "@/lib/time/zone"
 import { resolveViewerZone } from "@/lib/time/viewerZone"
 import dbConnect from "@/lib/db/dbConnect"
 import Lead from "@/models/Lead"
-import { SortOrder } from "mongoose"
+import { SortOrder, Types } from "mongoose"
 import { requireAuth } from "@/lib/auth/requireAuth"
 import { requireRole } from "@/lib/auth/requireRole"
 import { auditedCreate } from "@/lib/activity-log"
@@ -32,11 +32,17 @@ export async function GET(req: NextRequest) {
         const from = searchParams.get("from")
         const to = searchParams.get("to")
         const sort = searchParams.get("sort") || "latest"
+        const importId = searchParams.get("import")
 
         const query: any = {}
 
         if (status) {
             query.status = Number(status)
+        }
+
+        // The leads of one sheet import. The import notification links here.
+        if (importId && /^[a-f0-9]{24}$/i.test(importId)) {
+            query.importId = new Types.ObjectId(importId)
         }
 
         if (search) {

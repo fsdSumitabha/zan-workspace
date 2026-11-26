@@ -18,6 +18,16 @@ const LEAD_SOURCE_LABEL: Record<string, string> = {
     "facebook": "Facebook",
     "booking-page": "the booking page",
     "Cold Call": "a cold call",
+    // Set by the bulk lead import, from Meta's "platform" column.
+    "instagram": "Instagram",
+    "messenger": "Messenger",
+    "whatsapp": "WhatsApp",
+    "audience-network": "Audience Network",
+}
+
+// "86 leads", "1 lead".
+function leadCount(n: number): string {
+    return `${n} ${n === 1 ? "lead" : "leads"}`
 }
 
 function leadUrl(id: string): string {
@@ -147,6 +157,31 @@ export function renderMessage(
                 title: clip(to ? `${by} moved ${name} to ${to}` : `${by} changed the stage of ${name}`, TITLE_MAX),
                 body: bodyLine(stageMove(from, to), payload.remarks),
                 url: leadUrl(String(payload.lead?._id ?? "")),
+            }
+        }
+        case 1030: { // LEADS_IMPORTED
+            // One notification for a whole sheet. "Saransh imported 86 leads",
+            // then what did not go in, then where the leads came from.
+            const imported = Number(payload.imported) || 0
+            const failed = Number(payload.failed) || 0
+            const duplicates = Number(payload.duplicates) || 0
+            const sources = (Array.isArray(payload.sources) ? payload.sources : [])
+                .map((s: string) => LEAD_SOURCE_LABEL[s] ?? s)
+                .join(" and ")
+            const id = String(payload.import?._id ?? "")
+            return {
+                badge: "file-up",
+                title: clip(`${by} imported ${leadCount(imported)}`, TITLE_MAX),
+                body: bodyLine(
+                    failed > 0 && `${failed} failed`,
+                    duplicates > 0 && `${duplicates} already in the CRM`,
+                    failed === 0 && duplicates === 0 && "Every row went in",
+                    sources && `via ${sources}`,
+                ),
+                // The leads list, filtered to this import. Everyone who gets
+                // this notification can open the leads list; the import
+                // report page is for importers only.
+                url: id ? `/admin/operations/leads?import=${id}` : "/admin/operations/leads",
             }
         }
         case 1100: { // CLIENT_CREATED

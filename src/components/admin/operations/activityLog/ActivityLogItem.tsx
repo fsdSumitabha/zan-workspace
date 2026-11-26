@@ -44,6 +44,8 @@ function getEntityHref(
             return `/admin/operations/lead-sources/${entityId}`
         case ENTITY_TYPE.LEAD_SOURCE_UPLOAD:
             return `/admin/operations/lead-sources/uploads/${entityId}`
+        case ENTITY_TYPE.LEAD_IMPORT:
+            return `/admin/operations/ad-tracking/imports/${entityId}`
         default:
             return null
     }
@@ -63,6 +65,7 @@ const ENTITY_BADGE: Record<number, string> = {
     [ENTITY_TYPE.QUOTATION]: "bg-orange-500/10 text-orange-600 dark:text-orange-300 border-orange-500/30",
     [ENTITY_TYPE.LEAD_SOURCE]: "bg-teal-500/10 text-teal-600 dark:text-teal-300 border-teal-500/30",
     [ENTITY_TYPE.LEAD_SOURCE_UPLOAD]: "bg-lime-500/10 text-lime-700 dark:text-lime-300 border-lime-500/30",
+    [ENTITY_TYPE.LEAD_IMPORT]: "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/30",
 }
 
 const NEUTRAL_BADGE =

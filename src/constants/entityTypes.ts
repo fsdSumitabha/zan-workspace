@@ -23,6 +23,12 @@ export const ENTITY_TYPE = {
     EMAIL_SUPPRESSION: 16,
     EMAIL_SENDER_IDENTITY: 17,
     EMAIL_PROVIDER_CONFIG: 18,
+
+    // Ad tracking. One code for the import, which a person starts. The ad
+    // records (campaign, ad set, ad, lead form) are written in bulk by the
+    // import, not edited by people, so they are not audited.
+    // See docs/ad-tracking.md.
+    LEAD_IMPORT: 19,
 } as const
 
 export type EntityType = (typeof ENTITY_TYPE)[keyof typeof ENTITY_TYPE]
@@ -47,4 +53,5 @@ export const ENTITY_TYPE_META: Record<EntityType, { label: string }> = {
     16: { label: "Email Suppression" },
     17: { label: "Sender Identity" },
     18: { label: "Email Provider" },
+    19: { label: "Lead Import" },
 }

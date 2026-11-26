@@ -2,13 +2,19 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LogOut, MoreVertical, User, UserCircle, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import NotificationBell from "@/components/admin/operations/NotificationBell";
 import RegionSwitcher from "@/components/admin/operations/region/RegionSwitcher";
+import {
+    MOBILE_MORE_ITEMS,
+    isActiveMobilePath,
+} from "@/components/admin/operations/mobileNavItems";
 
 export default function OperationsMobileTopBar() {
+    const pathname = usePathname();
     const { user, loading, logout } = useAuth();
     const [open, setOpen] = useState(false);
     const [moreOpen, setMoreOpen] = useState(false);
@@ -19,6 +25,18 @@ export default function OperationsMobileTopBar() {
         if (!user) return "";
         return user.name || user.email || "";
     }, [user]);
+
+    // The pages that are not on the bottom bar, for this person's role.
+    const moreItems = useMemo(() => {
+        if (!user) return [];
+        return MOBILE_MORE_ITEMS.filter((i) => i.roles.includes(user.role));
+    }, [user]);
+
+    // True when the page showing is one from the three-dots menu. The
+    // bottom bar then has no current tab, so the button shows it instead.
+    const moreActive = moreItems.some((i) =>
+        isActiveMobilePath(pathname, i.href),
+    );
 
     const avatarUrl = user?.avatar?.trim() || "";
     const showAvatarImage = Boolean(avatarUrl) && !avatarBroken;
@@ -160,49 +178,80 @@ export default function OperationsMobileTopBar() {
                         )}
                     </div>
 
-                    {/* More menu (future overflow nav) */}
-                    <div className="relative">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setMoreOpen((v) => !v);
-                                if (!moreOpen) setOpen(false);
-                            }}
-                            className="h-9 w-9 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-neutral-900/60 flex items-center justify-center"
-                            aria-label="More menu"
-                        >
-                            <MoreVertical
-                                size={18}
-                                className="text-neutral-700 dark:text-neutral-200"
-                            />
-                        </button>
+                    {/* More menu: every page that is not on the bottom bar.
+                        The list is in mobileNavItems.ts. */}
+                    {moreItems.length > 0 && (
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setMoreOpen((v) => !v);
+                                    if (!moreOpen) setOpen(false);
+                                }}
+                                className={`h-9 w-9 rounded-full border flex items-center justify-center ${
+                                    moreActive
+                                        ? "border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/10"
+                                        : "border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-neutral-900/60"
+                                }`}
+                                aria-label="More menu"
+                                aria-haspopup="menu"
+                                aria-expanded={moreOpen}
+                            >
+                                <MoreVertical
+                                    size={18}
+                                    className={
+                                        moreActive
+                                            ? "text-emerald-600 dark:text-emerald-400"
+                                            : "text-neutral-700 dark:text-neutral-200"
+                                    }
+                                />
+                            </button>
 
-                        {moreOpen && (
-                            <div className="absolute right-0 mt-2 w-56 rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-lg overflow-hidden">
-                                <Link
-                                    href="/admin/operations/meetings"
-                                    onClick={() => setMoreOpen(false)}
-                                    className="block px-3 py-2 text-sm text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900"
+                            {moreOpen && (
+                                <div
+                                    role="menu"
+                                    className="absolute right-0 mt-2 w-56 max-h-[calc(100vh-5rem)] overflow-y-auto rounded-lg dark:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-lg py-1"
                                 >
-                                    Meetings
-                                </Link>
-                                <Link
-                                    href="/admin/operations/activity-logs"
-                                    onClick={() => setMoreOpen(false)}
-                                    className="block px-3 py-2 text-sm text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900"
-                                >
-                                    Activity Logs
-                                </Link>
-                                <Link
-                                    href="/admin/operations/overall-stats"
-                                    onClick={() => setMoreOpen(false)}
-                                    className="block px-3 py-2 text-sm text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900"
-                                >
-                                    Overall Stats
-                                </Link>
-                            </div>
-                        )}
-                    </div>
+                                    {moreItems.map((item) => {
+                                        const Icon = item.icon;
+                                        const active = isActiveMobilePath(
+                                            pathname,
+                                            item.href,
+                                        );
+
+                                        return (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                role="menuitem"
+                                                onClick={() =>
+                                                    setMoreOpen(false)
+                                                }
+                                                aria-current={
+                                                    active ? "page" : undefined
+                                                }
+                                                className={`flex items-center gap-2.5 px-3 py-2 text-sm ${
+                                                    active
+                                                        ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium"
+                                                        : "text-neutral-900 dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900"
+                                                }`}
+                                            >
+                                                <Icon
+                                                    size={16}
+                                                    className={
+                                                        active
+                                                            ? "shrink-0 text-emerald-600 dark:text-emerald-400"
+                                                            : "shrink-0 text-neutral-500 dark:text-neutral-400"
+                                                    }
+                                                />
+                                                {item.name}
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

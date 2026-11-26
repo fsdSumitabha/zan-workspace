@@ -2,72 +2,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { FolderKanban, Home, Target, UserRoundCog, Handshake, PhoneCall, Mails, } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { LEAD_SOURCE_ACCESS_ROLES } from "@/constants/leadSourceRoles";
-import { EMAIL_ACCESS_ROLES } from "@/constants/emailRoles";
 import styles from "@/assets/css/MobileNav.module.css";
+import {
+    MOBILE_TAB_ITEMS,
+    isActiveMobilePath,
+} from "@/components/admin/operations/mobileNavItems";
 
-
-const navItems: Array<{
-    name: string;
-    href: string;
-    roles: number[];
-    icon: React.ComponentType<{ size?: number | string }>;
-}> = [
-    {
-        name: "Dashboard",
-        href: "/admin/operations",
-        roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 65, 69, 70, 80],
-        icon: Home,
-    },
-    {
-        name: "Leads",
-        href: "/admin/operations/leads",
-        roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 65, 69, 70, 80],
-        icon: Target,
-    },
-    {
-        // "Calls", not "Lead Sources". The label shows under the active
-        // icon, and the long name runs into the next icon on a small phone.
-        name: "Calls",
-        href: "/admin/operations/lead-sources",
-        roles: LEAD_SOURCE_ACCESS_ROLES,
-        icon: PhoneCall,
-    },
-    {
-        name: "Clients",
-        href: "/admin/operations/clients",
-        roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 69, 70, 80],
-        icon: Handshake,
-    },
-    {
-        name: "Projects",
-        href: "/admin/operations/projects",
-        roles: [10, 15, 20, 30, 40, 42, 45, 50, 60, 70, 80],
-        icon: FolderKanban,
-    },
-    {
-        // "Email", not "Email Marketing". The label shows under the active
-        // icon, and the long name runs into the next icon on a small phone.
-        name: "Email",
-        href: "/admin/operations/email",
-        roles: EMAIL_ACCESS_ROLES,
-        icon: Mails,
-    },
-    {
-        name: "Users",
-        href: "/admin/operations/users",
-        roles: [10, 15, 20, 69],
-        icon: UserRoundCog,
-    },
-];
-
+/**
+ * The bottom bar on a phone. It holds four tabs only. Every other page is
+ * in the three-dots menu in MobileTopBar.tsx. Both lists live in
+ * mobileNavItems.ts.
+ */
 export default function OperationsMobileNav() {
     const pathname = usePathname();
     const { user, loading } = useAuth();
     const [visible, setVisible] = useState(true);
-    const [activeIndex, setActiveIndex] = useState(0);
+    // -1 means the page showing is not one of the tabs. It is a page from
+    // the three-dots menu, or the profile. The indicator hides then.
+    const [activeIndex, setActiveIndex] = useState(-1);
+    // Where the indicator sits. It keeps the last tab while hidden, so it
+    // does not slide in from the first tab when it shows again.
+    const [indicatorIndex, setIndicatorIndex] = useState(0);
     const [gapPx, setGapPx] = useState(0);
     const lastY = useRef(0);
     const raf = useRef<number | null>(null);
@@ -98,17 +54,15 @@ export default function OperationsMobileNav() {
 
     const filtered = useMemo(() => {
         if (!user) return [];
-        return navItems.filter((i) => i.roles.includes(user.role));
+        return MOBILE_TAB_ITEMS.filter((i) => i.roles.includes(user.role));
     }, [user]);
 
     useEffect(() => {
         const currentIndex = filtered.findIndex((item) =>
-            item.href === "/admin/operations"
-                ? pathname === item.href
-                : pathname === item.href ||
-                  pathname.startsWith(item.href + "/"),
+            isActiveMobilePath(pathname, item.href),
         );
-        if (currentIndex !== -1) setActiveIndex(currentIndex);
+        setActiveIndex(currentIndex);
+        if (currentIndex !== -1) setIndicatorIndex(currentIndex);
     }, [pathname, filtered]);
 
     // Measure the live gap between two adjacent items so the indicator
@@ -155,10 +109,12 @@ export default function OperationsMobileNav() {
                     <div className={styles.hood} aria-hidden="true" />
 
                     <div
-                        className={styles.indicator}
+                        className={`${styles.indicator} ${
+                            activeIndex === -1 ? styles.indicatorHidden : ""
+                        }`}
                         style={
                             {
-                                ["--item" as string]: activeIndex,
+                                ["--item" as string]: indicatorIndex,
                                 ["--gap" as string]: `${gapPx}px`,
                             } as React.CSSProperties
                         }
@@ -177,7 +133,10 @@ export default function OperationsMobileNav() {
                                         className={
                                             isActive ? styles.active : ""
                                         }
-                                        onClick={() => setActiveIndex(index)}
+                                        onClick={() => {
+                                            setActiveIndex(index);
+                                            setIndicatorIndex(index);
+                                        }}
                                         aria-current={
                                             isActive ? "page" : undefined
                                         }
