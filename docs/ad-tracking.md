@@ -328,4 +328,7 @@ Both files import `testing/tsxPhoneFix.ts` first. Without it, the phone library 
 3. **Google Ads.** `GOOGLE` is in every enum, so no schema change is needed. The sheet columns are not mapped.
 4. **Ads-only import.** The plan had an import of the ad records without leads. The engine can do it:
    skip steps 6 to 8.
-5. **Ad Tracking on the phone's bottom bar.** The pages work on a phone, but there is no icon in the mobile nav.
+
+On a phone, Ad Tracking is in the three-dots menu in the top bar, not on the bottom bar. The bottom bar
+holds Dashboard, Leads, Clients and Meetings only. Both lists are in
+`src/components/admin/operations/mobileNavItems.ts`.
